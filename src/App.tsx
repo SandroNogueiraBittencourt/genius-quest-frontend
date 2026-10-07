@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getHealth } from './services/api';
+import { DesignSystem } from './features/design-system/DesignSystem';
 import './App.css';
 
 function App() {
@@ -10,7 +11,6 @@ function App() {
 
   useEffect(() => {
     let active = true;
-
     getHealth()
       .then((data) => {
         if (!active) return;
@@ -22,36 +22,25 @@ function App() {
         setApiStatus('offline');
         setApiMessage('Backend indisponível no momento');
       });
-
     return () => {
       active = false;
     };
   }, []);
 
   return (
-    <main className="app-shell">
-      <section className="hero-card">
-        <span className="eyebrow">Genius Quest</span>
-        <h1>Conhecimento, competição e comunidade.</h1>
-        <p className="lead">
-          Base inicial do frontend em React + Vite. A próxima etapa será
-          construir autenticação, temas, quizzes, partidas e rankings.
-        </p>
-
+    <DesignSystem
+      apiStatus={
         <div
-          className={`status status--${apiStatus}`}
+          className={`ds-api ds-api--${apiStatus}`}
           role="status"
+          aria-label="Conexão com a API"
           aria-live="polite"
         >
-          <span className="status__dot" aria-hidden="true" />
-          <div>
-            <strong>API</strong>
-            <span>{apiMessage}</span>
-          </div>
+          <span className="ds-api-dot" aria-hidden="true" />
+          <span>{apiMessage}</span>
         </div>
-      </section>
-    </main>
+      }
+    />
   );
 }
-
 export default App;

@@ -10,12 +10,6 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  /* Aliases para a tela inicial preservada na etapa 1. */
-  --heading: var(--color-dark);
-  --surface: var(--color-white);
-  --border: var(--color-border);
-  --accent: var(--color-primary);
-  --status-bg: var(--color-light);
 }
 * {
   box-sizing: border-box;

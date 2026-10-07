@@ -28,7 +28,7 @@ Branco sobre roxo ou Meia-noite. Texto Meia-noite sobre âmbar, menta e coral. U
 
 Foco roxo em superfícies claras; menta no escuro. Pulso de pensamento 1,6 s; celebração única 0,7 s. `prefers-reduced-motion` desativa movimentos.
 
-As fontes são locais e os arquivos originais estão documentados em [BRAND.md](BRAND.md). O catálogo interativo entra no próximo commit desta branch.
+As fontes são locais e os arquivos originais estão documentados em [BRAND.md](BRAND.md). O catálogo interativo é a tela inicial desta branch. Rode `npm run dev` para conferir cores, fontes, componentes e seus estados. Os exemplos usam apenas estado local; a consulta de saúde da API existente permanece no rodapé.
 
 ## Componentes
 
@@ -54,3 +54,19 @@ import { Button, Card, Input, ProgressBar } from './components/ui';
 ```
 
 Em formulários, use `type="submit"` explicitamente. `busy` anuncia a operação e bloqueia novos cliques. A segurança e a idempotência continuam sendo responsabilidade do backend.
+
+## Catálogo e verificações
+
+`src/features/design-system` reúne os exemplos. O catálogo demonstra validação de formulário, progresso limitado a 0–10, botões, mensagens e movimento. Não é uma tela de jogo e não calcula pontuação, moedas ou elegibilidade.
+
+Vitest + RTL verificam os componentes e as interações do catálogo. Os testes de tokens leem o CSS fonte e calculam o contraste das combinações documentadas. Isso não substitui a avaliação de acessibilidade de cada tela futura.
+
+Para trabalhar com as fontes e a marca, preserve os arquivos originais em `public/brand`, `public/fonts` e `public/favicon.svg`, incluindo as licenças.
+
+## Validação desta entrega
+
+- 21 testes passando: API, estados da aplicação, componentes, catálogo e contraste dos tokens.
+- Lint, formatação e build de produção passando.
+- Catálogo conferido em 320, 375 e 1440 px, sem rolagem horizontal ou imagens quebradas.
+- Axe não detectou violações nos critérios WCAG A/AA habilitados nas vistas testadas. A consulta de saúde foi simulada nessa verificação visual; testes unitários cobrem a indisponibilidade real. Isso não constitui certificação de conformidade.
+- Foco inicial no link de pular para o conteúdo e movimento desativado com `prefers-reduced-motion: reduce`.

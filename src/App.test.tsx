@@ -14,12 +14,16 @@ describe('estado acessível da consulta ao backend', () => {
       vi.fn().mockResolvedValue(new Response(JSON.stringify(body))),
     );
     render(<App />);
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Consultando o backend',
-    );
-    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    expect(
+      screen.getByRole('status', { name: 'Conexão com a API' }),
+    ).toHaveTextContent('Consultando o backend');
+    expect(
+      screen.getByRole('status', { name: 'Conexão com a API' }),
+    ).toHaveAttribute('aria-live', 'polite');
     await screen.findByText('Genius Quest Backend conectado');
-    expect(screen.getByRole('status')).toHaveTextContent('conectado');
+    expect(
+      screen.getByRole('status', { name: 'Conexão com a API' }),
+    ).toHaveTextContent('conectado');
   });
   it('mantém a aplicação visível quando a API falha', async () => {
     vi.stubGlobal(
@@ -29,6 +33,8 @@ describe('estado acessível da consulta ao backend', () => {
     render(<App />);
     await screen.findByText('Backend indisponível no momento');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('indisponível');
+    expect(
+      screen.getByRole('status', { name: 'Conexão com a API' }),
+    ).toHaveTextContent('indisponível');
   });
 });
