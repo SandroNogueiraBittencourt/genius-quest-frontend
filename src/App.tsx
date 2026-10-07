@@ -1,30 +1,32 @@
-import { useEffect, useState } from 'react'
-import { getHealth } from './services/api'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { getHealth } from './services/api';
+import './App.css';
 
 function App() {
-  const [apiStatus, setApiStatus] = useState<'verificando' | 'online' | 'offline'>('verificando')
-  const [apiMessage, setApiMessage] = useState('Consultando o backend...')
+  const [apiStatus, setApiStatus] = useState<
+    'verificando' | 'online' | 'offline'
+  >('verificando');
+  const [apiMessage, setApiMessage] = useState('Consultando o backend...');
 
   useEffect(() => {
-    let active = true
+    let active = true;
 
     getHealth()
       .then((data) => {
-        if (!active) return
-        setApiStatus('online')
-        setApiMessage(`${data.application} conectado`)
+        if (!active) return;
+        setApiStatus('online');
+        setApiMessage(`${data.application} conectado`);
       })
       .catch(() => {
-        if (!active) return
-        setApiStatus('offline')
-        setApiMessage('Backend indisponível no momento')
-      })
+        if (!active) return;
+        setApiStatus('offline');
+        setApiMessage('Backend indisponível no momento');
+      });
 
     return () => {
-      active = false
-    }
-  }, [])
+      active = false;
+    };
+  }, []);
 
   return (
     <main className="app-shell">
@@ -32,11 +34,15 @@ function App() {
         <span className="eyebrow">Genius Quest</span>
         <h1>Conhecimento, competição e comunidade.</h1>
         <p className="lead">
-          Base inicial do frontend em React + Vite. A próxima etapa será construir
-          autenticação, temas, quizzes, partidas e rankings.
+          Base inicial do frontend em React + Vite. A próxima etapa será
+          construir autenticação, temas, quizzes, partidas e rankings.
         </p>
 
-        <div className={`status status--${apiStatus}`} role="status" aria-live="polite">
+        <div
+          className={`status status--${apiStatus}`}
+          role="status"
+          aria-live="polite"
+        >
           <span className="status__dot" aria-hidden="true" />
           <div>
             <strong>API</strong>
@@ -45,7 +51,7 @@ function App() {
         </div>
       </section>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;

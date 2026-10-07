@@ -71,3 +71,5 @@ src/
 ```
 
 Tailwind utiliza o plugin oficial do Vite e a importação CSS. Os tokens de marca e componentes reutilizáveis pertencem à etapa 2.
+
+Qualidade: ESLint para React/TypeScript e Prettier. Use `npm run format:check` para conferir e `npm run format` para aplicar a formatação.
