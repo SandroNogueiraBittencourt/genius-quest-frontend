@@ -1,0 +1,63 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: Sora;
+  src: url('/fonts/Sora-variable.ttf') format('truetype');
+  font-weight: 100 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  src: url('/fonts/Inter-variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: Caveat;
+  src: url('/fonts/Caveat-variable.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@theme {
+  --color-primary: #6c3bff;
+  --color-secondary: #ffb347;
+  --color-success: #2ee6a6;
+  --color-error: #ff6b6b;
+  --color-dark: #1a1530;
+  --color-light: #f5f3ff;
+  --color-white: #ffffff;
+  --font-heading: Sora, sans-serif;
+  --font-body: Inter, sans-serif;
+  --font-accent: Caveat, cursive;
+  --text-caption: 14px;
+  --text-body: 18px;
+  --text-title: 24px;
+  --text-question: 26px;
+  --text-section: 32px;
+  --text-display: 48px;
+  --radius-card: 24px;
+  --radius-control: 16px;
+}
+
+:root {
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --leading-body: 1.5;
+  --color-muted: #605672;
+  --color-muted-dark: #c9c2da;
+  --color-border: #c8bedd;
+  --color-control-border: #84788f;
+  --color-error-text: #a33142;
+  --color-primary-hover: #5727d8;
+  --color-secondary-hover: #ffc371;
+  --color-primary-soft: #eee9ff;
+  --color-disabled-bg: #e5deef;
+  --color-disabled-text: #61596d;
+  --motion-thinking: 1.6s;
+  --motion-success: 0.7s;
+}

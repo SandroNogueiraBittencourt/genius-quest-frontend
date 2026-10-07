@@ -1,0 +1,187 @@
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 52px;
+  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font: 600 var(--text-body)/var(--leading-body) var(--font-heading);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.ui-button--primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+.ui-button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.ui-button--secondary {
+  background: var(--color-secondary);
+  color: var(--color-dark);
+}
+.ui-button--secondary:hover:not(:disabled) {
+  background: var(--color-secondary-hover);
+}
+.ui-button--outline {
+  background: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-control-border);
+}
+.ui-button--outline:hover:not(:disabled),
+.ui-button--ghost:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+.ui-button--ghost {
+  background: transparent;
+  color: var(--color-primary);
+}
+.ui-button:disabled {
+  background: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: transparent;
+  cursor: not-allowed;
+}
+[data-surface='dark'] .ui-button--outline,
+[data-surface='dark'] .ui-button--ghost {
+  color: var(--color-white);
+}
+[data-surface='dark'] .ui-button--outline {
+  border-color: var(--color-muted-dark);
+}
+[data-surface='dark'] .ui-button--outline:hover:not(:disabled),
+[data-surface='dark'] .ui-button--ghost:hover:not(:disabled) {
+  background: #393147;
+}
+[data-surface='dark'] .ui-button:disabled {
+  color: var(--color-disabled-text);
+}
+.ui-card {
+  padding: var(--space-4);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+.ui-field {
+  display: grid;
+  gap: var(--space-1);
+}
+.ui-field label {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+.ui-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  color: var(--color-dark);
+  background: var(--color-white);
+  border: 1px solid var(--color-control-border);
+  border-radius: var(--radius-control);
+}
+.ui-input::placeholder {
+  color: var(--color-muted);
+}
+.ui-input:disabled {
+  color: var(--color-disabled-text);
+  background: var(--color-disabled-bg);
+  cursor: not-allowed;
+}
+.ui-input[aria-invalid='true'] {
+  border: 2px solid var(--color-error-text);
+}
+.ui-field-hint,
+.ui-field-error {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: var(--leading-body);
+}
+.ui-field-hint {
+  color: var(--color-muted);
+}
+.ui-field-error {
+  color: var(--color-error-text);
+}
+.ui-progress {
+  height: 8px;
+  border-radius: 8px;
+  background: #ded4f3;
+  overflow: hidden;
+}
+.ui-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 8px;
+  transition: width 0.2s;
+}
+.ui-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-control);
+  font: 600 18px/1 var(--font-heading);
+  background: var(--color-secondary);
+  color: var(--color-dark);
+}
+.ui-avatar--1 {
+  background: var(--color-success);
+}
+.ui-avatar--2 {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.ui-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: #ffe6e6;
+  color: var(--color-dark);
+  border: 1px solid var(--color-error-text);
+  border-radius: var(--radius-control);
+}
+.ui-notice > span {
+  font-weight: 700;
+}
+.ui-notice p {
+  margin: 0;
+}
+.ui-thinking {
+  animation: ui-thinking var(--motion-thinking) ease-in-out infinite;
+}
+.ui-celebrate {
+  animation: ui-celebrate var(--motion-success) ease-out 1;
+}
+@keyframes ui-thinking {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+@keyframes ui-celebrate {
+  0% {
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (max-width: 640px) {
+  .ui-card {
+    padding: var(--space-3);
+  }
+}

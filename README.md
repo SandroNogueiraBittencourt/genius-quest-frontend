@@ -1,12 +1,12 @@
-# Genius Quest · Etapa 1
+# Genius Quest · Etapa 2
 
-Configuração base do frontend, preservando o histórico existente. Branch: `chore/01-frontend-setup`.
+Design System básico na branch `feat/02-design-system`, criada a partir da etapa 1 incorporada em `main` (`f31b5f2`).
 
-## Escopo desta entrega
+## Escopo
 
-React + Vite com TypeScript estrito, Tailwind CSS 4, ESLint, Prettier, Vitest, React Testing Library e GitHub Actions. A tela inicial e a consulta de saúde da API existente foram preservadas.
+Assets SVG originais, fontes locais Sora/Inter/Caveat, tokens de cores e espaçamento, componentes Button/Card/Input/ProgressBar/Avatar/Notice e catálogo interativo responsivo. O catálogo demonstra estados e interações locais; a consulta existente de saúde do backend continua no rodapé.
 
-O Design System e as telas de jogo ficam nas etapas seguintes. React Query, Zustand, contratos das partidas e PWA entram quando forem necessários ao fluxo correspondente.
+As telas de Abertura, Lobby, Quiz e Resultado serão desenvolvidas nas próximas branches. React Query, Zustand, contratos das partidas e PWA entram nas respectivas etapas.
 
 ## Executar
 
@@ -17,9 +17,9 @@ npm ci
 npm run dev
 ```
 
-Acesse `http://localhost:5173`. Por padrão, `/api` usa o proxy para `http://localhost:8080`. A indisponibilidade do backend não impede abrir a aplicação.
+Acesse `http://localhost:5173`. Por padrão, `/api` usa o proxy para `http://localhost:8080`. A indisponibilidade do backend não impede usar o catálogo.
 
-Se precisar de outra base da API, copie `.env.example` para `.env` e ajuste `VITE_API_URL`. Variáveis `VITE_*` são públicas no build; nunca inclua segredos.
+Para outra base da API, copie `.env.example` para `.env` e ajuste `VITE_API_URL`. Variáveis `VITE_*` são públicas no build; nunca inclua segredos.
 
 ## Verificar
 
@@ -30,24 +30,14 @@ npm test
 npm run build
 ```
 
-Para formatar: `npm run format`. Para testes interativos: `npm run test:watch`. Para conferir o build: `npm run preview`.
+Para formatar: `npm run format`. Testes interativos: `npm run test:watch`. Conferir o build: `npm run preview`.
 
-## Estrutura
+## Documentação e estrutura
 
-```text
-src/
-  App.tsx              Tela inicial preservada
-  App.test.tsx         Estado de carregamento e falha da API
-  main.tsx             Entrada React
-  index.css            Importação Tailwind e CSS existente
-  services/
-    api.ts             Cliente tipado do endpoint de saúde
-    api.test.ts        Contrato HTTP e falha de rede
-  test/setup.ts        Configuração RTL
-```
+- [Design System e componentes](docs/DESIGN_SYSTEM.md)
+- [Uso dos assets originais](docs/BRAND.md)
+- [Branches, commits e próximas etapas](docs/ETAPAS.md)
 
-## Commits e próximas branches
+`src/components/ui` contém os componentes reutilizáveis; `src/styles` contém tokens e estilos; `src/features/design-system` contém o catálogo. `src/services/api.ts` mantém o cliente tipado do endpoint de saúde. Fontes e SVGs são servidos localmente a partir de `public`.
 
-Consulte [docs/ETAPAS.md](docs/ETAPAS.md). A etapa 1 possui commits separados de migração, Tailwind, qualidade e testes/CI. Todos foram criados localmente, com a identidade Git configurada no ambiente (`Codex`). Nenhum push ou merge foi feito.
-
-Para manter os commits individuais em um Pull Request, use a opção de merge que preserva os commits. Squash consolida a etapa em um único commit.
+Os commits da etapa 2 foram criados localmente com a identidade Git `Codex`. Nenhum push ou merge desta branch foi feito. Preserve os commits individuais ao revisar e incorporar a etapa no GitHub.
