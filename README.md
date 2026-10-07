@@ -1,6 +1,6 @@
 # Genius Quest Frontend
 
-Frontend web do **Genius Quest**, desenvolvido com React, Vite, JavaScript, HTML e CSS.
+Frontend web do **Genius Quest**, desenvolvido com React, Vite, TypeScript, HTML e CSS.
 
 ## Requisitos
 
@@ -59,16 +59,13 @@ docker build \
   -t genius-quest-frontend .
 ```
 
-## Estrutura inicial
+## Etapa 1 — configuração base
+
+Branch: `chore/01-frontend-setup`. A primeira mudança migra a base existente para TypeScript estrito, preservando a consulta de saúde da API. Design System, telas do jogo e PWA serão implementados em branches posteriores.
 
 ```text
 src/
-├── components
-├── contexts
-├── hooks
-├── layouts
-├── pages
-├── routes
-├── services
-└── styles
+  App.tsx
+  main.tsx
+  services/api.ts
 ```

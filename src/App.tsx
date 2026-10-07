@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { getHealth } from './services/api.js'
+import { getHealth } from './services/api'
 import './App.css'
 
 function App() {
-  const [apiStatus, setApiStatus] = useState('verificando')
+  const [apiStatus, setApiStatus] = useState<'verificando' | 'online' | 'offline'>('verificando')
   const [apiMessage, setApiMessage] = useState('Consultando o backend...')
 
   useEffect(() => {
