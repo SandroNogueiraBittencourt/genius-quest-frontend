@@ -28,4 +28,29 @@ Branco sobre roxo ou Meia-noite. Texto Meia-noite sobre âmbar, menta e coral. U
 
 Foco roxo em superfícies claras; menta no escuro. Pulso de pensamento 1,6 s; celebração única 0,7 s. `prefers-reduced-motion` desativa movimentos.
 
-As fontes são locais e os arquivos originais estão documentados em [BRAND.md](BRAND.md). Componentes e catálogo entram nos próximos commits desta branch.
+As fontes são locais e os arquivos originais estão documentados em [BRAND.md](BRAND.md). O catálogo interativo entra no próximo commit desta branch.
+
+## Componentes
+
+| Componente  | Propriedades principais                                   | Comportamento                                                                     |
+| ----------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Button      | variant, busy, loadingLabel, disabled e atributos nativos | Primary, secondary, outline, ghost; bloqueio de ação pendente; type button padrão |
+| Card        | className e atributos div                                 | Superfície clara e raio 24 px                                                     |
+| Input       | label, hint, error e atributos nativos                    | Label associado, descrições combinadas, erro anunciado                            |
+| ProgressBar | value, max, label                                         | Progresso normalizado com semântica acessível                                     |
+| Avatar      | name, index                                               | Iniciais decorativas; mostrar o nome legível ao lado                              |
+| Notice      | message                                                   | Alerta textual que acompanha a cor                                                |
+
+```tsx
+import { Button, Card, Input, ProgressBar } from './components/ui';
+
+<Card>
+  <Input label="Nome" hint="Como podemos chamar você?" required />
+  <Button type="submit" variant="secondary">
+    Reunir a turma
+  </Button>
+  <ProgressBar label="Progresso da rodada" value={4} max={10} />
+</Card>;
+```
+
+Em formulários, use `type="submit"` explicitamente. `busy` anuncia a operação e bloqueia novos cliques. A segurança e a idempotência continuam sendo responsabilidade do backend.
