@@ -1,6 +1,6 @@
 # Genius Quest Frontend
 
-Frontend web do **Genius Quest**, desenvolvido com React, Vite, TypeScript, HTML e CSS.
+Frontend web do **Genius Quest**, desenvolvido com React, Vite, TypeScript e Tailwind CSS 4.
 
 ## Requisitos
 
@@ -69,3 +69,5 @@ src/
   main.tsx
   services/api.ts
 ```
+
+Tailwind utiliza o plugin oficial do Vite e a importação CSS. Os tokens de marca e componentes reutilizáveis pertencem à etapa 2.
