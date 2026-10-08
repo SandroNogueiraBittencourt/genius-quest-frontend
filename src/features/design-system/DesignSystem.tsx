@@ -17,7 +17,13 @@ const palette = [
   ['light', 'Névoa Lilás', '#F5F3FF'],
   ['white', 'Branco', '#FFFFFF'],
 ];
-export function DesignSystem({ apiStatus }: { apiStatus: ReactNode }) {
+export function DesignSystem({
+  apiStatus,
+  backLink,
+}: {
+  apiStatus: ReactNode;
+  backLink?: ReactNode;
+}) {
   const [progress, setProgress] = useState(4);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -36,7 +42,10 @@ export function DesignSystem({ apiStatus }: { apiStatus: ReactNode }) {
             alt="Genius Quest"
           />
         </a>
-        <span className="ds-tag">Design System · etapa 02</span>
+        <div className="ds-header-meta">
+          <span className="ds-tag">Design System · etapa 02</span>
+          {backLink}
+        </div>
       </header>
       <main id="conteudo" tabIndex={-1} className="ds-main">
         <section

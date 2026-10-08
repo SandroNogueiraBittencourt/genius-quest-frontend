@@ -1,12 +1,19 @@
-# Genius Quest · Etapa 2
+# Genius Quest · Etapa 3
 
-Design System básico na branch `feat/02-design-system`, criada a partir da etapa 1 incorporada em `main` (`f31b5f2`).
+Abertura e Lobby demonstrativos na branch `feat/03-home-lobby`, baseada no merge da etapa 2 em `main` (`5026927`). O histórico das etapas anteriores foi preservado.
 
 ## Escopo
 
-Assets SVG originais, fontes locais Sora/Inter/Caveat, tokens de cores e espaçamento, componentes Button/Card/Input/ProgressBar/Avatar/Notice e catálogo interativo responsivo. O catálogo demonstra estados e interações locais; a consulta existente de saúde do backend continua no rodapé.
+- Abertura com a marca original, ação Reunir a turma e entrada por código.
+- Criação de sala com nome e tema; entrada na sala de exemplo `GQ2026`.
+- Lobby com participantes, código copiável, contador até 20 e modo Sem pressa.
+- Prévia dos estados Aguardando, Pronta e Em andamento. O anfitrião precisa reunir 2 pessoas antes de iniciar a prévia.
+- Cache de temas/sala com React Query e sessão da sala com Zustand.
+- Catálogo do Design System preservado e navegação acessível entre as telas.
 
-As telas de Abertura, Lobby, Quiz e Resultado serão desenvolvidas nas próximas branches. React Query, Zustand, contratos das partidas e PWA entram nas respectivas etapas.
+**As salas são demonstrações locais, somente nesta aba.** Recarregar apaga a sessão e salas criadas. Os códigos não conectam outros dispositivos. A prévia em andamento demonstra o estado do lobby; as perguntas e os resultados serão implementados na etapa 4.
+
+A consulta de saúde do backend permanece real. Auth, temas e partidas via API aguardam a etapa 5 e seus contratos OpenAPI. PWA entra na etapa 6.
 
 ## Executar
 
@@ -17,9 +24,16 @@ npm ci
 npm run dev
 ```
 
-Acesse `http://localhost:5173`. Por padrão, `/api` usa o proxy para `http://localhost:8080`. A indisponibilidade do backend não impede usar o catálogo.
+Acesse `http://localhost:5173`. O catálogo está em `http://localhost:5173/?view=design-system`.
 
-Para outra base da API, copie `.env.example` para `.env` e ajuste `VITE_API_URL`. Variáveis `VITE_*` são públicas no build; nunca inclua segredos.
+Por padrão, `/api` usa o proxy para `http://localhost:8080`. A indisponibilidade do backend não impede usar o protótipo. Para outra base da API, copie `.env.example` para `.env` e ajuste `VITE_API_URL`. Variáveis `VITE_*` são públicas no build; nunca inclua segredos.
+
+## Experimentar
+
+1. Clique em Reunir a turma, informe seu nome, escolha um tema e crie uma sala.
+2. No lobby, adicione uma pessoa de exemplo para atingir o mínimo de 2.
+3. Inicie a rodada demonstrativa e retorne ao lobby para conferir seus estados.
+4. Saia da sala. Use Entrar em uma sala com o código `GQ2026` para conferir a vista de um convidado.
 
 ## Verificar
 
@@ -28,16 +42,18 @@ npm run lint
 npm run format:check
 npm test
 npm run build
+npm audit
 ```
 
 Para formatar: `npm run format`. Testes interativos: `npm run test:watch`. Conferir o build: `npm run preview`.
 
-## Documentação e estrutura
+## Estrutura e documentação
 
+`src/features/home` contém a Abertura; `src/features/room` reúne Lobby, tipos, consultas e sessão; `src/features/demo` contém o adapter local; `src/app` configura navegação e cache. Componentes reutilizáveis continuam em `src/components/ui`.
+
+- [Comportamento e limites da demonstração](docs/DEMO.md)
 - [Design System e componentes](docs/DESIGN_SYSTEM.md)
 - [Uso dos assets originais](docs/BRAND.md)
-- [Branches, commits e próximas etapas](docs/ETAPAS.md)
+- [Branches e histórico por etapa](docs/ETAPAS.md)
 
-`src/components/ui` contém os componentes reutilizáveis; `src/styles` contém tokens e estilos; `src/features/design-system` contém o catálogo. `src/services/api.ts` mantém o cliente tipado do endpoint de saúde. Fontes e SVGs são servidos localmente a partir de `public`.
-
-Os commits da etapa 2 foram criados localmente com a identidade Git `Codex`. Nenhum push ou merge desta branch foi feito. Preserve os commits individuais ao revisar e incorporar a etapa no GitHub.
+Os commits desta etapa foram criados localmente com a identidade Git `Codex`. Nenhum push ou merge da etapa 3 foi realizado. Preserve os commits individuais ao incorporar a branch no GitHub.

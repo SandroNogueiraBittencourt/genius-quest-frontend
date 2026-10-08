@@ -215,7 +215,9 @@ export function Lobby({ onLeave }: { onLeave: () => void }) {
                 {room.isHost && (
                   <Button
                     variant="secondary"
-                    disabled={!room.canStart || leave.isPending}
+                    disabled={
+                      !room.canStart || leave.isPending || action.isPending
+                    }
                     busy={action.isPending && action.variables === 'start'}
                     loadingLabel="Iniciando…"
                     onClick={() => action.mutate('start')}

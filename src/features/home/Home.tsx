@@ -13,6 +13,8 @@ export function Home({ onEnter }: { onEnter: () => void }) {
   const [code, setCode] = useState('');
   const [themeId, setThemeId] = useState('nature');
   const formRef = useRef<HTMLFormElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const session = useRoomStore((state) => state.session);
   const themes = useDemoThemes();
   const enter = useRoomStore((state) => state.enter);
   function roomCreated(session: RoomSession) {
@@ -40,6 +42,20 @@ export function Home({ onEnter }: { onEnter: () => void }) {
   }
   return (
     <>
+      {session && (
+        <Card className="home-active-session">
+          <div>
+            <strong>Sua sala {session.code} continua aberta.</strong>
+            <p>
+              Volte à sala para continuar ou saia pelo lobby antes de criar
+              outra.
+            </p>
+          </div>
+          <Button variant="secondary" onClick={onEnter}>
+            Voltar para a sala
+          </Button>
+        </Card>
+      )}
       <section
         className="home-hero"
         data-surface="dark"
@@ -56,9 +72,10 @@ export function Home({ onEnter }: { onEnter: () => void }) {
             Reúna as pessoas que você gosta. Descubram coisas novas,
             compartilhem histórias e celebrem juntos.
           </p>
-          <div className="home-actions">
+          <div className="home-actions" ref={actionsRef}>
             <Button
               variant="secondary"
+              disabled={!!session}
               aria-expanded={mode === 'create'}
               onClick={() => chooseMode('create')}
             >
@@ -66,6 +83,7 @@ export function Home({ onEnter }: { onEnter: () => void }) {
             </Button>
             <Button
               variant="outline"
+              disabled={!!session}
               aria-expanded={mode === 'join'}
               onClick={() => chooseMode('join')}
             >
@@ -126,6 +144,9 @@ export function Home({ onEnter }: { onEnter: () => void }) {
                 variant="ghost"
                 disabled={activeMutation.isPending}
                 onClick={() => {
+                  actionsRef.current
+                    ?.querySelectorAll<HTMLButtonElement>('button')
+                    [mode === 'create' ? 0 : 1]?.focus();
                   setMode(null);
                   setName('');
                   setCode('');

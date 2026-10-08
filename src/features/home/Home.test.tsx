@@ -80,3 +80,17 @@ it('mostra erro no carregamento dos temas e permite recuperação', async () => 
     await screen.findByRole('radio', { name: /Natureza e descobertas/ }),
   ).toBeInTheDocument();
 });
+
+it('devolve o foco para a ação que abriu o formulário ao fechar', () => {
+  setup();
+  const trigger = screen.getByRole('button', { name: 'Entrar em uma sala' });
+  fireEvent.click(trigger);
+  expect(
+    screen.getByRole('textbox', { name: 'Como podemos chamar você?' }),
+  ).toHaveFocus();
+  fireEvent.click(screen.getByRole('button', { name: 'Fechar formulário' }));
+  expect(trigger).toHaveFocus();
+  expect(
+    screen.queryByRole('textbox', { name: 'Código da sala' }),
+  ).not.toBeInTheDocument();
+});
