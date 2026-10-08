@@ -33,9 +33,13 @@
   background: white;
   color: var(--color-primary);
   transform: translateY(-200%);
+  clip-path: inset(50%);
+  pointer-events: none;
 }
 .ds-skip:focus {
   transform: none;
+  clip-path: none;
+  pointer-events: auto;
 }
 .ds-hero {
   background: var(--color-dark);

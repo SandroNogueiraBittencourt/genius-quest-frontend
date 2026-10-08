@@ -1,6 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { resetDemoRooms } from './features/demo/roomGateway';
+import { useRoomStore } from './features/room/store';
+beforeEach(() => {
+  window.history.replaceState({}, '', '/');
+  resetDemoRooms();
+  useRoomStore.getState().leave();
+});
 afterEach(() => vi.unstubAllGlobals());
 describe('estado acessível da consulta ao backend', () => {
   it('anuncia carregamento e depois o retorno da API', async () => {
