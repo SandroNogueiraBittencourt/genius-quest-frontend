@@ -7,26 +7,44 @@ import { DesignSystem } from './features/design-system/DesignSystem';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
 import { useRoomStore } from './features/room/store';
+import { Button } from './components/ui';
+import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
+import { AuthLifecycle } from './features/auth/AuthLifecycle';
+import { useAuthStore } from './features/auth/store';
 import './App.css';
 import './styles/app-shell.css';
 function Pages() {
   const { view, navigate } = useNavigation();
+  const auth = useAuthStore((state) => state.session);
+  const notice = useAuthStore((state) => state.notice);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const isAuthView = view === 'login' || view === 'register';
+  function logout() {
+    useAuthStore.getState().end('signed-out');
+    setRegisteredEmail('');
+    navigate('home');
+  }
   const session = useRoomStore((state) => state.session);
-  const previousView = useRef(view);
+  const screenId = `${view}:${!!auth}`;
+  const previousView = useRef(screenId);
   useEffect(() => {
     document.title =
-      view === 'lobby'
-        ? 'Sua sala · Genius Quest'
-        : view === 'design-system'
-          ? 'Design System · Genius Quest'
-          : 'Genius Quest · Cada pergunta, uma nova memória';
-    if (previousView.current !== view) {
+      view === 'login'
+        ? 'Entrar · Genius Quest'
+        : view === 'register'
+          ? 'Criar conta · Genius Quest'
+          : view === 'lobby'
+            ? 'Sua sala · Genius Quest'
+            : view === 'design-system'
+              ? 'Design System · Genius Quest'
+              : 'Genius Quest · Cada pergunta, uma nova memória';
+    if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
       heading?.focus();
-      previousView.current = view;
+      previousView.current = screenId;
     }
-  }, [view]);
+  }, [view, screenId]);
   function open(event: MouseEvent<HTMLAnchorElement>, next: View) {
     if (
       event.button !== 0 ||
@@ -94,17 +112,103 @@ function Pages() {
           >
             Design System
           </a>
+          {auth ? (
+            <>
+              <a
+                href="?view=login"
+                aria-current={isAuthView ? 'page' : undefined}
+                onClick={(event) => open(event, 'login')}
+              >
+                Minha conta
+              </a>
+              <Button
+                className="auth-nav-button"
+                variant="outline"
+                onClick={logout}
+              >
+                Sair
+              </Button>
+            </>
+          ) : (
+            <>
+              <a
+                href="?view=login"
+                aria-current={view === 'login' ? 'page' : undefined}
+                onClick={(event) => open(event, 'login')}
+              >
+                Entrar
+              </a>
+              <a
+                className="auth-nav-signup"
+                href="?view=register"
+                aria-current={view === 'register' ? 'page' : undefined}
+                onClick={(event) => open(event, 'register')}
+              >
+                Criar conta
+              </a>
+            </>
+          )}
         </nav>
       </header>
-      <div className="gq-demo-banner">
-        <span className="gq-demo-label">Demonstração</span>
-        <p>
-          Salas e participantes de exemplo, somente nesta aba. Sem conexão entre
-          dispositivos.
-        </p>
-      </div>
+      {!isAuthView && (
+        <div className="gq-demo-banner">
+          <span className="gq-demo-label">Demonstração</span>
+          <p>
+            Salas e participantes de exemplo, somente nesta aba. Sem conexão
+            entre dispositivos.
+          </p>
+        </div>
+      )}
       <main id="conteudo" tabIndex={-1} className="gq-main">
-        {view === 'lobby' ? (
+        {notice && (
+          <div className="auth-notice">
+            <p role="status">
+              {notice === 'signed-out'
+                ? 'Você saiu da sua conta.'
+                : notice === 'expired'
+                  ? 'Sua sessão expirou. Entre novamente.'
+                  : 'Sua sessão não está mais válida. Entre novamente.'}
+            </p>
+            <div className="auth-notice-actions">
+              {!isAuthView && notice !== 'signed-out' && (
+                <a href="?view=login" onClick={(event) => open(event, 'login')}>
+                  Entrar novamente
+                </a>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => useAuthStore.getState().dismissNotice()}
+              >
+                Fechar aviso
+              </Button>
+            </div>
+          </div>
+        )}
+        {isAuthView ? (
+          auth ? (
+            <ConnectedAccount
+              onHome={() => navigate('home')}
+              onLogout={logout}
+            />
+          ) : (
+            <AuthPage
+              key={view}
+              mode={view}
+              initialEmail={registeredEmail}
+              registered={!!registeredEmail}
+              onSwitch={(mode) => navigate(mode)}
+              onRegistered={(email) => {
+                setRegisteredEmail(email);
+                useAuthStore.getState().dismissNotice();
+                navigate('login');
+              }}
+              onSignedIn={() => {
+                setRegisteredEmail('');
+                navigate('home');
+              }}
+            />
+          )
+        ) : view === 'lobby' ? (
           <Lobby onLeave={() => navigate('home')} />
         ) : (
           <Home onEnter={() => navigate('lobby')} />
@@ -121,6 +225,7 @@ export default function App() {
   const [client] = useState(createQueryClient);
   return (
     <QueryClientProvider client={client}>
+      <AuthLifecycle />
       <Pages />
     </QueryClientProvider>
   );
