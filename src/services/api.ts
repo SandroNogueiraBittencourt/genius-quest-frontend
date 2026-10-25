@@ -1,13 +1,9 @@
+import { API_BASE_URL } from './http';
 export type HealthResponse = {
   status: string;
   application: string;
   timestamp: string;
 };
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(
-  /\/$/,
-  '',
-);
 
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${API_BASE_URL}/health`, {
