@@ -11,6 +11,7 @@ import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
 import { AuthLifecycle } from './features/auth/AuthLifecycle';
 import { useAuthStore } from './features/auth/store';
+import { Categories } from './features/categories/Categories';
 import './App.css';
 import './styles/app-shell.css';
 function Pages() {
@@ -18,10 +19,12 @@ function Pages() {
   const auth = useAuthStore((state) => state.session);
   const notice = useAuthStore((state) => state.notice);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [afterLogin, setAfterLogin] = useState<View>('home');
   const isAuthView = view === 'login' || view === 'register';
   function logout() {
     useAuthStore.getState().end('signed-out');
     setRegisteredEmail('');
+    setAfterLogin('home');
     navigate('home');
   }
   const session = useRoomStore((state) => state.session);
@@ -33,11 +36,13 @@ function Pages() {
         ? 'Entrar · Genius Quest'
         : view === 'register'
           ? 'Criar conta · Genius Quest'
-          : view === 'lobby'
-            ? 'Sua sala · Genius Quest'
-            : view === 'design-system'
-              ? 'Design System · Genius Quest'
-              : 'Genius Quest · Cada pergunta, uma nova memória';
+          : view === 'categories'
+            ? 'Categorias · Genius Quest'
+            : view === 'lobby'
+              ? 'Sua sala · Genius Quest'
+              : view === 'design-system'
+                ? 'Design System · Genius Quest'
+                : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -55,6 +60,8 @@ function Pages() {
     )
       return;
     event.preventDefault();
+    if (next === 'login' || next === 'register')
+      setAfterLogin(view === 'categories' ? 'categories' : 'home');
     navigate(next);
   }
   if (view === 'design-system')
@@ -96,6 +103,13 @@ function Pages() {
             onClick={(event) => open(event, 'home')}
           >
             Início
+          </a>
+          <a
+            href="?view=categories"
+            aria-current={view === 'categories' ? 'page' : undefined}
+            onClick={(event) => open(event, 'categories')}
+          >
+            Categorias
           </a>
           {session && (
             <a
@@ -150,7 +164,7 @@ function Pages() {
           )}
         </nav>
       </header>
-      {!isAuthView && (
+      {(view === 'home' || view === 'lobby') && (
         <div className="gq-demo-banner">
           <span className="gq-demo-label">Demonstração</span>
           <p>
@@ -204,10 +218,18 @@ function Pages() {
               }}
               onSignedIn={() => {
                 setRegisteredEmail('');
-                navigate('home');
+                navigate(afterLogin);
+                setAfterLogin('home');
               }}
             />
           )
+        ) : view === 'categories' ? (
+          <Categories
+            onSignIn={() => {
+              setAfterLogin('categories');
+              navigate('login');
+            }}
+          />
         ) : view === 'lobby' ? (
           <Lobby onLeave={() => navigate('home')} />
         ) : (
