@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:auth-api": "node scripts/check-auth.mjs"
+    "test:auth-api": "node scripts/check-auth.mjs",
+    "test:categories-api": "node scripts/check-categories.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",

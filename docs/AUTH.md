@@ -64,7 +64,7 @@ Esse comando **cria uma conta de teste por execução**, usando dados aleatório
 
 ## Limites desta entrega
 
-Categorias reais, perfil editável e partidas aguardam suas branches. Abertura, salas e participantes continuam demonstrativos e não exigem login nesta etapa. A tela Minha conta mostra o e-mail da sessão; não consulta `/usuarios/{id}`. A pendência de autorização por proprietário identificada no backend continua sendo responsabilidade do backend.
+Categorias reais foram adicionadas em `feat/categories-integration`; veja [CATEGORIES.md](CATEGORIES.md). Perfil editável e partidas aguardam suas etapas. Abertura, salas e participantes continuam demonstrativos e não exigem login nesta etapa. A tela Minha conta mostra o e-mail da sessão; não consulta `/usuarios/{id}`. A pendência de autorização por proprietário identificada no backend continua sendo responsabilidade do backend.
 
 Testes automatizados da interface usam respostas HTTP controladas para conferir o contrato e os estados. A verificação contra um backend real será registrada separadamente; respostas simuladas não comprovam integração executada com PostgreSQL.
 
@@ -77,3 +77,16 @@ Fontes: [AuthController](https://github.com/SandroNogueiraBittencourt/genius-que
 - Axe não detectou violações nos critérios WCAG A/AA habilitados nessas vistas. Isso não constitui certificação de conformidade.
 - Auditoria npm com zero vulnerabilidades após atualizar Vite para 8.3.5 e os pacotes transitivos Undici e Zod.
 - Script HTTP verificado com servidor simulado e sem exposição de senha/token na saída. A execução contra o backend Spring Boot real não foi realizada neste ambiente; execute `npm run test:auth-api` com seu backend ativo e experimente também as telas.
+
+## Validação posterior e porta alternativa
+
+A etapa de autenticação foi incorporada à `main` no PR #4 (`085faff`). Em 25/10/2026, o usuário executou com sucesso o teste HTTP contra o backend real na porta `8081`: cadastro, login, credenciais inválidas (401), consulta sem token (401) e bloqueio administrativo (403). A porta 8080 desse ambiente estava ocupada pelo VoltaPet.
+
+Para repetir a execução nesse ambiente:
+
+```bash
+GQ_AUTH_API_URL=http://localhost:8081/api npm run test:auth-api
+VITE_API_URL=http://localhost:8081/api npm run dev
+```
+
+A verificação real acima se refere à autenticação. Categorias têm teste próprio e instruções em [CATEGORIES.md](CATEGORIES.md).

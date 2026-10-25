@@ -1,21 +1,23 @@
-# Genius Quest · Autenticação real
+# Genius Quest · Categorias reais
 
-Branch `feat/auth-integration`, criada a partir do `main` que incorporou a etapa 3 (`3323167`). Cadastro e login consomem os endpoints reais do backend Spring Boot; o JWT fica em memória no Zustand, com expiração e saída. Os assets originais e o Design System foram preservados.
+A branch `feat/categories-integration` parte do merge da autenticação em `main` (`085faff`). A página **Categorias** consulta as categorias aprovadas e envia sugestões para revisão usando a API real, com JWT da sessão. Marca, fontes e componentes do Design System foram preservados.
 
 ## Executar
 
-Use Node.js 24, a partir da versão 24.15. Também são aceitas as versões declaradas em `engines.node` no `package.json`. O backend deve estar ativo na porta 8080, preferencialmente na branch `develop` revisada em `c3f2bfd`.
+Use Node.js 24.15+ na linha 24 ou outra versão compatível com `engines.node`. Inicie o backend da branch `develop`, revisado em `c3f2bfd`, com PostgreSQL e JWT configurados.
 
 ```bash
 npm ci
-npm run dev
+VITE_API_URL=http://localhost:8081/api npm run dev
 ```
 
-Acesse `http://localhost:5173`. Use Criar conta, entre com seu e-mail e senha e confira Minha conta e Sair. Recarregar a página encerra a sessão local.
+Abra `http://localhost:5173/?view=categories`. Entre na sua conta, consulte as categorias aprovadas e envie uma sugestão. Ela retorna como pendente; aparece na lista de aprovadas após revisão pelo backend. Uma lista vazia é válida quando ainda não há categorias aprovadas.
 
-Por padrão, `/api` usa o proxy do Vite para `http://localhost:8080`. Para outra base, ajuste `VITE_API_URL` conforme `.env.example`. Essas variáveis são públicas no build; segredos JWT pertencem ao backend.
+A porta `8081` permite manter o VoltaPet na `8080`. Confira se `/api/health` identifica **Genius Quest Backend**. Para não repetir a variável no terminal, defina `VITE_API_URL=http://localhost:8081/api` no seu `.env.local` existente; esse arquivo é ignorado pelo Git. Reinicie o Vite após alterar a configuração.
 
-Abertura e Lobby continuam demonstrativos. Cadastro e login não estão disponíveis na branch antiga `main` do backend, que ainda contém a estrutura inicial. Veja [docs/AUTH.md](docs/AUTH.md) para contratos, execução com Docker, sessão e limites da implementação.
+Sem `VITE_API_URL`, o proxy de desenvolvimento encaminha `/api` para `http://localhost:8080`. O acesso direto à porta 8081 exige permitir `http://localhost:5173` no CORS do backend. Segredos JWT e credenciais do banco pertencem ao backend.
+
+Abertura, temas das salas, participantes e partidas continuam demonstrativos. Categorias reais têm uma página própria; esta etapa não conecta categorias a partidas que ainda não existem na API. Recarregar o navegador encerra a sessão em memória.
 
 ## Verificar
 
@@ -26,22 +28,22 @@ npm test
 npm run build
 ```
 
-Com a API real ativa, é possível rodar:
+Com o Genius Quest ativo na porta 8081:
 
 ```bash
-npm run test:auth-api
+GQ_AUTH_API_URL=http://localhost:8081/api npm run test:auth-api
+GQ_API_URL=http://localhost:8081/api npm run test:categories-api
 ```
 
-Esse último comando cria uma conta de teste por execução e verifica os endpoints HTTP de autenticação e autorização. A conta permanece no banco; senha e token não são exibidos.
+O teste de categorias confirma a identidade da API antes de gravar dados, cria uma conta e uma categoria pendente por execução, valida duplicidade e permissões, e confirma que a sugestão pendente fica fora da lista de aprovadas. A conta e a categoria permanecem no banco; senha e token não são exibidos. Scripts Node não carregam `.env.local` automaticamente.
 
 ## Documentação
 
+- [Categorias, contratos e revisão](docs/CATEGORIES.md)
 - [Autenticação e configuração da API](docs/AUTH.md)
 - [Demonstração de Abertura e Lobby](docs/DEMO.md)
 - [Design System](docs/DESIGN_SYSTEM.md)
 - [Marca original](docs/BRAND.md)
 - [Branches e commits](docs/ETAPAS.md)
 
-`src/features/auth` contém contratos, sessão, ciclo de expiração, telas e testes; `src/services/http.ts` trata JSON e erros; `scripts/check-auth.mjs` verifica uma API em execução. React Query continua responsável pelos dados de temas e salas demonstrativas.
-
-Os cinco commits desta entrega foram criados localmente com a identidade Git `Codex`. Nenhum push ou merge desta branch foi realizado. Preserve os commits individuais ao incorporar a entrega no GitHub.
+A entrega contém quatro commits locais, sem push ou merge automático. Preserve os commits individuais ao publicar a branch e incorporá-la no GitHub. Os arquivos `.env` com credenciais permanecem fora do histórico.

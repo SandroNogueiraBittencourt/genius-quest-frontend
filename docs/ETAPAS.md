@@ -2,7 +2,7 @@
 
 A etapa 1 foi incorporada em `main` pelo PR #1, merge `f31b5f2447d6a3e50475c7ac825d53180b391b9d`. O histórico preserva os quatro commits de configuração e o ajuste de segurança de `source-map-js` feito no repositório (`2bfd92e`).
 
-A etapa 2 foi incorporada em `main` pelo PR #2, merge `502692735570ee07e109077bfe3aaf6e652d26b0`, preservando seus quatro commits. A etapa 3 foi incorporada pelo PR #3, merge `3323167911cda51c9219f50b0fdf0dfb60a53782`. A branch adicional `feat/auth-integration` parte desse merge.
+A etapa 2 foi incorporada em `main` pelo PR #2, merge `502692735570ee07e109077bfe3aaf6e652d26b0`, preservando seus quatro commits. A etapa 3 foi incorporada pelo PR #3, merge `3323167911cda51c9219f50b0fdf0dfb60a53782`. A autenticação foi incorporada pelo PR #4, merge `085faffc5784549dbc7419a73fab2e6e46bcdf90`. A branch `feat/categories-integration` parte desse merge.
 
 ## Commits da etapa 2
 
@@ -40,8 +40,8 @@ Cada etapa começa após a anterior ser incorporada em `main`. As branches futur
 ```bash
 git log --graph --oneline --decorate --all
 git log --oneline origin/main..HEAD
-git diff origin/main...feat/auth-integration
-git push -u origin feat/auth-integration
+git diff origin/main...feat/categories-integration
+git push -u origin feat/categories-integration
 ```
 
 No GitHub, abra o Pull Request para `main`. Preserve os commits individuais ao fazer o merge para manter o detalhamento da etapa.
@@ -58,4 +58,17 @@ Branch adicional: `feat/auth-integration`. Contratos do backend `develop` em `c3
 | 4     | fix(deps): atualizar Vite e dependências transitivas vulneráveis | Correções compatíveis da auditoria                               |
 | 5     | test(auth): validar fluxos e documentar integração com backend   | Testes de interface, script HTTP, revisão de foco e documentação |
 
-A configuração Docker entregue em `chore/local-docker-tests` é independente e ainda não faz parte desta base publicada. As branches devem ser revisadas e incorporadas conforme o fluxo do repositório. Categorias reais vêm depois da autenticação; a branch planejada de Quiz e Resultado continua `feat/04-quiz-result`.
+A configuração Docker entregue em `chore/local-docker-tests` é independente e ainda não faz parte desta base publicada. As branches devem ser revisadas e incorporadas conforme o fluxo do repositório. Categorias reais são a próxima branch incremental; a branch planejada de Quiz e Resultado continua `feat/04-quiz-result`.
+
+## Categorias reais antes da etapa 4
+
+Branch adicional: `feat/categories-integration`, baseada no merge `085faff` da `main`. Backend conferido em `develop`, commit `c3f2bfd`.
+
+| Ordem | Commit                                                                | Escopo                                                        |
+| ----- | --------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 1     | feat(categories-api): consumir contratos autenticados de categorias   | DTOs, endpoints, cache autenticado e testes de contrato       |
+| 2     | feat(categories-ui): listar aprovadas e enviar sugestões para revisão | Estados da lista, formulário acessível, status e recuperação  |
+| 3     | feat(navigation): conectar categorias ao fluxo de autenticação        | Menu, retorno após login e isolamento entre sessões           |
+| 4     | test(categories): documentar contratos e validar API local            | Script HTTP, execução na porta 8081 e documentação da entrega |
+
+O bundle contém os quatro commits e o histórico anterior. A publicação e o merge continuam pelo fluxo de PR do usuário, preservando os commits individuais.
