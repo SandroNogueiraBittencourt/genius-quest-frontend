@@ -25,7 +25,8 @@ function Pages() {
     navigate('home');
   }
   const session = useRoomStore((state) => state.session);
-  const previousView = useRef(view);
+  const screenId = `${view}:${!!auth}`;
+  const previousView = useRef(screenId);
   useEffect(() => {
     document.title =
       view === 'login'
@@ -37,13 +38,13 @@ function Pages() {
             : view === 'design-system'
               ? 'Design System · Genius Quest'
               : 'Genius Quest · Cada pergunta, uma nova memória';
-    if (previousView.current !== view) {
+    if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
       heading?.focus();
-      previousView.current = view;
+      previousView.current = screenId;
     }
-  }, [view]);
+  }, [view, screenId]);
   function open(event: MouseEvent<HTMLAnchorElement>, next: View) {
     if (
       event.button !== 0 ||

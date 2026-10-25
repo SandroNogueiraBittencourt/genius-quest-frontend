@@ -1,39 +1,21 @@
-# Genius Quest · Etapa 3
+# Genius Quest · Autenticação real
 
-Abertura e Lobby demonstrativos na branch `feat/03-home-lobby`, baseada no merge da etapa 2 em `main` (`5026927`). O histórico das etapas anteriores foi preservado.
-
-## Escopo
-
-- Abertura com a marca original, ação Reunir a turma e entrada por código.
-- Criação de sala com nome e tema; entrada na sala de exemplo `GQ2026`.
-- Lobby com participantes, código copiável, contador até 20 e modo Sem pressa.
-- Prévia dos estados Aguardando, Pronta e Em andamento. O anfitrião precisa reunir 2 pessoas antes de iniciar a prévia.
-- Cache de temas/sala com React Query e sessão da sala com Zustand.
-- Catálogo do Design System preservado e navegação acessível entre as telas.
-
-**As salas são demonstrações locais, somente nesta aba.** Recarregar apaga a sessão e salas criadas. Os códigos não conectam outros dispositivos. A prévia em andamento demonstra o estado do lobby; as perguntas e os resultados serão implementados na etapa 4.
-
-A consulta de saúde do backend permanece real. Auth, temas e partidas via API aguardam a etapa 5 e seus contratos OpenAPI. PWA entra na etapa 6.
+Branch `feat/auth-integration`, criada a partir do `main` que incorporou a etapa 3 (`3323167`). Cadastro e login consomem os endpoints reais do backend Spring Boot; o JWT fica em memória no Zustand, com expiração e saída. Os assets originais e o Design System foram preservados.
 
 ## Executar
 
-Use Node.js 24 (mínimo: 22.12).
+Use Node.js 24, a partir da versão 24.15. Também são aceitas as versões declaradas em `engines.node` no `package.json`. O backend deve estar ativo na porta 8080, preferencialmente na branch `develop` revisada em `c3f2bfd`.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Acesse `http://localhost:5173`. O catálogo está em `http://localhost:5173/?view=design-system`.
+Acesse `http://localhost:5173`. Use Criar conta, entre com seu e-mail e senha e confira Minha conta e Sair. Recarregar a página encerra a sessão local.
 
-Por padrão, `/api` usa o proxy para `http://localhost:8080`. A indisponibilidade do backend não impede usar o protótipo. Para outra base da API, copie `.env.example` para `.env` e ajuste `VITE_API_URL`. Variáveis `VITE_*` são públicas no build; nunca inclua segredos.
+Por padrão, `/api` usa o proxy do Vite para `http://localhost:8080`. Para outra base, ajuste `VITE_API_URL` conforme `.env.example`. Essas variáveis são públicas no build; segredos JWT pertencem ao backend.
 
-## Experimentar
-
-1. Clique em Reunir a turma, informe seu nome, escolha um tema e crie uma sala.
-2. No lobby, adicione uma pessoa de exemplo para atingir o mínimo de 2.
-3. Inicie a rodada demonstrativa e retorne ao lobby para conferir seus estados.
-4. Saia da sala. Use Entrar em uma sala com o código `GQ2026` para conferir a vista de um convidado.
+Abertura e Lobby continuam demonstrativos. Cadastro e login não estão disponíveis na branch antiga `main` do backend, que ainda contém a estrutura inicial. Veja [docs/AUTH.md](docs/AUTH.md) para contratos, execução com Docker, sessão e limites da implementação.
 
 ## Verificar
 
@@ -42,18 +24,24 @@ npm run lint
 npm run format:check
 npm test
 npm run build
-npm audit
 ```
 
-Para formatar: `npm run format`. Testes interativos: `npm run test:watch`. Conferir o build: `npm run preview`.
+Com a API real ativa, é possível rodar:
 
-## Estrutura e documentação
+```bash
+npm run test:auth-api
+```
 
-`src/features/home` contém a Abertura; `src/features/room` reúne Lobby, tipos, consultas e sessão; `src/features/demo` contém o adapter local; `src/app` configura navegação e cache. Componentes reutilizáveis continuam em `src/components/ui`.
+Esse último comando cria uma conta de teste por execução e verifica os endpoints HTTP de autenticação e autorização. A conta permanece no banco; senha e token não são exibidos.
 
-- [Comportamento e limites da demonstração](docs/DEMO.md)
-- [Design System e componentes](docs/DESIGN_SYSTEM.md)
-- [Uso dos assets originais](docs/BRAND.md)
-- [Branches e histórico por etapa](docs/ETAPAS.md)
+## Documentação
 
-Os commits desta etapa foram criados localmente com a identidade Git `Codex`. Nenhum push ou merge da etapa 3 foi realizado. Preserve os commits individuais ao incorporar a branch no GitHub.
+- [Autenticação e configuração da API](docs/AUTH.md)
+- [Demonstração de Abertura e Lobby](docs/DEMO.md)
+- [Design System](docs/DESIGN_SYSTEM.md)
+- [Marca original](docs/BRAND.md)
+- [Branches e commits](docs/ETAPAS.md)
+
+`src/features/auth` contém contratos, sessão, ciclo de expiração, telas e testes; `src/services/http.ts` trata JSON e erros; `scripts/check-auth.mjs` verifica uma API em execução. React Query continua responsável pelos dados de temas e salas demonstrativas.
+
+Os cinco commits desta entrega foram criados localmente com a identidade Git `Codex`. Nenhum push ou merge desta branch foi realizado. Preserve os commits individuais ao incorporar a entrega no GitHub.

@@ -20,12 +20,12 @@ export function AuthLifecycle() {
   );
   useEffect(() => {
     if (!session) return;
+    const { expiresAt, token } = session;
     let timer: ReturnType<typeof setTimeout>;
     function check() {
       clearTimeout(timer);
-      const remaining = session!.expiresAt - Date.now();
-      if (remaining <= 0)
-        useAuthStore.getState().end('expired', session!.token);
+      const remaining = expiresAt - Date.now();
+      if (remaining <= 0) useAuthStore.getState().end('expired', token);
       else timer = setTimeout(check, Math.min(remaining, 2_147_483_647));
     }
     check();

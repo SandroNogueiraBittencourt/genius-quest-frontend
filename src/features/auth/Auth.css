@@ -187,3 +187,8 @@
     gap: 8px 12px;
   }
 }
+
+.gq-header nav a.auth-nav-signup[aria-current='page'] {
+  color: var(--color-dark);
+  border-bottom-color: transparent;
+}
