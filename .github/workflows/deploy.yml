@@ -30,6 +30,8 @@ jobs:
             --build-arg VITE_API_URL=https://example.invalid/api \
             -t genius-quest-web:ci .
   deploy:
+    # Ativar somente depois de cadastrar o Deploy Hook do Render.
+    if: vars.ENABLE_RENDER_DEPLOY == 'true'
     needs: verify
     runs-on: ubuntu-latest
     environment: production
