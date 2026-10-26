@@ -12,7 +12,13 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run format:check
+      - name: Diagnosticar formatacao YAML
+        run: |
+          npx prettier --write .github/workflows/deploy.yml
+          echo "=== DIFF PRETTIER ==="
+          git diff -- .github/workflows/deploy.yml || true
+          echo "=== FIM DIFF ==="
+          npm run format:check
       - run: npm run lint
       - run: npm test
       - run: npm run build
