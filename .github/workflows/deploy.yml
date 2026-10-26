@@ -24,7 +24,11 @@ jobs:
       - run: npm run build
         env:
           VITE_API_URL: https://example.invalid/api
-      - run: docker build --build-arg VITE_API_URL=https://example.invalid/api -t genius-quest-web:ci .
+      - name: Validar build Docker
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=https://example.invalid/api \
+            -t genius-quest-web:ci .
   deploy:
     needs: verify
     runs-on: ubuntu-latest
