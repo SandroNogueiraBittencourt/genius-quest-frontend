@@ -1,0 +1,45 @@
+name: Deploy Render Frontend
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: genius-quest-web-deploy
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_API_URL: https://example.invalid/api
+      - name: Validar build Docker
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=https://example.invalid/api \
+            -t genius-quest-web:ci .
+  deploy:
+    # Ativar somente depois de cadastrar o Deploy Hook do Render.
+    if: vars.ENABLE_RENDER_DEPLOY == 'true'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Disparar deploy do Render
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOOK" || { echo "::error::Configure RENDER_DEPLOY_HOOK_URL"; exit 1; }
+          curl --fail --silent --show-error --retry 3 -X POST "$DEPLOY_HOOK"
