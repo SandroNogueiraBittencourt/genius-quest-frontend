@@ -9,9 +9,9 @@ services:
     staticPublishPath: ./dist
     autoDeployTrigger: off
     envVars:
-      # URL completa da API incluindo /api, ex: https://genius-quest-api.onrender.com/api
+      # A URL da API e publica e incorporada ao build pelo Vite.
       - key: VITE_API_URL
-        sync: false
+        value: https://genius-quest-api-7h95.onrender.com/api
     routes:
       - type: rewrite
         source: /*
