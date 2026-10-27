@@ -7,7 +7,7 @@ services:
     branch: main
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
-    autoDeployTrigger: off
+    autoDeployTrigger: checksPass
     envVars:
       # A URL da API e publica e incorporada ao build pelo Vite.
       - key: VITE_API_URL
