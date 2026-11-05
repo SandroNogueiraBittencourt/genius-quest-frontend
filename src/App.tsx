@@ -10,6 +10,8 @@ import { useRoomStore } from './features/room/store';
 import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
 import { AuthLifecycle } from './features/auth/AuthLifecycle';
+import { logout as revokeSession } from './features/auth/api';
+import { ApiError } from './services/http';
 import { useAuthStore } from './features/auth/store';
 import './App.css';
 import './styles/app-shell.css';
@@ -18,11 +20,44 @@ function Pages() {
   const auth = useAuthStore((state) => state.session);
   const notice = useAuthStore((state) => state.notice);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [logoutPending, setLogoutPending] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
+  const logoutInFlight = useRef(false);
   const isAuthView = view === 'login' || view === 'register';
-  function logout() {
-    useAuthStore.getState().end('signed-out');
-    setRegisteredEmail('');
-    navigate('home');
+  async function logout() {
+    const current = useAuthStore.getState().session;
+    if (!current || logoutInFlight.current) return;
+
+    logoutInFlight.current = true;
+    setLogoutPending(true);
+    setLogoutError('');
+
+    try {
+      await revokeSession(current.token);
+      // Uma resposta antiga não pode encerrar um login feito durante o logout.
+      if (useAuthStore.getState().session?.token === current.token) {
+        useAuthStore.getState().end('signed-out', current.token);
+        setRegisteredEmail('');
+        navigate('home');
+      }
+    } catch (error) {
+      if (useAuthStore.getState().session?.token !== current.token) return;
+
+      if (error instanceof ApiError && error.status === 401) {
+        // O servidor já considera esse JWT inválido ou revogado.
+        useAuthStore.getState().end('unauthorized', current.token);
+        setRegisteredEmail('');
+        navigate('home');
+      } else {
+        // Não afirmar que houve revogação se a API não confirmou o logout.
+        setLogoutError(
+          'Não foi possível encerrar sua sessão no servidor. Verifique a conexão e tente novamente.',
+        );
+      }
+    } finally {
+      logoutInFlight.current = false;
+      setLogoutPending(false);
+    }
   }
   const session = useRoomStore((state) => state.session);
   const screenId = `${view}:${!!auth}`;
@@ -124,7 +159,9 @@ function Pages() {
               <Button
                 className="auth-nav-button"
                 variant="outline"
-                onClick={logout}
+                busy={logoutPending}
+                loadingLabel="Saindo…"
+                onClick={() => void logout()}
               >
                 Sair
               </Button>
@@ -160,6 +197,11 @@ function Pages() {
         </div>
       )}
       <main id="conteudo" tabIndex={-1} className="gq-main">
+        {logoutError && (
+          <p className="auth-logout-error" role="alert">
+            {logoutError}
+          </p>
+        )}
         {notice && (
           <div className="auth-notice">
             <p role="status">
@@ -188,7 +230,8 @@ function Pages() {
           auth ? (
             <ConnectedAccount
               onHome={() => navigate('home')}
-              onLogout={logout}
+              onLogout={() => void logout()}
+              logoutPending={logoutPending}
             />
           ) : (
             <AuthPage

@@ -291,9 +291,11 @@ export function AuthPage({
 export function ConnectedAccount({
   onHome,
   onLogout,
+  logoutPending = false,
 }: {
   onHome: () => void;
   onLogout: () => void;
+  logoutPending?: boolean;
 }) {
   const session = useAuthStore((state) => state.session);
   return (
@@ -308,7 +310,12 @@ export function ConnectedAccount({
         <Button variant="secondary" onClick={onHome}>
           Voltar à abertura
         </Button>
-        <Button variant="outline" onClick={onLogout}>
+        <Button
+          variant="outline"
+          onClick={onLogout}
+          busy={logoutPending}
+          loadingLabel="Saindo…"
+        >
           Sair da minha conta
         </Button>
       </div>
