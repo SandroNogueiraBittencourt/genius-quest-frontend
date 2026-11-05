@@ -12,13 +12,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Diagnostic Prettier categories
-        run: |
-          for file in src/App.tsx src/features/categories/CategoriesAdmin.tsx src/features/categories/CategoriesAdmin.test.tsx; do
-            echo "FORMAT_START_$file"
-            npx prettier "$file"
-            echo "FORMAT_END_$file"
-          done
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
