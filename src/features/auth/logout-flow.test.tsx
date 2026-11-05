@@ -16,10 +16,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 function start(token = 'token-anterior') {
-  useAuthStore.getState().start(
-    { token, tipo: 'Bearer', expiraEm: 3600 },
-    'usuario@geniusquest.test',
-  );
+  useAuthStore
+    .getState()
+    .start(
+      { token, tipo: 'Bearer', expiraEm: 3600 },
+      'usuario@geniusquest.test',
+    );
 }
 
 function health(): Response {
@@ -96,13 +98,15 @@ it('mantém a sessão após falha 503 e permite repetir', async () => {
 it('encerra a sessão local para token rejeitado pelo servidor', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockImplementation((url: string) =>
-      Promise.resolve(
-        url.endsWith('/auth/logout')
-          ? new Response(null, { status: 401 })
-          : health(),
+    vi
+      .fn()
+      .mockImplementation((url: string) =>
+        Promise.resolve(
+          url.endsWith('/auth/logout')
+            ? new Response(null, { status: 401 })
+            : health(),
+        ),
       ),
-    ),
   );
   start();
   render(<App />);
