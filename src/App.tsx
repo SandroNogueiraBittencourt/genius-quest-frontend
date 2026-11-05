@@ -74,14 +74,14 @@ function Pages() {
         : view === 'register'
           ? 'Criar conta · Genius Quest'
           : view === 'categories'
-          ? 'Categorias · Genius Quest'
-          : view === 'categories-admin'
-            ? 'Moderação de categorias · Genius Quest'
-            : view === 'lobby'
-            ? 'Sua sala · Genius Quest'
-            : view === 'design-system'
-              ? 'Design System · Genius Quest'
-              : 'Genius Quest · Cada pergunta, uma nova memória';
+            ? 'Categorias · Genius Quest'
+            : view === 'categories-admin'
+              ? 'Moderação de categorias · Genius Quest'
+              : view === 'lobby'
+                ? 'Sua sala · Genius Quest'
+                : view === 'design-system'
+                  ? 'Design System · Genius Quest'
+                  : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
