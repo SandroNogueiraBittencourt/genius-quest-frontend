@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-export type View = 'home' | 'lobby' | 'design-system' | 'login' | 'register';
+export type View =
+  | 'home'
+  | 'lobby'
+  | 'design-system'
+  | 'login'
+  | 'register'
+  | 'categories'
+  | 'categories-admin';
 function currentView(): View {
   const view = new URLSearchParams(window.location.search).get('view');
   return view === 'lobby' ||
     view === 'design-system' ||
     view === 'login' ||
-    view === 'register'
+    view === 'register' ||
+    view === 'categories' ||
+    view === 'categories-admin'
     ? view
     : 'home';
 }
