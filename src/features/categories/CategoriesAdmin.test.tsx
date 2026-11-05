@@ -76,7 +76,7 @@ it('lista pendentes e permite aprovar via PATCH autenticado', async () => {
   let status = 'PENDENTE';
   const fetch = vi
     .fn()
-    .mockImplementation((url: string, options: RequestInit) => {
+    .mockImplementation((url: string) => {
       if (url.endsWith('/aprovar')) {
         status = 'APROVADA';
         return Promise.resolve(json({ ...category, status }));
