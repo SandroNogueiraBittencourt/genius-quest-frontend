@@ -34,10 +34,12 @@ function setup() {
 }
 
 beforeEach(() => {
-  useAuthStore.getState().start(
-    { token: 'jwt-admin', tipo: 'Bearer', expiraEm: 3600 },
-    'admin@example.test',
-  );
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-admin', tipo: 'Bearer', expiraEm: 3600 },
+      'admin@example.test',
+    );
 });
 
 afterEach(() => {
@@ -72,13 +74,15 @@ it('exibe 403 para usuário não autorizado, sem mostrar ações de moderação'
 
 it('lista pendentes e permite aprovar via PATCH autenticado', async () => {
   let status = 'PENDENTE';
-  const fetch = vi.fn().mockImplementation((url: string, options: RequestInit) => {
-    if (url.endsWith('/aprovar')) {
-      status = 'APROVADA';
-      return Promise.resolve(json({ ...category, status }));
-    }
-    return Promise.resolve(json([{ ...category, status }]));
-  });
+  const fetch = vi
+    .fn()
+    .mockImplementation((url: string, options: RequestInit) => {
+      if (url.endsWith('/aprovar')) {
+        status = 'APROVADA';
+        return Promise.resolve(json({ ...category, status }));
+      }
+      return Promise.resolve(json([{ ...category, status }]));
+    });
   vi.stubGlobal('fetch', fetch);
   const { client } = setup();
   expect(
@@ -99,13 +103,15 @@ it('lista pendentes e permite aprovar via PATCH autenticado', async () => {
 });
 
 it('exige confirmação explícita antes de remover', async () => {
-  const fetch = vi.fn().mockImplementation((url: string) =>
-    Promise.resolve(
-      url.endsWith('/remover')
-        ? json({ ...category, status: 'REMOVIDA' })
-        : json([category]),
-    ),
-  );
+  const fetch = vi
+    .fn()
+    .mockImplementation((url: string) =>
+      Promise.resolve(
+        url.endsWith('/remover')
+          ? json({ ...category, status: 'REMOVIDA' })
+          : json([category]),
+      ),
+    );
   vi.stubGlobal('fetch', fetch);
   const { client } = setup();
   await screen.findByRole('heading', { name: 'Astronomia' });
