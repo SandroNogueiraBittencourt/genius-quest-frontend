@@ -12,11 +12,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Diagnostic Prettier output
-        run: |
-          echo '### FORMAT_START ###'
-          npx prettier src/features/auth/logout-flow.test.tsx
-          echo '### FORMAT_END ###'
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
