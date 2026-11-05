@@ -66,3 +66,54 @@ export async function suggestCategory(
     );
   return data;
 }
+
+/** A moderação sempre depende da autorização do backend (ADMIN). */
+export async function getManagedCategories(
+  signal?: AbortSignal,
+): Promise<Category[]> {
+  const session = useAuthStore.getState().session;
+  const data = await authenticatedRequest<unknown>('/categorias', { signal });
+  checkSession(session, signal);
+  if (!Array.isArray(data) || !data.every(isCategory))
+    throw new ApiError(502, 'A API retornou categorias inválidas.');
+  return data;
+}
+
+export async function changeCategoryStatus(
+  id: string,
+  action: 'aprovar' | 'remover',
+  signal?: AbortSignal,
+): Promise<Category> {
+  const session = useAuthStore.getState().session;
+  const data = await authenticatedRequest<unknown>(
+    '/categorias/' + encodeURIComponent(id) + '/' + action,
+    { method: 'PATCH', signal },
+  );
+  checkSession(session, signal);
+  if (!isCategory(data))
+    throw new ApiError(502, 'Não foi possível confirmar a moderação.');
+  return data;
+}
+
+export async function updateCategory(
+  id: string,
+  change: { nome: string; descricao: string },
+  signal?: AbortSignal,
+): Promise<Category> {
+  const session = useAuthStore.getState().session;
+  const data = await authenticatedRequest<unknown>(
+    '/categorias/' + encodeURIComponent(id),
+    {
+      method: 'PATCH',
+      json: {
+        nome: change.nome.trim(),
+        descricao: change.descricao.trim(),
+      },
+      signal,
+    },
+  );
+  checkSession(session, signal);
+  if (!isCategory(data))
+    throw new ApiError(502, 'Não foi possível confirmar a atualização.');
+  return data;
+}
