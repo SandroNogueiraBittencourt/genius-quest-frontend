@@ -109,11 +109,16 @@ it('limpa a sessão local quando o backend informa que o token já é inválido'
 
 it('a resposta de logout de uma sessão antiga não encerra um novo login', async () => {
   let complete!: (response: Response) => void;
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) =>
-    url.endsWith('/auth/logout')
-      ? new Promise<Response>((resolve) => { complete = resolve; })
-      : Promise.resolve(health()),
-  ));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((url: string) =>
+      url.endsWith('/auth/logout')
+        ? new Promise<Response>((resolve) => {
+            complete = resolve;
+          })
+        : Promise.resolve(health()),
+    ),
+  );
   start();
   render(<App />);
 
