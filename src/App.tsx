@@ -4,6 +4,9 @@ import { createQueryClient } from './app/queryClient';
 import { useNavigation, type View } from './app/navigation';
 import { ApiHealth } from './app/ApiHealth';
 import { DesignSystem } from './features/design-system/DesignSystem';
+import { Categories } from './features/categories/Categories';
+import { CategoriesAdmin } from './features/categories/CategoriesAdmin';
+import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
 import { useRoomStore } from './features/room/store';
@@ -20,10 +23,12 @@ function Pages() {
   const auth = useAuthStore((state) => state.session);
   const notice = useAuthStore((state) => state.notice);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [afterLogin, setAfterLogin] = useState<View>('home');
   const [logoutPending, setLogoutPending] = useState(false);
   const [logoutError, setLogoutError] = useState('');
   const logoutInFlight = useRef(false);
   const isAuthView = view === 'login' || view === 'register';
+  const isCategoriesView = view === 'categories' || view === 'categories-admin';
   async function logout() {
     const current = useAuthStore.getState().session;
     if (!current || logoutInFlight.current) return;
@@ -68,7 +73,11 @@ function Pages() {
         ? 'Entrar · Genius Quest'
         : view === 'register'
           ? 'Criar conta · Genius Quest'
-          : view === 'lobby'
+          : view === 'categories'
+          ? 'Categorias · Genius Quest'
+          : view === 'categories-admin'
+            ? 'Moderação de categorias · Genius Quest'
+            : view === 'lobby'
             ? 'Sua sala · Genius Quest'
             : view === 'design-system'
               ? 'Design System · Genius Quest'
@@ -90,6 +99,8 @@ function Pages() {
     )
       return;
     event.preventDefault();
+    if (next === 'login' || next === 'register')
+      setAfterLogin(isCategoriesView ? view : 'home');
     navigate(next);
   }
   if (view === 'design-system')
@@ -132,6 +143,22 @@ function Pages() {
           >
             Início
           </a>
+          <a
+            href="?view=categories"
+            aria-current={view === 'categories' ? 'page' : undefined}
+            onClick={(event) => open(event, 'categories')}
+          >
+            Categorias
+          </a>
+          {auth && hasAdminClaim(auth.token) && (
+            <a
+              href="?view=categories-admin"
+              aria-current={view === 'categories-admin' ? 'page' : undefined}
+              onClick={(event) => open(event, 'categories-admin')}
+            >
+              Moderação
+            </a>
+          )}
           {session && (
             <a
               href="?view=lobby"
@@ -187,7 +214,7 @@ function Pages() {
           )}
         </nav>
       </header>
-      {!isAuthView && (
+      {(view === 'home' || view === 'lobby') && (
         <div className="gq-demo-banner">
           <span className="gq-demo-label">Demonstração</span>
           <p>
@@ -247,10 +274,25 @@ function Pages() {
               }}
               onSignedIn={() => {
                 setRegisteredEmail('');
-                navigate('home');
+                navigate(afterLogin);
+                setAfterLogin('home');
               }}
             />
           )
+        ) : view === 'categories' ? (
+          <Categories
+            onSignIn={() => {
+              setAfterLogin('categories');
+              navigate('login');
+            }}
+          />
+        ) : view === 'categories-admin' ? (
+          <CategoriesAdmin
+            onSignIn={() => {
+              setAfterLogin('categories-admin');
+              navigate('login');
+            }}
+          />
         ) : view === 'lobby' ? (
           <Lobby onLeave={() => navigate('home')} />
         ) : (
