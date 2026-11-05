@@ -68,7 +68,10 @@ export async function register(
  * Solicita ao backend a revogação da sessão atual.
  * Não altera a store: a interface só limpa a sessão após confirmação.
  */
-export async function logout(token: string, signal?: AbortSignal): Promise<void> {
+export async function logout(
+  token: string,
+  signal?: AbortSignal,
+): Promise<void> {
   await apiRequest<void>('/auth/logout', {
     method: 'POST',
     token,
