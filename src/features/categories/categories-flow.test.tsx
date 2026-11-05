@@ -52,6 +52,8 @@ it('volta às categorias após login e recarrega os dados ao trocar de conta', a
     .fn()
     .mockImplementation((url: string, options: RequestInit) => {
       if (url.endsWith('/health')) return Promise.resolve(health());
+      if (url.endsWith('/auth/logout'))
+        return Promise.resolve(new Response(null, { status: 204 }));
       if (url.endsWith('/auth/login')) {
         loginCount++;
         return Promise.resolve(
@@ -96,6 +98,7 @@ it('volta às categorias após login e recarrega os dados ao trocar de conta', a
   fireEvent.click(screen.getByRole('button', { name: 'Enviar para revisão' }));
   await screen.findByRole('heading', { name: 'Sugestão recebida!' });
   fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+  await screen.findByText('Você saiu da sua conta.');
   fireEvent.click(screen.getByRole('link', { name: 'Categorias' }));
   expect(screen.queryByText('Oceanos')).not.toBeInTheDocument();
   expect(
@@ -162,6 +165,8 @@ it('sair da conta durante envio cancela a tela e impede confirmação na próxim
     'fetch',
     vi.fn().mockImplementation((url: string, options: RequestInit) => {
       if (url.endsWith('/health')) return Promise.resolve(health());
+      if (url.endsWith('/auth/logout'))
+        return Promise.resolve(new Response(null, { status: 204 }));
       if (options.method === 'POST') {
         signal = options.signal as AbortSignal;
         return new Promise<Response>((resolve) => {
@@ -181,6 +186,7 @@ it('sair da conta durante envio cancela a tela e impede confirmação na próxim
     screen.getByRole('button', { name: 'Enviando sugestão…' }),
   ).toBeDisabled();
   fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+  await screen.findByText('Você saiu da sua conta.');
   expect(signal?.aborted).toBe(true);
   await act(async () =>
     finish(json({ ...category, nome: 'Oceanos', status: 'PENDENTE' }, 201)),
