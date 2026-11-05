@@ -70,8 +70,13 @@ function ManagedCategories() {
     kind: 'aprovar' | 'remover' | 'editar',
   ) {
     if (request.current) return;
-    if (kind === 'editar' && (!nome.trim() || nome.length > 80 || descricao.length > 255)) {
-      setError('Informe nome com até 80 caracteres e descrição de até 255 caracteres.');
+    if (
+      kind === 'editar' &&
+      (!nome.trim() || nome.length > 80 || descricao.length > 255)
+    ) {
+      setError(
+        'Informe nome com até 80 caracteres e descrição de até 255 caracteres.',
+      );
       return;
     }
 
@@ -94,7 +99,13 @@ function ManagedCategories() {
       if (controller.signal.aborted) return;
       setEditingId(null);
       setRemoveId(null);
-      setMessage('Categoria "' + updated.nome + '" atualizada: ' + statuses[updated.status] + '.');
+      setMessage(
+        'Categoria "' +
+          updated.nome +
+          '" atualizada: ' +
+          statuses[updated.status] +
+          '.',
+      );
       await client.invalidateQueries({ queryKey: ['categories'] });
     } catch (cause) {
       if (controller.signal.aborted) return;
@@ -122,7 +133,9 @@ function ManagedCategories() {
 
   return (
     <div className="categories-admin">
-      <p>As decisões de moderação são realizadas somente pelo backend autorizado.</p>
+      <p>
+        As decisões de moderação são realizadas somente pelo backend autorizado.
+      </p>
       {categories.isPending ? (
         <p role="status">Carregando categorias para moderação…</p>
       ) : categories.isError ? (
@@ -144,7 +157,10 @@ function ManagedCategories() {
         </Card>
       ) : (
         <>
-          <div className="categories-admin-filters" aria-label="Filtrar categorias">
+          <div
+            className="categories-admin-filters"
+            aria-label="Filtrar categorias"
+          >
             {(['PENDENTE', 'APROVADA', 'REMOVIDA', 'TODAS'] as const).map(
               (status) => (
                 <Button
@@ -158,17 +174,21 @@ function ManagedCategories() {
               ),
             )}
           </div>
-          {error && <div role="alert"><Notice message={error} /></div>}
+          {error && (
+            <div role="alert">
+              <Notice message={error} />
+            </div>
+          )}
           {message && <p role="status">{message}</p>}
-          <p role="status">
-            {visible.length} categorias encontradas.
-          </p>
+          <p role="status">{visible.length} categorias encontradas.</p>
           {visible.length === 0 && <p>Nenhuma categoria neste status.</p>}
           <ul className="categories-admin-list">
             {visible.map((category) => (
               <li key={category.id}>
                 <Card>
-                  <span className="category-status">{statuses[category.status]}</span>
+                  <span className="category-status">
+                    {statuses[category.status]}
+                  </span>
                   <h2>{category.nome}</h2>
                   <p>{category.descricao || 'Sem descrição'}</p>
                   {editingId === category.id ? (
@@ -236,15 +256,16 @@ function ManagedCategories() {
                       >
                         Editar
                       </Button>
-                      {category.status !== 'REMOVIDA' && removeId !== category.id && (
-                        <Button
-                          variant="outline"
-                          disabled={busyId !== null}
-                          onClick={() => setRemoveId(category.id)}
-                        >
-                          Remover
-                        </Button>
-                      )}
+                      {category.status !== 'REMOVIDA' &&
+                        removeId !== category.id && (
+                          <Button
+                            variant="outline"
+                            disabled={busyId !== null}
+                            onClick={() => setRemoveId(category.id)}
+                          >
+                            Remover
+                          </Button>
+                        )}
                       {removeId === category.id && (
                         <>
                           <Button
@@ -254,7 +275,10 @@ function ManagedCategories() {
                           >
                             Confirmar remoção
                           </Button>
-                          <Button variant="ghost" onClick={() => setRemoveId(null)}>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setRemoveId(null)}
+                          >
                             Cancelar remoção
                           </Button>
                         </>
