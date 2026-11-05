@@ -74,15 +74,13 @@ it('exibe 403 para usuário não autorizado, sem mostrar ações de moderação'
 
 it('lista pendentes e permite aprovar via PATCH autenticado', async () => {
   let status = 'PENDENTE';
-  const fetch = vi
-    .fn()
-    .mockImplementation((url: string) => {
+  const fetch = vi.fn().mockImplementation((url: string) => {
       if (url.endsWith('/aprovar')) {
         status = 'APROVADA';
         return Promise.resolve(json({ ...category, status }));
       }
       return Promise.resolve(json([{ ...category, status }]));
-    });
+  });
   vi.stubGlobal('fetch', fetch);
   const { client } = setup();
   expect(
