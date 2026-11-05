@@ -11,6 +11,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 it('percorre cadastro, login, conta conectada e saída pela navegação real', async () => {
   const fetch = vi.fn().mockImplementation((url: string) => {
+    if (url.endsWith('/auth/logout'))
+      return Promise.resolve(new Response(null, { status: 204 }));
     const body = url.endsWith('/health')
       ? {
           status: 'UP',
@@ -70,6 +72,13 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Sair da minha conta' }));
   await screen.findByText('Você saiu da sua conta.');
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/auth/logout',
+    expect.objectContaining({
+      method: 'POST',
+      headers: expect.objectContaining({ Authorization: 'Bearer jwt' }),
+    }),
+  );
   expect(useAuthStore.getState().session).toBeNull();
   expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument();
 });

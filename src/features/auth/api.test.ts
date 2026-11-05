@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { login, register } from './api';
+import { login, logout, register } from './api';
 afterEach(() => vi.unstubAllGlobals());
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -66,6 +66,23 @@ it('cadastra usando nome, email e senha sem abrir sessão automaticamente', asyn
         nome: 'Sandro',
         email: 'sandro@example.test',
         senha: 'senha123',
+      }),
+    }),
+  );
+});
+
+it('revoga JWT com POST sem corpo e aceita a resposta 204', async () => {
+  const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+  vi.stubGlobal('fetch', fetch);
+
+  await expect(logout('jwt-da-aba')).resolves.toBeUndefined();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/auth/logout',
+    expect.objectContaining({
+      method: 'POST',
+      body: undefined,
+      headers: expect.objectContaining({
+        Authorization: 'Bearer jwt-da-aba',
       }),
     }),
   );
