@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import App from '../../App';
 import { useAuthStore } from './store';
@@ -27,7 +33,7 @@ function health(): Response {
   );
 }
 
-it('envia o JWT real no logout e só limpa a sessão após o retorno 204', async () => {
+it('encerra a sessão somente após resposta 204', async () => {
   let complete!: (response: Response) => void;
   const fetch = vi.fn().mockImplementation((url: string) =>
     url.endsWith('/auth/logout')
@@ -55,10 +61,12 @@ it('envia o JWT real no logout e só limpa a sessão após o retorno 204', async
 
   await act(async () => complete(new Response(null, { status: 204 })));
   expect(useAuthStore.getState().session).toBeNull();
-  expect(await screen.findByText('Você saiu da sua conta.')).toBeInTheDocument();
+  expect(
+    await screen.findByText('Você saiu da sua conta.'),
+  ).toBeInTheDocument();
 });
 
-it('não afirma logout remoto quando a API falha; permite tentar novamente', async () => {
+it('mantém a sessão após falha 503 e permite repetir', async () => {
   let attempts = 0;
   const fetch = vi.fn().mockImplementation((url: string) => {
     if (url.endsWith('/auth/logout')) {
@@ -85,7 +93,7 @@ it('não afirma logout remoto quando a API falha; permite tentar novamente', asy
   expect(attempts).toBe(2);
 });
 
-it('limpa a sessão local quando o backend informa que o token já é inválido', async () => {
+it('encerra a sessão local para token rejeitado pelo servidor', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockImplementation((url: string) =>
@@ -107,7 +115,7 @@ it('limpa a sessão local quando o backend informa que o token já é inválido'
   expect(useAuthStore.getState().session).toBeNull();
 });
 
-it('a resposta de logout de uma sessão antiga não encerra um novo login', async () => {
+it('não encerra um login novo por resposta antiga', async () => {
   let complete!: (response: Response) => void;
   vi.stubGlobal(
     'fetch',
