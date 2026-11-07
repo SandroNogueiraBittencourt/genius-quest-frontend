@@ -231,8 +231,8 @@ it('restaura categoria removida com ação explícita e mesma API de aprovação
   });
   vi.stubGlobal('fetch', fetch);
   const { client } = setup();
+  fireEvent.click(await screen.findByRole('button', { name: 'Removida' }));
   await screen.findByRole('heading', { name: 'Astronomia' });
-  fireEvent.click(screen.getByRole('button', { name: 'Removida' }));
   expect(
     screen.getByText('Removida', { selector: '.category-status' }),
   ).toHaveAttribute('data-status', 'REMOVIDA');
