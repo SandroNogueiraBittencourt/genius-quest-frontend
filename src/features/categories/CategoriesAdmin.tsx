@@ -186,7 +186,10 @@ function ManagedCategories() {
             {visible.map((category) => (
               <li key={category.id}>
                 <Card>
-                  <span className="category-status">
+                  <span
+                    className="category-status"
+                    data-status={category.status}
+                  >
                     {statuses[category.status]}
                   </span>
                   <h2>{category.nome}</h2>
@@ -219,13 +222,18 @@ function ManagedCategories() {
                         onChange={(event) => setDescricao(event.target.value)}
                       />
                       <div className="categories-admin-actions">
-                        <Button type="submit" busy={busyId === category.id}>
+                        <Button
+                          type="submit"
+                          busy={busyId === category.id}
+                          aria-label={`Salvar alteração de ${category.nome}`}
+                        >
                           Salvar alteração
                         </Button>
                         <Button
                           variant="ghost"
                           disabled={busyId !== null}
                           onClick={() => setEditingId(null)}
+                          aria-label={`Cancelar edição de ${category.nome}`}
                         >
                           Cancelar edição
                         </Button>
@@ -239,13 +247,21 @@ function ManagedCategories() {
                           busy={busyId === category.id}
                           disabled={busyId !== null}
                           onClick={() => void mutate(category, 'aprovar')}
+                          aria-label={
+                            category.status === 'REMOVIDA'
+                              ? `Restaurar ${category.nome}`
+                              : `Aprovar ${category.nome}`
+                          }
                         >
-                          Aprovar
+                          {category.status === 'REMOVIDA'
+                            ? 'Restaurar categoria'
+                            : 'Aprovar'}
                         </Button>
                       )}
                       <Button
                         variant="outline"
                         disabled={busyId !== null}
+                        aria-label={`Editar ${category.nome}`}
                         onClick={() => {
                           setError('');
                           setRemoveId(null);
@@ -262,6 +278,7 @@ function ManagedCategories() {
                             variant="outline"
                             disabled={busyId !== null}
                             onClick={() => setRemoveId(category.id)}
+                            aria-label={`Remover ${category.nome}`}
                           >
                             Remover
                           </Button>
@@ -272,12 +289,14 @@ function ManagedCategories() {
                             variant="secondary"
                             busy={busyId === category.id}
                             onClick={() => void mutate(category, 'remover')}
+                            aria-label={`Confirmar remoção de ${category.nome}`}
                           >
                             Confirmar remoção
                           </Button>
                           <Button
                             variant="ghost"
                             onClick={() => setRemoveId(null)}
+                            aria-label={`Cancelar remoção de ${category.nome}`}
                           >
                             Cancelar remoção
                           </Button>
