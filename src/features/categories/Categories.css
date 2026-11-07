@@ -85,10 +85,23 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
-  background: #d4faed;
-  color: var(--color-dark);
   padding: 5px 10px;
   border-radius: 8px;
+  color: var(--color-dark);
+  background: #e9e5ef;
+}
+
+.category-status[data-status='APROVADA'] {
+  background: #d4faed;
+}
+
+.category-status[data-status='PENDENTE'] {
+  background: #ffebcf;
+}
+
+.category-status[data-status='REMOVIDA'] {
+  background: #e9e5ef;
+  color: #443653;
 }
 .category-card h3 {
   font-size: 24px;
@@ -182,9 +195,6 @@
   font-size: 24px;
   line-height: 1.35;
   margin: 24px 0 16px;
-}
-.category-success .category-status {
-  background: #ffebcf;
 }
 .category-success p strong {
   color: var(--color-dark);
