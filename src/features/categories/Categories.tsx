@@ -138,7 +138,9 @@ function SignedInCategories() {
               {categories.data.map((category) => (
                 <li key={category.id}>
                   <Card className="category-card">
-                    <span className="category-status">Aprovada</span>
+                    <span className="category-status" data-status="APROVADA">
+                      Aprovada
+                    </span>
                     <h3>{category.nome}</h3>
                     <p>
                       {category.descricao?.trim() ||
@@ -286,7 +288,9 @@ function SuggestionForm({ onCreated }: { onCreated: () => void }) {
           tabIndex={-1}
           role="status"
         >
-          <span className="category-status">{statusLabels[sent.status]}</span>
+          <span className="category-status" data-status={sent.status}>
+            {statusLabels[sent.status]}
+          </span>
           <h3>Sugestão recebida!</h3>
           <p>
             <strong>{sent.nome}</strong>
