@@ -67,7 +67,9 @@ it('exibe 403 para usuário não autorizado, sem mostrar ações de moderação'
   expect(
     await screen.findByText('Acesso restrito a administradores.'),
   ).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Aprovar Astronomia' })).toBeNull();
+  expect(
+    screen.queryByRole('button', { name: 'Aprovar Astronomia' }),
+  ).toBeNull();
   expect(useAuthStore.getState().session).not.toBeNull();
   client.clear();
 });
@@ -130,13 +132,15 @@ it('exige confirmação explícita antes de remover', async () => {
 
 it('edita nome e descrição e atualiza o catálogo após PATCH autenticado', async () => {
   let current = { ...category };
-  const fetch = vi.fn().mockImplementation((url: string, options: RequestInit) => {
-    if (options.method === 'PATCH') {
-      current = { ...current, ...JSON.parse(String(options.body)) };
-      return Promise.resolve(json(current));
-    }
-    return Promise.resolve(json([current]));
-  });
+  const fetch = vi
+    .fn()
+    .mockImplementation((url: string, options: RequestInit) => {
+      if (options.method === 'PATCH') {
+        current = { ...current, ...JSON.parse(String(options.body)) };
+        return Promise.resolve(json(current));
+      }
+      return Promise.resolve(json([current]));
+    });
   vi.stubGlobal('fetch', fetch);
   const { client } = setup();
   await screen.findByRole('heading', { name: 'Astronomia' });
@@ -171,7 +175,10 @@ it('edita nome e descrição e atualiza o catálogo após PATCH autenticado', as
 it.each([
   {
     status: 400,
-    response: { mensagem: 'Nome não permitido', campos: { nome: 'Nome inválido' } },
+    response: {
+      mensagem: 'Nome não permitido',
+      campos: { nome: 'Nome inválido' },
+    },
     expected: 'Nome não permitido',
   },
   {
@@ -182,13 +189,15 @@ it.each([
 ])(
   'mantém edição aberta e valores preservados quando backend responde $status',
   async ({ status, response, expected }) => {
-    const fetch = vi.fn().mockImplementation((url: string, options: RequestInit) =>
-      Promise.resolve(
-        options.method === 'PATCH'
-          ? json(response, status)
-          : json([category]),
-      ),
-    );
+    const fetch = vi
+      .fn()
+      .mockImplementation((url: string, options: RequestInit) =>
+        Promise.resolve(
+          options.method === 'PATCH'
+            ? json(response, status)
+            : json([category]),
+        ),
+      );
     vi.stubGlobal('fetch', fetch);
     const { client } = setup();
     await screen.findByRole('heading', { name: 'Astronomia' });
@@ -200,7 +209,9 @@ it.each([
       screen.getByRole('button', { name: 'Salvar alteração de Astronomia' }),
     );
     expect(await screen.findByText(expected)).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome para edição')).toHaveValue('Novo assunto');
+    expect(screen.getByLabelText('Nome para edição')).toHaveValue(
+      'Novo assunto',
+    );
     expect(
       screen.getByRole('button', { name: 'Salvar alteração de Astronomia' }),
     ).toBeEnabled();
@@ -222,10 +233,9 @@ it('restaura categoria removida com ação explícita e mesma API de aprovação
   const { client } = setup();
   await screen.findByRole('heading', { name: 'Astronomia' });
   fireEvent.click(screen.getByRole('button', { name: 'Removida' }));
-  expect(screen.getByText('Removida', { selector: '.category-status' })).toHaveAttribute(
-    'data-status',
-    'REMOVIDA',
-  );
+  expect(
+    screen.getByText('Removida', { selector: '.category-status' }),
+  ).toHaveAttribute('data-status', 'REMOVIDA');
   expect(
     screen.queryByRole('button', { name: 'Aprovar Astronomia' }),
   ).not.toBeInTheDocument();
