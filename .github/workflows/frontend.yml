@@ -12,6 +12,11 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Inspect Prettier categories test
+        run: |
+          echo CATEGORY_TEST_FORMAT_BEGIN
+          npx prettier src/features/categories/CategoriesAdmin.test.tsx
+          echo CATEGORY_TEST_FORMAT_END
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
