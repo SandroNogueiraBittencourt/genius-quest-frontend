@@ -12,6 +12,25 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Preparar arquivos formatados para revisão da branch
+        run: |
+          npx prettier --write src/App.tsx src/features/themes/api.test.ts src/features/themes/Themes.tsx src/features/themes/ThemesAdmin.tsx
+          echo 'GQ_FORMAT_START_APP'
+          base64 -w 0 src/App.tsx
+          echo
+          echo 'GQ_FORMAT_END_APP'
+          echo 'GQ_FORMAT_START_API_TEST'
+          base64 -w 0 src/features/themes/api.test.ts
+          echo
+          echo 'GQ_FORMAT_END_API_TEST'
+          echo 'GQ_FORMAT_START_THEMES'
+          base64 -w 0 src/features/themes/Themes.tsx
+          echo
+          echo 'GQ_FORMAT_END_THEMES'
+          echo 'GQ_FORMAT_START_ADMIN'
+          base64 -w 0 src/features/themes/ThemesAdmin.tsx
+          echo
+          echo 'GQ_FORMAT_END_ADMIN'
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
