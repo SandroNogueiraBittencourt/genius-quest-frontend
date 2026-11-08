@@ -87,11 +87,11 @@ function Pages() {
                 ? 'Temas · Genius Quest'
                 : view === 'themes-admin'
                   ? 'Moderação de temas · Genius Quest'
-              : view === 'lobby'
-                ? 'Sua sala · Genius Quest'
-                : view === 'design-system'
-                  ? 'Design System · Genius Quest'
-                  : 'Genius Quest · Cada pergunta, uma nova memória';
+                  : view === 'lobby'
+                    ? 'Sua sala · Genius Quest'
+                    : view === 'design-system'
+                      ? 'Design System · Genius Quest'
+                      : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');

@@ -68,14 +68,23 @@ function ManagedThemes() {
     retry: false,
   });
 
-  async function moderate(theme: Theme, action: 'aprovar' | 'suspender' | 'remover') {
+  async function moderate(
+    theme: Theme,
+    action: 'aprovar' | 'suspender' | 'remover',
+  ) {
     if (busyId) return;
     setBusyId(theme.id);
     setError('');
     setMessage('');
     try {
       const result = await moderateTheme(theme.id, action);
-      setMessage('Tema "' + result.titulo + '" atualizado: ' + labels[result.status] + '.');
+      setMessage(
+        'Tema "' +
+          result.titulo +
+          '" atualizado: ' +
+          labels[result.status] +
+          '.',
+      );
       await client.invalidateQueries({ queryKey: ['themes'] });
     } catch (cause) {
       setError(
@@ -111,7 +120,9 @@ function ManagedThemes() {
       await client.invalidateQueries({ queryKey: ['themes'] });
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'Não foi possível administrar o ciclo.',
+        cause instanceof Error
+          ? cause.message
+          : 'Não foi possível administrar o ciclo.',
       );
     } finally {
       setPendingCycle(false);
@@ -119,8 +130,9 @@ function ManagedThemes() {
   }
 
   const visible =
-    themes.data?.filter((theme) => filter === 'TODOS' || theme.status === filter) ??
-    [];
+    themes.data?.filter(
+      (theme) => filter === 'TODOS' || theme.status === filter,
+    ) ?? [];
 
   return (
     <>
@@ -147,18 +159,24 @@ function ManagedThemes() {
           ) : (
             <>
               <div className="themes-filters" aria-label="Filtrar temas">
-                {(['PENDENTE', 'APROVADO', 'SUSPENSO', 'REMOVIDO', 'TODOS'] as const).map(
-                  (status) => (
-                    <Button
-                      key={status}
-                      variant={status === filter ? 'secondary' : 'outline'}
-                      aria-pressed={status === filter}
-                      onClick={() => setFilter(status)}
-                    >
-                      {status === 'TODOS' ? 'Todos' : labels[status]}
-                    </Button>
-                  ),
-                )}
+                {(
+                  [
+                    'PENDENTE',
+                    'APROVADO',
+                    'SUSPENSO',
+                    'REMOVIDO',
+                    'TODOS',
+                  ] as const
+                ).map((status) => (
+                  <Button
+                    key={status}
+                    variant={status === filter ? 'secondary' : 'outline'}
+                    aria-pressed={status === filter}
+                    onClick={() => setFilter(status)}
+                  >
+                    {status === 'TODOS' ? 'Todos' : labels[status]}
+                  </Button>
+                ))}
               </div>
               {visible.length === 0 ? (
                 <Card>
@@ -169,7 +187,9 @@ function ManagedThemes() {
                   {visible.map((theme) => (
                     <li key={theme.id}>
                       <Card className="themes-card">
-                        <span className="themes-state">{labels[theme.status]}</span>
+                        <span className="themes-state">
+                          {labels[theme.status]}
+                        </span>
                         <h3>{theme.titulo}</h3>
                         <p>{theme.descricao || 'Sem descrição.'}</p>
                         <div className="themes-actions">
@@ -225,7 +245,10 @@ function ManagedThemes() {
                 <p>
                   <strong>{cycle.data.nome}</strong> — aberto
                 </p>
-                <p>Encerra em {new Date(cycle.data.fimEm).toLocaleString('pt-BR')}.</p>
+                <p>
+                  Encerra em{' '}
+                  {new Date(cycle.data.fimEm).toLocaleString('pt-BR')}.
+                </p>
                 <Button
                   variant="outline"
                   busy={pendingCycle}
@@ -256,10 +279,16 @@ function ManagedThemes() {
                     min={5}
                     max={10080}
                     value={duration}
-                    onChange={(event) => setDuration(Number(event.target.value))}
+                    onChange={(event) =>
+                      setDuration(Number(event.target.value))
+                    }
                     required
                   />
-                  <Button type="submit" busy={pendingCycle} loadingLabel="Abrindo…">
+                  <Button
+                    type="submit"
+                    busy={pendingCycle}
+                    loadingLabel="Abrindo…"
+                  >
                     Abrir ciclo
                   </Button>
                 </fieldset>

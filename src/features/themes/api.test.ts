@@ -27,10 +27,12 @@ function response(body: unknown, status = 200) {
 }
 
 beforeEach(() => {
-  useAuthStore.getState().start(
-    { token: 'token-de-teste', tipo: 'Bearer', expiraEm: 3600 },
-    'usuario@teste.local',
-  );
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'token-de-teste', tipo: 'Bearer', expiraEm: 3600 },
+      'usuario@teste.local',
+    );
 });
 
 afterEach(() => {

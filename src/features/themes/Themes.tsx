@@ -84,7 +84,9 @@ function SignedInThemes() {
     event.preventDefault();
     if (busy) return;
     if (!categoriaId || titulo.trim().length < 3 || titulo.length > 120) {
-      setError('Selecione a categoria e informe um título entre 3 e 120 caracteres.');
+      setError(
+        'Selecione a categoria e informe um título entre 3 e 120 caracteres.',
+      );
       return;
     }
     setBusy(true);
@@ -176,12 +178,16 @@ function SignedInThemes() {
                 <li key={theme.id}>
                   <Card className="themes-card">
                     <h3>{theme.titulo}</h3>
-                    <p>{theme.descricao || 'Um novo assunto para descobrir.'}</p>
+                    <p>
+                      {theme.descricao || 'Um novo assunto para descobrir.'}
+                    </p>
                     <Button
                       variant="secondary"
                       busy={votingId === theme.id}
                       loadingLabel="Registrando voto…"
-                      disabled={!cycle.data || !!votingId || voted.includes(theme.id)}
+                      disabled={
+                        !cycle.data || !!votingId || voted.includes(theme.id)
+                      }
                       onClick={() => void vote(theme.id)}
                     >
                       {voted.includes(theme.id)
@@ -194,7 +200,10 @@ function SignedInThemes() {
             </ul>
           )}
           {cycle.data && (
-            <section aria-labelledby="themes-ranking-title" className="themes-ranking">
+            <section
+              aria-labelledby="themes-ranking-title"
+              className="themes-ranking"
+            >
               <h2 id="themes-ranking-title">Classificação do ciclo</h2>
               {ranking.isPending ? (
                 <p role="status">Carregando classificação…</p>
@@ -260,7 +269,9 @@ function SignedInThemes() {
                   hint="Entre 3 e 120 caracteres."
                 />
                 <div className="ui-field">
-                  <label htmlFor="themes-description">Descrição (opcional)</label>
+                  <label htmlFor="themes-description">
+                    Descrição (opcional)
+                  </label>
                   <textarea
                     id="themes-description"
                     className="ui-input"
