@@ -86,7 +86,6 @@ it('não oculta erro 409 quando o jogador já votou', async () => {
   await expect(voteTheme('tema-01')).rejects.toMatchObject({ status: 409 });
 });
 
-
 it('consulta histórico paginado com JWT e sem expor dados pessoais', async () => {
   const payload = {
     ciclos: [

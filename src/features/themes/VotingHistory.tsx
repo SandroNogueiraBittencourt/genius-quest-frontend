@@ -22,8 +22,8 @@ export function VotingHistory({ onSignIn }: { onSignIn: () => void }) {
         <span className="gq-kicker">A curiosidade deixa lembranças</span>
         <h1>Resultados e histórico.</h1>
         <p>
-          Relembre as votações encerradas, conheça os temas vencedores
-          e descubra como cada assunto foi escolhido.
+          Relembre as votações encerradas, conheça os temas vencedores e
+          descubra como cada assunto foi escolhido.
         </p>
       </header>
       {session ? (
@@ -122,10 +122,14 @@ function SignedInHistory() {
                   </p>
                   <p>
                     {cycle.totalVotos}{' '}
-                    {cycle.totalVotos === 1 ? 'voto registrado' : 'votos registrados'}
+                    {cycle.totalVotos === 1
+                      ? 'voto registrado'
+                      : 'votos registrados'}
                   </p>
                   <Button
-                    variant={selected?.id === cycle.id ? 'secondary' : 'outline'}
+                    variant={
+                      selected?.id === cycle.id ? 'secondary' : 'outline'
+                    }
                     aria-pressed={selected?.id === cycle.id}
                     onClick={() => setSelectedId(cycle.id)}
                   >
@@ -196,7 +200,9 @@ function SignedInHistory() {
                   {ranking.data.map((theme) => (
                     <li key={theme.temaId}>
                       <span className="history-position">{theme.posicao}º</span>
-                      <span className="history-result-name">{theme.titulo}</span>
+                      <span className="history-result-name">
+                        {theme.titulo}
+                      </span>
                       <strong>
                         {theme.votos} {theme.votos === 1 ? 'voto' : 'votos'}
                       </strong>

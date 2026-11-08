@@ -182,7 +182,6 @@ export async function closeCycle(id: string): Promise<VotingCycle> {
   return data;
 }
 
-
 function validHistoryCycle(value: unknown): value is VotingHistoryCycle {
   if (!value || typeof value !== 'object') return false;
   const item = value as Record<string, unknown>;

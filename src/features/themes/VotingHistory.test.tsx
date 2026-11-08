@@ -54,18 +54,34 @@ it('pede login sem fazer requisição quando a sessão está ausente', () => {
 });
 
 it('mostra vencedor, classificação e aviso para ciclos reconstruídos', async () => {
-  useAuthStore.getState().start(
-    { token: 'jwt-history', tipo: 'Bearer', expiraEm: 3600 },
-    'jogador@example.test',
-  );
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-history', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@example.test',
+    );
   const fetch = vi.fn((url: string) => {
     if (url.includes('/historico?'))
       return Promise.resolve(
-        json({ ciclos: [cycle], pagina: 0, tamanho: 10, total: 1, temProxima: false }),
+        json({
+          ciclos: [cycle],
+          pagina: 0,
+          tamanho: 10,
+          total: 1,
+          temProxima: false,
+        }),
       );
     if (url.endsWith('/ciclo-01/ranking'))
       return Promise.resolve(
-        json([{ posicao: 1, temaId: 'tema-01', titulo: 'História do Futebol', votos: 2, votantesDistintos: 2 }]),
+        json([
+          {
+            posicao: 1,
+            temaId: 'tema-01',
+            titulo: 'História do Futebol',
+            votos: 2,
+            votantesDistintos: 2,
+          },
+        ]),
       );
     return Promise.resolve(json({}, 404));
   });
@@ -75,22 +91,53 @@ it('mostra vencedor, classificação e aviso para ciclos reconstruídos', async 
   expect(
     await screen.findByRole('heading', { name: 'Votação de Novembro' }),
   ).toBeInTheDocument();
-  expect(await screen.findByText('Resultado histórico reconstruído a partir dos votos salvos.', { exact: false })).toBeInTheDocument();
+  expect(
+    await screen.findByText(
+      'Resultado histórico reconstruído a partir dos votos salvos.',
+      { exact: false },
+    ),
+  ).toBeInTheDocument();
   expect(await screen.findByText('2 votos')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
 });
 
 it('avança páginas sem misturar o resultado da página anterior', async () => {
-  useAuthStore.getState().start(
-    { token: 'jwt-history', tipo: 'Bearer', expiraEm: 3600 },
-    'jogador@example.test',
-  );
-  const next = { ...cycle, id: 'ciclo-02', nome: 'Votação de Outubro', vencedorTitulo: null, vencedorTemaId: null, totalVotos: 0, rankingReconstruido: false };
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-history', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@example.test',
+    );
+  const next = {
+    ...cycle,
+    id: 'ciclo-02',
+    nome: 'Votação de Outubro',
+    vencedorTitulo: null,
+    vencedorTemaId: null,
+    totalVotos: 0,
+    rankingReconstruido: false,
+  };
   const fetch = vi.fn((url: string) => {
     if (url.includes('page=0'))
-      return Promise.resolve(json({ ciclos: [cycle], pagina: 0, tamanho: 10, total: 2, temProxima: true }));
+      return Promise.resolve(
+        json({
+          ciclos: [cycle],
+          pagina: 0,
+          tamanho: 10,
+          total: 2,
+          temProxima: true,
+        }),
+      );
     if (url.includes('page=1'))
-      return Promise.resolve(json({ ciclos: [next], pagina: 1, tamanho: 10, total: 2, temProxima: false }));
+      return Promise.resolve(
+        json({
+          ciclos: [next],
+          pagina: 1,
+          tamanho: 10,
+          total: 2,
+          temProxima: false,
+        }),
+      );
     return Promise.resolve(json([]));
   });
   vi.stubGlobal('fetch', fetch);
@@ -101,5 +148,7 @@ it('avança páginas sem misturar o resultado da página anterior', async () => 
   expect(
     await screen.findByRole('heading', { name: 'Votação de Outubro' }),
   ).toBeInTheDocument();
-  expect(screen.queryByRole('heading', { name: 'Votação de Novembro' })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('heading', { name: 'Votação de Novembro' }),
+  ).not.toBeInTheDocument();
 });
