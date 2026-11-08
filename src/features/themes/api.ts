@@ -1,7 +1,14 @@
 import { ApiError } from '../../services/http';
 import { authenticatedRequest } from '../auth/authenticatedRequest';
 import { useAuthStore } from '../auth/store';
-import type { Theme, ThemeRank, ThemeVote, VotingCycle } from './types';
+import type {
+  Theme,
+  ThemeRank,
+  ThemeVote,
+  VotingCycle,
+  VotingHistoryCycle,
+  VotingHistoryPage,
+} from './types';
 
 function checkSession(
   previous: ReturnType<typeof useAuthStore.getState>['session'],
@@ -173,4 +180,49 @@ export async function closeCycle(id: string): Promise<VotingCycle> {
   if (!validCycle(data))
     throw new ApiError(502, 'Não foi possível confirmar o encerramento.');
   return data;
+}
+
+
+function validHistoryCycle(value: unknown): value is VotingHistoryCycle {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === 'string' &&
+    typeof item.nome === 'string' &&
+    typeof item.inicioEm === 'string' &&
+    typeof item.fimEm === 'string' &&
+    typeof item.encerradoEm === 'string' &&
+    (typeof item.vencedorTemaId === 'string' || item.vencedorTemaId === null) &&
+    (typeof item.vencedorTitulo === 'string' || item.vencedorTitulo === null) &&
+    typeof item.totalVotos === 'number' &&
+    item.totalVotos >= 0 &&
+    typeof item.rankingReconstruido === 'boolean'
+  );
+}
+
+export async function getVotingHistory(
+  page = 0,
+  signal?: AbortSignal,
+): Promise<VotingHistoryPage> {
+  if (!Number.isInteger(page) || page < 0)
+    throw new Error('Página do histórico inválida.');
+
+  const data = await withSession<unknown>(
+    '/ciclos-votacao/historico?page=' + page + '&size=10',
+    { signal },
+  );
+  if (!data || typeof data !== 'object')
+    throw new ApiError(502, 'A API retornou um histórico inválido.');
+  const result = data as Record<string, unknown>;
+  if (
+    !Array.isArray(result.ciclos) ||
+    !result.ciclos.every(validHistoryCycle) ||
+    typeof result.pagina !== 'number' ||
+    typeof result.tamanho !== 'number' ||
+    typeof result.total !== 'number' ||
+    typeof result.temProxima !== 'boolean'
+  )
+    throw new ApiError(502, 'A API retornou um histórico inválido.');
+
+  return result as VotingHistoryPage;
 }

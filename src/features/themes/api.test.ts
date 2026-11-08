@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useAuthStore } from '../auth/store';
 import {
   getCurrentCycle,
+  getVotingHistory,
   getManagedThemes,
   getThemes,
   suggestTheme,
@@ -83,4 +84,49 @@ it('propaga 403 de moderação sem apagar a sessão', async () => {
 it('não oculta erro 409 quando o jogador já votou', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({}, 409)));
   await expect(voteTheme('tema-01')).rejects.toMatchObject({ status: 409 });
+});
+
+
+it('consulta histórico paginado com JWT e sem expor dados pessoais', async () => {
+  const payload = {
+    ciclos: [
+      {
+        id: 'ciclo-01',
+        nome: 'Votação de Novembro',
+        inicioEm: '2026-11-08T16:00:00Z',
+        fimEm: '2026-11-08T18:00:00Z',
+        encerradoEm: '2026-11-08T17:09:00Z',
+        vencedorTemaId: 'tema-01',
+        vencedorTitulo: 'História do Futebol',
+        totalVotos: 2,
+        rankingReconstruido: true,
+      },
+    ],
+    pagina: 0,
+    tamanho: 10,
+    total: 1,
+    temProxima: false,
+  };
+  const fetch = vi.fn().mockResolvedValue(response(payload));
+  vi.stubGlobal('fetch', fetch);
+  expect(await getVotingHistory(0)).toEqual(payload);
+  expect(fetch.mock.calls[0][0]).toContain(
+    '/ciclos-votacao/historico?page=0&size=10',
+  );
+  expect(fetch.mock.calls[0][1].headers.Authorization).toBe(
+    'Bearer token-de-teste',
+  );
+});
+
+it('rejeita resposta do histórico que não respeita o contrato', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(response({ ciclos: [{}], total: 1 })),
+  );
+  await expect(getVotingHistory()).rejects.toMatchObject({ status: 502 });
+});
+
+it('não interpreta histórico 404 como lista vazia', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({}, 404)));
+  await expect(getVotingHistory()).rejects.toMatchObject({ status: 404 });
 });

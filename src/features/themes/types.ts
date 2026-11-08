@@ -35,3 +35,23 @@ export type ThemeRank = {
   votos: number;
   votantesDistintos: number;
 };
+
+export type VotingHistoryCycle = {
+  id: string;
+  nome: string;
+  inicioEm: string;
+  fimEm: string;
+  encerradoEm: string;
+  vencedorTemaId: string | null;
+  vencedorTitulo: string | null;
+  totalVotos: number;
+  rankingReconstruido: boolean;
+};
+
+export type VotingHistoryPage = {
+  ciclos: VotingHistoryCycle[];
+  pagina: number;
+  tamanho: number;
+  total: number;
+  temProxima: boolean;
+};

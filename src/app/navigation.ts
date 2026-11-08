@@ -8,7 +8,8 @@ export type View =
   | 'categories'
   | 'categories-admin'
   | 'themes'
-  | 'themes-admin';
+  | 'themes-admin'
+  | 'history';
 function currentView(): View {
   const view = new URLSearchParams(window.location.search).get('view');
   return view === 'lobby' ||
@@ -18,7 +19,8 @@ function currentView(): View {
     view === 'categories' ||
     view === 'categories-admin' ||
     view === 'themes' ||
-    view === 'themes-admin'
+    view === 'themes-admin' ||
+    view === 'history'
     ? view
     : 'home';
 }

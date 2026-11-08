@@ -8,6 +8,7 @@ import { Categories } from './features/categories/Categories';
 import { CategoriesAdmin } from './features/categories/CategoriesAdmin';
 import { Themes } from './features/themes/Themes';
 import { ThemesAdmin } from './features/themes/ThemesAdmin';
+import { VotingHistory } from './features/themes/VotingHistory';
 import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
@@ -34,7 +35,8 @@ function Pages() {
     view === 'categories' ||
     view === 'categories-admin' ||
     view === 'themes' ||
-    view === 'themes-admin';
+    view === 'themes-admin' ||
+    view === 'history';
   async function logout() {
     const current = useAuthStore.getState().session;
     if (!current || logoutInFlight.current) return;
@@ -87,6 +89,8 @@ function Pages() {
                 ? 'Temas · Genius Quest'
                 : view === 'themes-admin'
                   ? 'Moderação de temas · Genius Quest'
+                  : view === 'history'
+                    ? 'Resultados e histórico · Genius Quest'
                   : view === 'lobby'
                     ? 'Sua sala · Genius Quest'
                     : view === 'design-system'
@@ -166,6 +170,13 @@ function Pages() {
             onClick={(event) => open(event, 'themes')}
           >
             Temas e votação
+          </a>
+          <a
+            href="?view=history"
+            aria-current={view === 'history' ? 'page' : undefined}
+            onClick={(event) => open(event, 'history')}
+          >
+            Resultados
           </a>
           {auth && hasAdminClaim(auth.token) && (
             <a
@@ -323,6 +334,13 @@ function Pages() {
           <Themes
             onSignIn={() => {
               setAfterLogin('themes');
+              navigate('login');
+            }}
+          />
+        ) : view === 'history' ? (
+          <VotingHistory
+            onSignIn={() => {
+              setAfterLogin('history');
               navigate('login');
             }}
           />
