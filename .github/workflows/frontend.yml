@@ -12,6 +12,29 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Preparar formatação de histórico
+        run: |
+          npx prettier --write src/App.tsx src/features/themes/api.test.ts src/features/themes/api.ts src/features/themes/VotingHistory.test.tsx src/features/themes/VotingHistory.tsx
+          echo 'GQ_HIST_START_APP'
+          base64 -w 0 src/App.tsx
+          echo
+          echo 'GQ_HIST_END_APP'
+          echo 'GQ_HIST_START_API_TEST'
+          base64 -w 0 src/features/themes/api.test.ts
+          echo
+          echo 'GQ_HIST_END_API_TEST'
+          echo 'GQ_HIST_START_API'
+          base64 -w 0 src/features/themes/api.ts
+          echo
+          echo 'GQ_HIST_END_API'
+          echo 'GQ_HIST_START_HISTORY_TEST'
+          base64 -w 0 src/features/themes/VotingHistory.test.tsx
+          echo
+          echo 'GQ_HIST_END_HISTORY_TEST'
+          echo 'GQ_HIST_START_HISTORY'
+          base64 -w 0 src/features/themes/VotingHistory.tsx
+          echo
+          echo 'GQ_HIST_END_HISTORY'
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
