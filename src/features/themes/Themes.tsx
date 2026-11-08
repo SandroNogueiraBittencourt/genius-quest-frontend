@@ -239,6 +239,7 @@ function SignedInThemes() {
                   <select
                     id="themes-category"
                     required
+                    disabled={!categories.isSuccess || categories.data.length === 0}
                     className="ui-input"
                     value={categoriaId}
                     onChange={(event) => setCategoriaId(event.target.value)}
@@ -250,8 +251,18 @@ function SignedInThemes() {
                       </option>
                     ))}
                   </select>
+                  {categories.isPending && (
+                    <p role="status">Carregando categorias aprovadas…</p>
+                  )}
                   {categories.isError && (
                     <p role="alert">Não foi possível carregar as categorias.</p>
+                  )}
+                  {categories.isSuccess && categories.data.length === 0 && (
+                    <p role="alert" className="themes-category-help">
+                      Ainda não há categorias aprovadas. Acesse Categorias,
+                      sugira uma e aguarde a aprovação pela moderação para
+                      enviar seu tema.
+                    </p>
                   )}
                 </div>
                 <Input
@@ -276,7 +287,12 @@ function SignedInThemes() {
                     onChange={(event) => setDescricao(event.target.value)}
                   />
                 </div>
-                <Button type="submit" busy={busy} loadingLabel="Enviando…">
+                <Button
+                  type="submit"
+                  busy={busy}
+                  disabled={!categories.isSuccess || categories.data.length === 0}
+                  loadingLabel="Enviando…"
+                >
                   Enviar sugestão
                 </Button>
               </fieldset>
