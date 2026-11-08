@@ -6,6 +6,8 @@ import { ApiHealth } from './app/ApiHealth';
 import { DesignSystem } from './features/design-system/DesignSystem';
 import { Categories } from './features/categories/Categories';
 import { CategoriesAdmin } from './features/categories/CategoriesAdmin';
+import { Themes } from './features/themes/Themes';
+import { ThemesAdmin } from './features/themes/ThemesAdmin';
 import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
@@ -28,7 +30,11 @@ function Pages() {
   const [logoutError, setLogoutError] = useState('');
   const logoutInFlight = useRef(false);
   const isAuthView = view === 'login' || view === 'register';
-  const isCategoriesView = view === 'categories' || view === 'categories-admin';
+  const isCommunityView =
+    view === 'categories' ||
+    view === 'categories-admin' ||
+    view === 'themes' ||
+    view === 'themes-admin';
   async function logout() {
     const current = useAuthStore.getState().session;
     if (!current || logoutInFlight.current) return;
@@ -77,6 +83,10 @@ function Pages() {
             ? 'Categorias · Genius Quest'
             : view === 'categories-admin'
               ? 'Moderação de categorias · Genius Quest'
+              : view === 'themes'
+                ? 'Temas · Genius Quest'
+                : view === 'themes-admin'
+                  ? 'Moderação de temas · Genius Quest'
               : view === 'lobby'
                 ? 'Sua sala · Genius Quest'
                 : view === 'design-system'
@@ -100,7 +110,7 @@ function Pages() {
       return;
     event.preventDefault();
     if (next === 'login' || next === 'register')
-      setAfterLogin(isCategoriesView ? view : 'home');
+      setAfterLogin(isCommunityView ? view : 'home');
     navigate(next);
   }
   if (view === 'design-system')
@@ -150,6 +160,22 @@ function Pages() {
           >
             Categorias
           </a>
+          <a
+            href="?view=themes"
+            aria-current={view === 'themes' ? 'page' : undefined}
+            onClick={(event) => open(event, 'themes')}
+          >
+            Temas e votação
+          </a>
+          {auth && hasAdminClaim(auth.token) && (
+            <a
+              href="?view=themes-admin"
+              aria-current={view === 'themes-admin' ? 'page' : undefined}
+              onClick={(event) => open(event, 'themes-admin')}
+            >
+              Moderar temas
+            </a>
+          )}
           {auth && hasAdminClaim(auth.token) && (
             <a
               href="?view=categories-admin"
@@ -290,6 +316,20 @@ function Pages() {
           <CategoriesAdmin
             onSignIn={() => {
               setAfterLogin('categories-admin');
+              navigate('login');
+            }}
+          />
+        ) : view === 'themes' ? (
+          <Themes
+            onSignIn={() => {
+              setAfterLogin('themes');
+              navigate('login');
+            }}
+          />
+        ) : view === 'themes-admin' ? (
+          <ThemesAdmin
+            onSignIn={() => {
+              setAfterLogin('themes-admin');
               navigate('login');
             }}
           />

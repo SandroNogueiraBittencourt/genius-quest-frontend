@@ -1,0 +1,126 @@
+.themes-page {
+  margin: 24px 0 48px;
+}
+.themes-heading {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--color-border);
+}
+.themes-heading h1 {
+  margin: 12px 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.2;
+}
+.themes-heading p {
+  max-width: 640px;
+  color: var(--color-muted);
+}
+.themes-layout,
+.themes-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+.themes-layout > section,
+.themes-admin-layout > section {
+  min-width: 0;
+}
+.themes-section-heading,
+.themes-actions,
+.themes-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.themes-section-heading {
+  justify-content: space-between;
+}
+.themes-list {
+  display: grid;
+  gap: 16px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.themes-card {
+  display: grid;
+  gap: 14px;
+}
+.themes-card h3,
+.themes-suggest h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+.themes-card p,
+.themes-suggest p {
+  margin: 0;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+.themes-card .ui-button {
+  justify-self: start;
+}
+.themes-fields {
+  display: grid;
+  gap: 20px;
+  padding: 20px 0 0;
+  border: 0;
+  min-width: 0;
+}
+.themes-fields textarea {
+  width: 100%;
+  resize: vertical;
+}
+.themes-suggest {
+  background: var(--color-primary-soft);
+}
+.themes-suggest form {
+  margin-top: 12px;
+}
+.themes-login {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.themes-success {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #d4faed;
+  color: #174e3d;
+  margin: 16px 0;
+}
+.themes-cycle {
+  margin: 16px 0;
+  color: var(--color-muted);
+}
+.themes-ranking {
+  margin-top: 36px;
+}
+.themes-ranking ol {
+  display: grid;
+  gap: 12px;
+  padding-left: 24px;
+}
+.themes-ranking li {
+  padding: 12px;
+}
+.themes-ranking li span {
+  float: right;
+}
+.themes-state {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.themes-filters {
+  margin: 20px 0;
+}
+.themes-admin-layout > section > h2 {
+  margin: 0 0 16px;
+}
+@media (max-width: 780px) {
+  .themes-layout,
+  .themes-admin-layout {
+    grid-template-columns: 1fr;
+  }
+}
