@@ -239,7 +239,9 @@ function SignedInThemes() {
                   <select
                     id="themes-category"
                     required
-                    disabled={!categories.isSuccess || categories.data.length === 0}
+                    disabled={
+                      !categories.isSuccess || categories.data.length === 0
+                    }
                     className="ui-input"
                     value={categoriaId}
                     onChange={(event) => setCategoriaId(event.target.value)}
@@ -290,7 +292,9 @@ function SignedInThemes() {
                 <Button
                   type="submit"
                   busy={busy}
-                  disabled={!categories.isSuccess || categories.data.length === 0}
+                  disabled={
+                    !categories.isSuccess || categories.data.length === 0
+                  }
                   loadingLabel="Enviando…"
                 >
                   Enviar sugestão

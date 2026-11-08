@@ -12,10 +12,12 @@ function json(body: unknown, status = 200) {
 }
 
 beforeEach(() => {
-  useAuthStore.getState().start(
-    { token: 'token-de-teste', tipo: 'Bearer', expiraEm: 3600 },
-    'teste@geniusquest.local',
-  );
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'token-de-teste', tipo: 'Bearer', expiraEm: 3600 },
+      'teste@geniusquest.local',
+    );
 });
 
 afterEach(() => {
@@ -50,5 +52,7 @@ it('explica a ausência de categorias e impede o envio de sugestões', async () 
   expect(
     screen.getByRole('combobox', { name: 'Categoria aprovada' }),
   ).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Enviar sugestão' })).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Enviar sugestão' }),
+  ).toBeDisabled();
 });
