@@ -122,14 +122,9 @@ function SignedInThemes() {
       setNotice('Seu voto foi registrado!');
       await client.invalidateQueries({ queryKey: ['themes', 'ranking'] });
     } catch (cause) {
-      if (cause instanceof ApiError && cause.status === 409) {
-        setVoted((previous) => [...previous, id]);
-        setError('Seu voto já foi registrado para este tema e ciclo.');
-      } else {
-        setError(
-          cause instanceof Error ? cause.message : 'Não foi possível votar.',
-        );
-      }
+      setError(
+        cause instanceof Error ? cause.message : 'Não foi possível votar.',
+      );
     } finally {
       setVotingId(null);
     }
