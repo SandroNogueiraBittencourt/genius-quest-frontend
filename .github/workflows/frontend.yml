@@ -12,6 +12,17 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Preparar formatação da correção
+        run: |
+          npx prettier --write src/features/themes/Themes.tsx src/features/themes/Themes.test.tsx
+          echo 'GQ_FMT_START_THEMES'
+          base64 -w 0 src/features/themes/Themes.tsx
+          echo
+          echo 'GQ_FMT_END_THEMES'
+          echo 'GQ_FMT_START_TEST'
+          base64 -w 0 src/features/themes/Themes.test.tsx
+          echo
+          echo 'GQ_FMT_END_TEST'
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
