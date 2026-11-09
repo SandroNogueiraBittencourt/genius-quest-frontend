@@ -6,7 +6,10 @@ export type View =
   | 'login'
   | 'register'
   | 'categories'
-  | 'categories-admin';
+  | 'categories-admin'
+  | 'themes'
+  | 'themes-admin'
+  | 'history';
 function currentView(): View {
   const view = new URLSearchParams(window.location.search).get('view');
   return view === 'lobby' ||
@@ -14,7 +17,10 @@ function currentView(): View {
     view === 'login' ||
     view === 'register' ||
     view === 'categories' ||
-    view === 'categories-admin'
+    view === 'categories-admin' ||
+    view === 'themes' ||
+    view === 'themes-admin' ||
+    view === 'history'
     ? view
     : 'home';
 }
