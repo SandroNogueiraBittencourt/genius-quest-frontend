@@ -18,8 +18,8 @@ export function QuizPreparation({
         <span className="gq-kicker">Do tema vencedor à nova descoberta</span>
         <h1>Minhas partidas.</h1>
         <p>
-          Prepare partidas a partir dos temas que venceram as votações.
-          O quiz com perguntas e pontuação será liberado em outra etapa.
+          Prepare partidas a partir dos temas que venceram as votações. O quiz
+          com perguntas e pontuação será liberado em outra etapa.
         </p>
       </header>
       {session ? (
@@ -76,8 +76,8 @@ function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
         <Card>
           <h3>Você ainda não preparou nenhuma partida.</h3>
           <p>
-            Escolha uma votação encerrada com vencedor na página Resultados
-            e clique em “Preparar partida com este tema”.
+            Escolha uma votação encerrada com vencedor na página Resultados e
+            clique em “Preparar partida com este tema”.
           </p>
           <Button variant="secondary" onClick={onViewHistory}>
             Explorar resultados
@@ -98,7 +98,8 @@ function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
                 </p>
                 <p>
                   <time dateTime={match.criadoEm}>
-                    Preparada em {new Date(match.criadoEm).toLocaleString('pt-BR')}
+                    Preparada em{' '}
+                    {new Date(match.criadoEm).toLocaleString('pt-BR')}
                   </time>
                 </p>
                 <p className="quiz-preparation-disclaimer">

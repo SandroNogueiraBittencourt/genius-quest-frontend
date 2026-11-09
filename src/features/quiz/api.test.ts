@@ -20,10 +20,12 @@ function response(body: unknown, status = 200) {
 }
 
 beforeEach(() => {
-  useAuthStore.getState().start(
-    { token: 'token-partida', tipo: 'Bearer', expiraEm: 3600 },
-    'jogador@geniusquest.test',
-  );
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'token-partida', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@geniusquest.test',
+    );
 });
 afterEach(() => {
   useAuthStore.setState({ session: null, notice: null });

@@ -55,10 +55,12 @@ it('mostra a partida preparada sem oferecer gameplay inexistente', async () => {
       }),
     ),
   );
-  useAuthStore.getState().start(
-    { token: 'jwt-partida', tipo: 'Bearer', expiraEm: 3600 },
-    'jogador@geniusquest.test',
-  );
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-partida', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@geniusquest.test',
+    );
   mount();
   expect(
     await screen.findByRole('heading', { name: 'Animais Selvagens' }),

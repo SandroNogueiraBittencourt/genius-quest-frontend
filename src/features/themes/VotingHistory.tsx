@@ -90,7 +90,9 @@ function SignedInHistory({ onOpenMatch }: { onOpenMatch?: () => void }) {
       onOpenMatch?.();
     } catch (cause) {
       setPrepareError(
-        cause instanceof Error ? cause.message : 'Não foi possível preparar a partida.',
+        cause instanceof Error
+          ? cause.message
+          : 'Não foi possível preparar a partida.',
       );
     } finally {
       setPreparing(false);

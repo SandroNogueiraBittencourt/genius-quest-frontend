@@ -30,7 +30,10 @@ function validMatch(data: unknown): data is PreparedMatch {
   );
 }
 
-function assertSessionUnchanged(session: ReturnType<typeof useAuthStore.getState>['session'], signal?: AbortSignal) {
+function assertSessionUnchanged(
+  session: ReturnType<typeof useAuthStore.getState>['session'],
+  signal?: AbortSignal,
+) {
   if (signal?.aborted || session !== useAuthStore.getState().session)
     throw new DOMException('Solicitação encerrada.', 'AbortError');
 }
@@ -47,9 +50,13 @@ export async function prepareMatch(cicloId: string): Promise<PreparedMatch> {
   return data;
 }
 
-export async function getMyMatches(signal?: AbortSignal): Promise<PreparedMatch[]> {
+export async function getMyMatches(
+  signal?: AbortSignal,
+): Promise<PreparedMatch[]> {
   const session = useAuthStore.getState().session;
-  const data = await authenticatedRequest<unknown>('/partidas/minhas', { signal });
+  const data = await authenticatedRequest<unknown>('/partidas/minhas', {
+    signal,
+  });
   assertSessionUnchanged(session, signal);
   if (!Array.isArray(data) || !data.every(validMatch))
     throw new ApiError(502, 'A API retornou partidas inválidas.');
