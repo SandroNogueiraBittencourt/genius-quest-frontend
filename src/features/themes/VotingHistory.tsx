@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { useAuthStore } from '../auth/store';
 import { getCycleRanking, getVotingHistory } from './api';
+import { prepareMatch } from '../quiz/api';
 import type { VotingHistoryCycle } from './types';
 import './VotingHistory.css';
 
@@ -14,7 +16,13 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
-export function VotingHistory({ onSignIn }: { onSignIn: () => void }) {
+export function VotingHistory({
+  onSignIn,
+  onOpenMatch,
+}: {
+  onSignIn: () => void;
+  onOpenMatch?: () => void;
+}) {
   const session = useAuthStore((state) => state.session);
   return (
     <section className="history-page">
@@ -27,7 +35,7 @@ export function VotingHistory({ onSignIn }: { onSignIn: () => void }) {
         </p>
       </header>
       {session ? (
-        <SignedInHistory key={session.token} />
+        <SignedInHistory key={session.token} onOpenMatch={onOpenMatch} />
       ) : (
         <Card className="history-login">
           <h2>As descobertas continuam.</h2>
@@ -41,8 +49,12 @@ export function VotingHistory({ onSignIn }: { onSignIn: () => void }) {
   );
 }
 
-function SignedInHistory() {
+function SignedInHistory({ onOpenMatch }: { onOpenMatch?: () => void }) {
   const session = useAuthStore((state) => state.session);
+  const client = useQueryClient();
+  const [preparing, setPreparing] = useState(false);
+  const [prepareError, setPrepareError] = useState('');
+  const [preparedMessage, setPreparedMessage] = useState('');
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const identity = [session?.email, session?.expiresAt];
@@ -65,6 +77,25 @@ function SignedInHistory() {
     retry: false,
     networkMode: 'always',
   });
+
+  async function prepareSelected() {
+    if (!selected || !selected.vencedorTemaId || preparing) return;
+    setPreparing(true);
+    setPrepareError('');
+    setPreparedMessage('');
+    try {
+      const partida = await prepareMatch(selected.id);
+      await client.invalidateQueries({ queryKey: ['quiz', 'my-matches'] });
+      setPreparedMessage('Partida criada para ' + partida.temaTitulo + '.');
+      onOpenMatch?.();
+    } catch (cause) {
+      setPrepareError(
+        cause instanceof Error ? cause.message : 'Não foi possível preparar a partida.',
+      );
+    } finally {
+      setPreparing(false);
+    }
+  }
 
   return (
     <div className="history-layout">
@@ -182,6 +213,24 @@ function SignedInHistory() {
                 <span>Tema vencedor</span>
                 <strong>{selected.vencedorTitulo ?? 'Sem vencedor'}</strong>
               </div>
+              {selected.vencedorTemaId && (
+                <div className="history-prepare-match">
+                  <p>
+                    Crie uma partida vinculada a este vencedor. As perguntas
+                    ainda serão implementadas na próxima subetapa.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    busy={preparing}
+                    loadingLabel="Preparando partida…"
+                    onClick={() => void prepareSelected()}
+                  >
+                    Preparar partida com este tema
+                  </Button>
+                  {prepareError && <Notice message={prepareError} />}
+                  {preparedMessage && <p role="status">{preparedMessage}</p>}
+                </div>
+              )}
               {selected.rankingReconstruido && (
                 <p className="history-reconstructed" role="note">
                   Resultado histórico reconstruído a partir dos votos salvos.
