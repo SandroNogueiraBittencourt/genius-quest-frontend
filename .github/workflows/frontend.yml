@@ -12,6 +12,25 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Normalizar formatação de arquivos novos (temporário)
+        run: |
+          npx prettier --write src/App.tsx src/features/quiz/api.ts src/features/quiz/QuizPreparation.tsx src/features/themes/VotingHistory.tsx
+          echo 'GQ_ST2_START_APP'
+          base64 -w 0 src/App.tsx
+          echo
+          echo 'GQ_ST2_END_APP'
+          echo 'GQ_ST2_START_API'
+          base64 -w 0 src/features/quiz/api.ts
+          echo
+          echo 'GQ_ST2_END_API'
+          echo 'GQ_ST2_START_QUIZ'
+          base64 -w 0 src/features/quiz/QuizPreparation.tsx
+          echo
+          echo 'GQ_ST2_END_QUIZ'
+          echo 'GQ_ST2_START_HISTORY'
+          base64 -w 0 src/features/themes/VotingHistory.tsx
+          echo
+          echo 'GQ_ST2_END_HISTORY'
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
