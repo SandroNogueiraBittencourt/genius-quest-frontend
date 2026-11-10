@@ -9,6 +9,7 @@ import { CategoriesAdmin } from './features/categories/CategoriesAdmin';
 import { Themes } from './features/themes/Themes';
 import { ThemesAdmin } from './features/themes/ThemesAdmin';
 import { VotingHistory } from './features/themes/VotingHistory';
+import { QuizPreparation } from './features/quiz/QuizPreparation';
 import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
@@ -36,7 +37,8 @@ function Pages() {
     view === 'categories-admin' ||
     view === 'themes' ||
     view === 'themes-admin' ||
-    view === 'history';
+    view === 'history' ||
+    view === 'quiz';
   async function logout() {
     const current = useAuthStore.getState().session;
     if (!current || logoutInFlight.current) return;
@@ -91,11 +93,13 @@ function Pages() {
                   ? 'Moderação de temas · Genius Quest'
                   : view === 'history'
                     ? 'Resultados e histórico · Genius Quest'
-                    : view === 'lobby'
-                      ? 'Sua sala · Genius Quest'
-                      : view === 'design-system'
-                        ? 'Design System · Genius Quest'
-                        : 'Genius Quest · Cada pergunta, uma nova memória';
+                    : view === 'quiz'
+                      ? 'Minhas partidas · Genius Quest'
+                      : view === 'lobby'
+                        ? 'Sua sala · Genius Quest'
+                        : view === 'design-system'
+                          ? 'Design System · Genius Quest'
+                          : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -177,6 +181,13 @@ function Pages() {
             onClick={(event) => open(event, 'history')}
           >
             Resultados
+          </a>
+          <a
+            href="?view=quiz"
+            aria-current={view === 'quiz' ? 'page' : undefined}
+            onClick={(event) => open(event, 'quiz')}
+          >
+            Minhas partidas
           </a>
           {auth && hasAdminClaim(auth.token) && (
             <a
@@ -343,6 +354,15 @@ function Pages() {
               setAfterLogin('history');
               navigate('login');
             }}
+            onOpenMatch={() => navigate('quiz')}
+          />
+        ) : view === 'quiz' ? (
+          <QuizPreparation
+            onSignIn={() => {
+              setAfterLogin('quiz');
+              navigate('login');
+            }}
+            onViewHistory={() => navigate('history')}
           />
         ) : view === 'themes-admin' ? (
           <ThemesAdmin
