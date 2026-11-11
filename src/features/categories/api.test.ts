@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useAuthStore } from '../auth/store';
-import { getApprovedCategories, suggestCategory } from './api';
+import {
+  getApprovedCategories,
+  getApprovedCategoriesPage,
+  suggestCategory,
+} from './api';
 
 const category = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -121,4 +125,90 @@ it('descarta uma sugestão que termina após troca de conta', async () => {
     );
   finish(json({ ...category, status: 'PENDENTE' }, 201));
   await expect(request).rejects.toMatchObject({ name: 'AbortError' });
+});
+
+const validCategoryPage = {
+  content: [category],
+  page: {
+    size: 2,
+    number: 0,
+    totalElements: 1,
+    totalPages: 1,
+  },
+};
+
+it('consulta categorias paginadas com JWT e metadados', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(json(validCategoryPage));
+  vi.stubGlobal('fetch', fetchMock);
+
+  const signal = new AbortController().signal;
+  const result = await getApprovedCategoriesPage(0, 2, signal);
+
+  expect(result).toEqual(validCategoryPage);
+  expect(fetchMock).toHaveBeenCalledWith(
+    '/api/categorias/aprovadas?page=0&size=2',
+    expect.objectContaining({
+      method: 'GET',
+      signal,
+      headers: expect.objectContaining({
+        Authorization: 'Bearer test-jwt',
+      }),
+    }),
+  );
+});
+
+it('rejeita parâmetros de paginação inválidos sem consultar a API', async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+
+  await expect(getApprovedCategoriesPage(-1, 10)).rejects.toThrow();
+  await expect(getApprovedCategoriesPage(0, 0)).rejects.toThrow();
+  await expect(getApprovedCategoriesPage(0, 101)).rejects.toThrow();
+  await expect(getApprovedCategoriesPage(1.5, 10)).rejects.toThrow();
+
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it.each([
+  { content: [], page: null },
+  { ...validCategoryPage, content: [{ ...category, status: 'PENDENTE' }] },
+  { ...validCategoryPage, page: { ...validCategoryPage.page, number: -1 } },
+  {
+    ...validCategoryPage,
+    page: { ...validCategoryPage.page, totalElements: 'invalido' },
+  },
+])('rejeita resposta paginada inválida: %j', async (data) => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(data)));
+
+  await expect(getApprovedCategoriesPage(0, 2)).rejects.toMatchObject({
+    status: 502,
+  });
+});
+
+it('descarta resposta paginada após troca de conta', async () => {
+  let finish!: (response: Response) => void;
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockReturnValue(
+      new Promise<Response>((resolve) => {
+        finish = resolve;
+      }),
+    ),
+  );
+
+  const request = getApprovedCategoriesPage(0, 2);
+
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'other-jwt', tipo: 'Bearer', expiraEm: 3600 },
+      'outro@example.test',
+    );
+
+  finish(json(validCategoryPage));
+
+  await expect(request).rejects.toMatchObject({
+    name: 'AbortError',
+  });
 });

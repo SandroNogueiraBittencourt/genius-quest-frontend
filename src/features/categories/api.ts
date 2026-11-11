@@ -1,7 +1,7 @@
 import { ApiError } from '../../services/http';
 import { authenticatedRequest } from '../auth/authenticatedRequest';
 import { useAuthStore } from '../auth/store';
-import type { Category, CategorySuggestion } from './types';
+import type { Category, CategoryPage, CategorySuggestion } from './types';
 
 function isCategory(value: unknown): value is Category {
   if (typeof value !== 'object' || value === null) return false;
@@ -43,6 +43,66 @@ export async function getApprovedCategories(
       'A API retornou uma lista de categorias inválida. Tente novamente.',
     );
   return data;
+}
+
+export async function getApprovedCategoriesPage(
+  page: number,
+  size = 10,
+  signal?: AbortSignal,
+): Promise<CategoryPage> {
+  if (
+    !Number.isInteger(page) ||
+    page < 0 ||
+    !Number.isInteger(size) ||
+    size < 1 ||
+    size > 100
+  ) {
+    throw new Error('Parâmetros de paginação inválidos.');
+  }
+
+  const session = useAuthStore.getState().session;
+
+  const data = await authenticatedRequest<unknown>(
+    `/categorias/aprovadas?page=${page}&size=${size}`,
+    { signal },
+  );
+
+  checkSession(session, signal);
+
+  if (typeof data !== 'object' || data === null) {
+    throw new ApiError(502, 'Resposta de paginação inválida.');
+  }
+
+  const result = data as Record<string, unknown>;
+  const metadata = result.page;
+
+  if (
+    !Array.isArray(result.content) ||
+    !result.content.every(
+      (item) => isCategory(item) && item.status === 'APROVADA',
+    ) ||
+    typeof metadata !== 'object' ||
+    metadata === null
+  ) {
+    throw new ApiError(502, 'Resposta de paginação inválida.');
+  }
+
+  const info = metadata as Record<string, unknown>;
+
+  if (
+    !Number.isInteger(info.number) ||
+    info.number !== page ||
+    !Number.isInteger(info.size) ||
+    info.size !== size ||
+    !Number.isInteger(info.totalElements) ||
+    !Number.isInteger(info.totalPages) ||
+    Number(info.totalElements) < 0 ||
+    Number(info.totalPages) < 0
+  ) {
+    throw new ApiError(502, 'Metadados de paginação inválidos.');
+  }
+
+  return data as CategoryPage;
 }
 
 export async function suggestCategory(
