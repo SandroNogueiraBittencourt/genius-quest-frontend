@@ -295,3 +295,26 @@
   width: 100%;
   min-height: 112px;
 }
+
+/* Navegação acessível para catálogos com mais de uma página. */
+.categories-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+.categories-pagination p {
+  color: var(--color-muted);
+  font-size: 14px;
+  margin: 0;
+}
+.categories-pagination .ui-button {
+  min-height: 44px;
+}
+@media (max-width: 700px) {
+  .categories-pagination {
+    justify-content: center;
+  }
+}

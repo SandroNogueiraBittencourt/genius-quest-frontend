@@ -13,7 +13,19 @@ const category = {
   atualizadoEm: '2026-10-25T12:00:00Z',
 };
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  // GET /categorias/aprovadas agora usa o contrato de paginação.
+  const payload = Array.isArray(body)
+    ? {
+        content: body,
+        page: {
+          size: 10,
+          number: 0,
+          totalElements: body.length,
+          totalPages: Math.ceil(body.length / 10),
+        },
+      }
+    : body;
+  return new Response(JSON.stringify(payload), {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
@@ -60,7 +72,7 @@ it('volta às categorias após login e recarrega os dados ao trocar de conta', a
           json({ token: 'jwt-' + loginCount, tipo: 'Bearer', expiraEm: 3600 }),
         );
       }
-      if (url.endsWith('/categorias/aprovadas'))
+      if (url.includes('/categorias/aprovadas?page='))
         return Promise.resolve(
           json([
             { ...category, nome: loginCount === 1 ? 'Astronomia' : 'História' },
@@ -113,7 +125,7 @@ it('volta às categorias após login e recarrega os dados ao trocar de conta', a
     screen.queryByRole('heading', { name: 'Astronomia' }),
   ).not.toBeInTheDocument();
   const lastRead = fetch.mock.calls
-    .filter(([url]) => String(url).endsWith('/categorias/aprovadas'))
+    .filter(([url]) => String(url).includes('/categorias/aprovadas?page='))
     .at(-1);
   expect(lastRead?.[1]).toMatchObject({
     headers: expect.objectContaining({ Authorization: 'Bearer jwt-2' }),
