@@ -4,7 +4,7 @@ import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { useAuthStore } from '../auth/store';
 import { suggestCategory } from './api';
-import { approvedCategoriesKey, useApprovedCategories } from './queries';
+import { approvedCategoriesKey, useApprovedCategoriesPage } from './queries';
 import type { Category, CategoryStatus } from './types';
 import './Categories.css';
 
@@ -61,7 +61,8 @@ export function Categories({ onSignIn }: { onSignIn: () => void }) {
 }
 
 function SignedInCategories() {
-  const categories = useApprovedCategories();
+  const [page, setPage] = useState(0);
+  const categories = useApprovedCategoriesPage(page, 10);
   const session = useAuthStore((state) => state.session);
   const client = useQueryClient();
   const forbidden =
@@ -115,7 +116,7 @@ function SignedInCategories() {
               </Button>
             )}
           </Card>
-        ) : categories.data.length === 0 ? (
+        ) : categories.data.page.totalElements === 0 ? (
           <Card className="categories-state">
             <span className="categories-state-label">
               Espaço para novas ideias
@@ -126,16 +127,32 @@ function SignedInCategories() {
               disponível nesta lista após revisão.
             </p>
           </Card>
+        ) : categories.data.content.length === 0 ? (
+          <Card className="categories-state">
+            <p>Nenhuma categoria encontrada nesta página.</p>
+            {page > 0 ? (
+              <Button variant="outline" onClick={() => setPage(0)}>
+                Voltar à primeira página
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => void categories.refetch()}
+              >
+                Atualizar lista
+              </Button>
+            )}
+          </Card>
         ) : (
           <>
             <p className="categories-count" role="status">
-              {categories.data.length}{' '}
-              {categories.data.length === 1
+              {categories.data.page.totalElements}{' '}
+              {categories.data.page.totalElements === 1
                 ? 'categoria aprovada'
                 : 'categorias aprovadas'}
             </p>
             <ul className="categories-grid">
-              {categories.data.map((category) => (
+              {categories.data.content.map((category) => (
                 <li key={category.id}>
                   <Card className="category-card">
                     <span className="category-status" data-status="APROVADA">
@@ -150,6 +167,35 @@ function SignedInCategories() {
                 </li>
               ))}
             </ul>
+            {categories.data.page.totalPages > 1 && (
+              <nav
+                className="categories-pagination"
+                aria-label="Paginação de categorias"
+              >
+                <Button
+                  variant="outline"
+                  disabled={page === 0 || categories.isFetching}
+                  onClick={() =>
+                    setPage((previous) => Math.max(0, previous - 1))
+                  }
+                >
+                  Anterior
+                </Button>
+                <p aria-live="polite">
+                  Página {page + 1} de {categories.data.page.totalPages}
+                </p>
+                <Button
+                  variant="outline"
+                  disabled={
+                    page + 1 >= categories.data.page.totalPages ||
+                    categories.isFetching
+                  }
+                  onClick={() => setPage((previous) => previous + 1)}
+                >
+                  Próxima
+                </Button>
+              </nav>
+            )}
           </>
         )}
         <aside className="categories-care">

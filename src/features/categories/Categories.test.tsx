@@ -14,8 +14,26 @@ const category = {
   atualizadoEm: '2026-10-25T12:00:00Z',
 };
 const clients: QueryClient[] = [];
+function categoryPage(
+  content: unknown[],
+  page = 0,
+  size = 10,
+  totalElements = content.length,
+) {
+  return {
+    content,
+    page: {
+      size,
+      number: page,
+      totalElements,
+      totalPages: Math.ceil(totalElements / size),
+    },
+  };
+}
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  // Os arrays dos mocks nesta suíte representam o endpoint de categorias aprovadas.
+  const payload = Array.isArray(body) ? categoryPage(body) : body;
+  return new Response(JSON.stringify(payload), {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
@@ -380,4 +398,68 @@ it('bloqueia envio duplicado, cancela ao sair e descarta sucesso tardio', async 
   expect(posts[0][1].signal.aborted).toBe(true);
   await act(async () => finish(json({ ...category, status: 'PENDENTE' }, 201)));
   expect(page.client.getMutationCache().getAll()).toHaveLength(0);
+});
+
+it('navega entre páginas com contagem global e bloqueia limites', async () => {
+  const primeira = { ...category, id: 'primeira-id', nome: 'Animais' };
+  const ultima = { ...category, id: 'ultima-id', nome: 'Xadrez' };
+  const fetchMock = vi.fn().mockImplementation((url: string) => {
+    if (url.includes('page=0&size=10'))
+      return Promise.resolve(json(categoryPage([primeira], 0, 10, 11)));
+    if (url.includes('page=1&size=10'))
+      return Promise.resolve(json(categoryPage([ultima], 1, 10, 11)));
+    return Promise.resolve(json({ erro: 'Rota inesperada' }, 404));
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  setup();
+  await screen.findByRole('heading', { name: 'Animais' });
+  expect(screen.getByRole('status')).toHaveTextContent(
+    '11 categorias aprovadas',
+  );
+  expect(screen.getByRole('button', { name: 'Anterior' })).toBeDisabled();
+  expect(screen.getByText('Página 1 de 2')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  await screen.findByRole('heading', { name: 'Xadrez' });
+  expect(
+    screen.queryByRole('heading', { name: 'Animais' }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText('Página 2 de 2')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+  expect(fetchMock).toHaveBeenCalledWith(
+    '/api/categorias/aprovadas?page=1&size=10',
+    expect.objectContaining({ method: 'GET' }),
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Anterior' }));
+  await screen.findByRole('heading', { name: 'Animais' });
+  expect(screen.getByText('Página 1 de 2')).toBeInTheDocument();
+});
+
+it('não confunde página vazia com catálogo sem categorias', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation((url: string) =>
+      Promise.resolve(
+        json(
+          url.includes('page=1&size=10')
+            ? categoryPage([], 1, 10, 11)
+            : categoryPage([category], 0, 10, 11),
+        ),
+      ),
+    );
+  vi.stubGlobal('fetch', fetchMock);
+  setup();
+  await screen.findByRole('heading', { name: 'Astronomia' });
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  expect(
+    await screen.findByText('Nenhuma categoria encontrada nesta página.'),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText('A primeira descoberta pode começar com você.'),
+  ).not.toBeInTheDocument();
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Voltar à primeira página' }),
+  );
+  await screen.findByRole('heading', { name: 'Astronomia' });
 });

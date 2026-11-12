@@ -13,3 +13,13 @@ export type CategorySuggestion = {
   nome: string;
   descricao: string;
 };
+
+export type CategoryPage = {
+  content: Category[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+};
