@@ -18,6 +18,7 @@ import { useRoomStore } from './features/room/store';
 import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
 import { AuthLifecycle } from './features/auth/AuthLifecycle';
+import { PasswordRecovery } from './features/auth/PasswordRecovery';
 import { logout as revokeSession } from './features/auth/api';
 import { ApiError } from './services/http';
 import { useAuthStore } from './features/auth/store';
@@ -81,29 +82,33 @@ function Pages() {
   const previousView = useRef(screenId);
   useEffect(() => {
     document.title =
-      view === 'login'
-        ? 'Entrar · Genius Quest'
-        : view === 'register'
-          ? 'Criar conta · Genius Quest'
-          : view === 'categories'
-            ? 'Categorias · Genius Quest'
-            : view === 'categories-admin'
-              ? 'Moderação de categorias · Genius Quest'
-              : view === 'themes'
-                ? 'Temas · Genius Quest'
-                : view === 'questions-admin'
-                  ? 'Curadoria de perguntas · Genius Quest'
-                  : view === 'themes-admin'
-                    ? 'Moderação de temas · Genius Quest'
-                    : view === 'history'
-                      ? 'Resultados e histórico · Genius Quest'
-                      : view === 'quiz'
-                        ? 'Minhas partidas · Genius Quest'
-                        : view === 'lobby'
-                          ? 'Sua sala · Genius Quest'
-                          : view === 'design-system'
-                            ? 'Design System · Genius Quest'
-                            : 'Genius Quest · Cada pergunta, uma nova memória';
+      view === 'forgot-password'
+        ? 'Recuperar senha · Genius Quest'
+        : view === 'reset-password'
+          ? 'Redefinir senha · Genius Quest'
+          : view === 'login'
+            ? 'Entrar · Genius Quest'
+            : view === 'register'
+              ? 'Criar conta · Genius Quest'
+              : view === 'categories'
+                ? 'Categorias · Genius Quest'
+                : view === 'categories-admin'
+                  ? 'Moderação de categorias · Genius Quest'
+                  : view === 'themes'
+                    ? 'Temas · Genius Quest'
+                    : view === 'questions-admin'
+                      ? 'Curadoria de perguntas · Genius Quest'
+                      : view === 'themes-admin'
+                        ? 'Moderação de temas · Genius Quest'
+                        : view === 'history'
+                          ? 'Resultados e histórico · Genius Quest'
+                          : view === 'quiz'
+                            ? 'Minhas partidas · Genius Quest'
+                            : view === 'lobby'
+                              ? 'Sua sala · Genius Quest'
+                              : view === 'design-system'
+                                ? 'Design System · Genius Quest'
+                                : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -314,7 +319,13 @@ function Pages() {
             </div>
           </div>
         )}
-        {isAuthView ? (
+        {view === 'forgot-password' || view === 'reset-password' ? (
+          <PasswordRecovery
+            key={`${view}:${window.location.search}`}
+            mode={view}
+            onNavigate={navigate}
+          />
+        ) : isAuthView ? (
           auth ? (
             <ConnectedAccount
               onHome={() => navigate('home')}
@@ -328,6 +339,7 @@ function Pages() {
               initialEmail={registeredEmail}
               registered={!!registeredEmail}
               onSwitch={(mode) => navigate(mode)}
+              onForgotPassword={() => navigate('forgot-password')}
               onRegistered={(email) => {
                 setRegisteredEmail(email);
                 useAuthStore.getState().dismissNotice();

@@ -5,6 +5,27 @@ import type {
   RegisterRequest,
   UserResponse,
 } from './types';
+export async function requestPasswordReset(
+  email: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await apiRequest<unknown>('/auth/esqueci-senha', {
+    method: 'POST',
+    json: { email: email.trim().toLowerCase() },
+    signal,
+  });
+}
+export async function resetPassword(
+  token: string,
+  novaSenha: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await apiRequest<void>('/auth/redefinir-senha', {
+    method: 'POST',
+    json: { token, novaSenha },
+    signal,
+  });
+}
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

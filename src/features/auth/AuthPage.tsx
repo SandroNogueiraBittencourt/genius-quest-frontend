@@ -20,6 +20,7 @@ type Props = {
   onSwitch: (mode: AuthMode) => void;
   onRegistered: (email: string) => void;
   onSignedIn: () => void;
+  onForgotPassword?: () => void;
 };
 export function AuthPage({
   mode,
@@ -28,6 +29,7 @@ export function AuthPage({
   onSwitch,
   onRegistered,
   onSignedIn,
+  onForgotPassword,
 }: Props) {
   const isRegister = mode === 'register';
   const [nome, setNome] = useState(''),
@@ -275,6 +277,28 @@ export function AuthPage({
             {isRegister ? 'Criar minha conta' : 'Entrar na minha conta'}
           </Button>
         </form>
+        {!isRegister && (
+          <p className="auth-switch">
+            <a
+              href="?view=forgot-password"
+              onClick={(event) => {
+                if (
+                  onForgotPassword &&
+                  event.button === 0 &&
+                  !event.ctrlKey &&
+                  !event.metaKey &&
+                  !event.shiftKey &&
+                  !event.altKey
+                ) {
+                  event.preventDefault();
+                  onForgotPassword();
+                }
+              }}
+            >
+              Esqueci minha senha
+            </a>
+          </p>
+        )}
         <p className="auth-switch">
           {isRegister ? 'Já tem uma conta?' : 'Ainda não tem uma conta?'}{' '}
           <a
