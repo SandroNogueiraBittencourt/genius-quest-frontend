@@ -7,6 +7,7 @@ export type View =
   | 'register'
   | 'categories'
   | 'categories-admin'
+  | 'questions-admin'
   | 'themes'
   | 'themes-admin'
   | 'history'
@@ -19,6 +20,7 @@ function currentView(): View {
     view === 'register' ||
     view === 'categories' ||
     view === 'categories-admin' ||
+    view === 'questions-admin' ||
     view === 'themes' ||
     view === 'themes-admin' ||
     view === 'history' ||

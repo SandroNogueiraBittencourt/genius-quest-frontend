@@ -6,6 +6,7 @@ import { ApiHealth } from './app/ApiHealth';
 import { DesignSystem } from './features/design-system/DesignSystem';
 import { Categories } from './features/categories/Categories';
 import { CategoriesAdmin } from './features/categories/CategoriesAdmin';
+import { QuestionsAdmin } from './features/questions/QuestionsAdmin';
 import { Themes } from './features/themes/Themes';
 import { ThemesAdmin } from './features/themes/ThemesAdmin';
 import { VotingHistory } from './features/themes/VotingHistory';
@@ -35,6 +36,7 @@ function Pages() {
   const isCommunityView =
     view === 'categories' ||
     view === 'categories-admin' ||
+    view === 'questions-admin' ||
     view === 'themes' ||
     view === 'themes-admin' ||
     view === 'history' ||
@@ -89,17 +91,19 @@ function Pages() {
               ? 'Moderação de categorias · Genius Quest'
               : view === 'themes'
                 ? 'Temas · Genius Quest'
-                : view === 'themes-admin'
-                  ? 'Moderação de temas · Genius Quest'
-                  : view === 'history'
-                    ? 'Resultados e histórico · Genius Quest'
-                    : view === 'quiz'
-                      ? 'Minhas partidas · Genius Quest'
-                      : view === 'lobby'
-                        ? 'Sua sala · Genius Quest'
-                        : view === 'design-system'
-                          ? 'Design System · Genius Quest'
-                          : 'Genius Quest · Cada pergunta, uma nova memória';
+                : view === 'questions-admin'
+                  ? 'Curadoria de perguntas · Genius Quest'
+                  : view === 'themes-admin'
+                    ? 'Moderação de temas · Genius Quest'
+                    : view === 'history'
+                      ? 'Resultados e histórico · Genius Quest'
+                      : view === 'quiz'
+                        ? 'Minhas partidas · Genius Quest'
+                        : view === 'lobby'
+                          ? 'Sua sala · Genius Quest'
+                          : view === 'design-system'
+                            ? 'Design System · Genius Quest'
+                            : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -205,6 +209,15 @@ function Pages() {
               onClick={(event) => open(event, 'categories-admin')}
             >
               Moderação
+            </a>
+          )}
+          {auth && hasAdminClaim(auth.token) && (
+            <a
+              href="?view=questions-admin"
+              aria-current={view === 'questions-admin' ? 'page' : undefined}
+              onClick={(event) => open(event, 'questions-admin')}
+            >
+              Moderar perguntas
             </a>
           )}
           {session && (
@@ -363,6 +376,13 @@ function Pages() {
               navigate('login');
             }}
             onViewHistory={() => navigate('history')}
+          />
+        ) : view === 'questions-admin' ? (
+          <QuestionsAdmin
+            onSignIn={() => {
+              setAfterLogin('questions-admin');
+              navigate('login');
+            }}
           />
         ) : view === 'themes-admin' ? (
           <ThemesAdmin
