@@ -268,7 +268,9 @@ it('consulta status IA apenas com JWT e valida cotas retornadas', async () => {
 });
 
 it('envia geração IA com Idempotency-Key e valida retorno PENDENTE', async () => {
-  const fetch = vi.fn().mockResolvedValue(json({ ids: [id], status: 'PENDENTE' }, 201));
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(json({ ids: [id], status: 'PENDENTE' }, 201));
   vi.stubGlobal('fetch', fetch);
   const payload = { temaId: themeId, quantidade: 1 };
   const chave = '550e8400-e29b-41d4-a716-446655440004';
@@ -299,7 +301,10 @@ it('recusa quantidade inválida antes de enviar requisição à IA', async () =>
 it('não aceita retorno com IDs inválidos ou status diferente de PENDENTE', async () => {
   const payload = { temaId: themeId, quantidade: 1 };
   const chave = '550e8400-e29b-41d4-a716-446655440004';
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ids: [id], status: 'APROVADA' }, 201)));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(json({ ids: [id], status: 'APROVADA' }, 201)),
+  );
   await expect(generateAIQuestions(payload, chave)).rejects.toMatchObject({
     status: 502,
   });
