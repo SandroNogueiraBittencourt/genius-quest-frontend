@@ -87,8 +87,8 @@ export function CreateManualQuestion({ onCancel, onCreated }: Props) {
     <Card className="questions-admin-create">
       <h2>Cadastrar pergunta manual</h2>
       <p>
-        A pergunta será enviada para revisão com status pendente.
-        Nenhuma resposta será publicada automaticamente.
+        A pergunta será enviada para revisão com status pendente. Nenhuma
+        resposta será publicada automaticamente.
       </p>
       {themes.isPending ? (
         <p role="status">Consultando temas aprovados…</p>
