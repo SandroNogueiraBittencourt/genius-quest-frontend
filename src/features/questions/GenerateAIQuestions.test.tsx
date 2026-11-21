@@ -57,13 +57,17 @@ afterEach(() => {
 });
 
 it('com flags desativadas exibe aviso e nunca envia POST', async () => {
-  const fetch = vi.fn().mockResolvedValue(json({ ...status, habilitada: false }));
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(json({ ...status, habilitada: false }));
   vi.stubGlobal('fetch', fetch);
   const { client } = setup();
   expect(
     await screen.findByText(/geração por IA está desativada/),
   ).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Solicitar geração' })).toBeNull();
+  expect(
+    screen.queryByRole('button', { name: 'Solicitar geração' }),
+  ).toBeNull();
   expect(fetch).toHaveBeenCalledTimes(1);
   client.clear();
 });
@@ -117,8 +121,12 @@ it('na falha bloqueia nova submissao automatica e orienta verificar a fila', asy
   fireEvent.click(screen.getByRole('checkbox'));
   fireEvent.click(screen.getByRole('button', { name: 'Solicitar geração' }));
   expect(await screen.findByText(/Cota indisponível/)).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Solicitar geração' })).toBeDisabled();
-  expect(screen.getByText(/Essa tentativa não será repetida automaticamente/)).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Solicitar geração' }),
+  ).toBeDisabled();
+  expect(
+    screen.getByText(/Essa tentativa não será repetida automaticamente/),
+  ).toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(3);
   client.clear();
 });
