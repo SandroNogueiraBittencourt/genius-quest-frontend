@@ -231,7 +231,10 @@ it('não aceita cadastro manual sem sessão ou resposta sem UUID', async () => {
       { token: 'jwt-admin', tipo: 'Bearer', expiraEm: 3600 },
       'admin@example.test',
     );
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ id: 'inválido' }, 201)));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(json({ id: 'inválido' }, 201)),
+  );
   await expect(createManualQuestion(payload)).rejects.toMatchObject({
     status: 502,
   });
