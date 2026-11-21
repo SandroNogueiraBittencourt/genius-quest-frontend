@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useAuthStore } from '../auth/store';
 import {
+  createManualQuestion,
   decideQuestion,
   getManagedQuestion,
   getQuestionHistory,
@@ -184,4 +185,57 @@ it('propaga 403 sem invalidar a sessão e descarta resposta após troca de conta
     );
   resolve(json(question));
   await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+});
+
+it('cadastra candidata manual por POST ADMIN e valida o UUID retornado', async () => {
+  const fetch = vi.fn().mockResolvedValue(json({ id }, 201));
+  vi.stubGlobal('fetch', fetch);
+  const payload = {
+    temaId: themeId,
+    enunciado: question.enunciado,
+    alternativas: question.alternativas,
+    respostaCorretaIndice: 1,
+    dificuldadeInicial: 'FACIL' as const,
+    fonteReferencia: null,
+  };
+  await expect(createManualQuestion(payload)).resolves.toBe(id);
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/admin/perguntas',
+    expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: expect.objectContaining({ Authorization: 'Bearer jwt-admin' }),
+    }),
+  );
+});
+
+it('não aceita cadastro manual sem sessão ou resposta sem UUID', async () => {
+  useAuthStore.getState().end(null);
+  const fetch = vi.fn();
+  vi.stubGlobal('fetch', fetch);
+  const payload = {
+    temaId: themeId,
+    enunciado: question.enunciado,
+    alternativas: question.alternativas,
+    respostaCorretaIndice: 1,
+    dificuldadeInicial: 'FACIL' as const,
+    fonteReferencia: null,
+  };
+  await expect(createManualQuestion(payload)).rejects.toMatchObject({
+    status: 401,
+  });
+  expect(fetch).not.toHaveBeenCalled();
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-admin', tipo: 'Bearer', expiraEm: 3600 },
+      'admin@example.test',
+    );
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(json({ id: 'inválido' }, 201)),
+  );
+  await expect(createManualQuestion(payload)).rejects.toMatchObject({
+    status: 502,
+  });
 });

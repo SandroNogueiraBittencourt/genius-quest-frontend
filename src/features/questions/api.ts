@@ -4,6 +4,7 @@ import { useAuthStore } from '../auth/store';
 import type {
   ManagedQuestion,
   ManagedQuestionPage,
+  ManualQuestionInput,
   QuestionDecision,
   QuestionHistory,
   QuestionReview,
@@ -191,4 +192,25 @@ export async function decideQuestion(
   if (!isManagedQuestion(data) || data.id !== id)
     throw new ApiError(502, 'A API não confirmou a decisão.');
   return data;
+}
+
+/** Cria uma candidata PENDENTE; a resposta retorna somente o identificador. */
+export async function createManualQuestion(
+  request: ManualQuestionInput,
+  signal?: AbortSignal,
+): Promise<string> {
+  const previous = useAuthStore.getState().session;
+  const data = await authenticatedRequest<unknown>('/admin/perguntas', {
+    method: 'POST',
+    json: request,
+    signal,
+  });
+  unchangedSession(previous, signal);
+  if (
+    !record(data) ||
+    typeof data.id !== 'string' ||
+    !/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(data.id)
+  )
+    throw new ApiError(502, 'A API não confirmou o cadastro da pergunta.');
+  return data.id;
 }

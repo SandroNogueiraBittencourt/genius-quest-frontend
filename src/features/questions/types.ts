@@ -51,3 +51,13 @@ export type QuestionHistory = {
   depois: string | null;
   criadoEm: string;
 };
+
+/** Payload enviado apenas à API ADMIN; a questão começa como MANUAL/PENDENTE. */
+export type ManualQuestionInput = {
+  temaId: string;
+  enunciado: string;
+  alternativas: string[];
+  respostaCorretaIndice: number;
+  dificuldadeInicial: QuestionDifficulty;
+  fonteReferencia: string | null;
+};

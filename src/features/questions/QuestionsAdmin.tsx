@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
+import { CreateManualQuestion } from './CreateManualQuestion';
 import { useAuthStore } from '../auth/store';
 import { hasAdminClaim } from '../categories/permissions';
 import {
@@ -67,6 +68,7 @@ function AdminPanel() {
   const session = useAuthStore((state) => state.session);
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<QuestionStatus | 'TODAS'>('PENDENTE');
+  const [creating, setCreating] = useState(false);
   const [temaId, setTemaId] = useState('');
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -186,6 +188,22 @@ function AdminPanel() {
 
   const forbidden = list.error instanceof ApiError && list.error.status === 403;
   const question = detail.data;
+  function createdManualQuestion(id: string) {
+    setCreating(false);
+    setStatus('PENDENTE');
+    setTemaId('');
+    setPage(0);
+    setSelectedId(id);
+    setEditing(false);
+    setShowHistory(false);
+    setDecision(null);
+    setMessage(
+      'Pergunta cadastrada como pendente. Revise o conteúdo antes de aprovar.',
+    );
+    setError('');
+    void queryClient.invalidateQueries({ queryKey: ['questions-admin'] });
+  }
+
   return (
     <div className="questions-admin-body">
       <p className="questions-admin-security">
@@ -198,6 +216,18 @@ function AdminPanel() {
           {message}
         </p>
       )}
+      <div className="questions-admin-create-area">
+        {creating ? (
+          <CreateManualQuestion
+            onCreated={createdManualQuestion}
+            onCancel={() => setCreating(false)}
+          />
+        ) : (
+          <Button variant="secondary" onClick={() => setCreating(true)}>
+            Nova pergunta manual
+          </Button>
+        )}
+      </div>
       <div className="questions-admin-layout">
         <section aria-labelledby="questions-list-title">
           <div className="questions-admin-toolbar">
