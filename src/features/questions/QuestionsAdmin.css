@@ -189,3 +189,36 @@
   min-height: 110px;
   resize: vertical;
 }
+
+.questions-admin-ia h2 {
+  margin-top: 0;
+}
+.questions-admin-ia p {
+  margin-bottom: 16px;
+}
+.questions-admin-ia fieldset {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin-top: 18px;
+}
+.questions-admin-ia select {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: white;
+  color: var(--color-dark);
+  padding: 12px;
+  font: inherit;
+}
+.questions-admin-ia-confirm {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  line-height: 1.5;
+}
+.questions-admin-ia-confirm input {
+  margin-top: 5px;
+}
