@@ -1,0 +1,23 @@
+name: Preview Prettier - temporary diagnostics
+on:
+  push:
+    branches:
+      - feature/curadoria-formulario-manual-20261121
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Print Prettier changes (no writeback)
+        run: |
+          ./node_modules/.bin/prettier --write src/features/questions/CreateManualQuestion.tsx src/features/questions/CreateManualQuestion.test.tsx src/features/questions/QuestionsAdmin.tsx src/features/questions/api.test.ts
+          echo 'FORMAT_DIFF_BEGIN'
+          git diff --no-ext-diff --unified=0 -- src/features/questions/CreateManualQuestion.tsx src/features/questions/CreateManualQuestion.test.tsx src/features/questions/QuestionsAdmin.tsx src/features/questions/api.test.ts
+          echo 'FORMAT_DIFF_END'
