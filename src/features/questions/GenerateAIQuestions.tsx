@@ -3,10 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { getManagedThemes } from '../themes/api';
-import {
-  generateAIQuestions,
-  getAIQuestionGenerationStatus,
-} from './api';
+import { generateAIQuestions, getAIQuestionGenerationStatus } from './api';
 
 type Props = {
   onCancel: () => void;
@@ -60,7 +57,9 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
       limites.perguntasHoje + quantidade > limites.limitePerguntasDiarias ||
       !confirmado
     ) {
-      setError('Confira o tema, a quantidade, a cota disponível e a confirmação de custo.');
+      setError(
+        'Confira o tema, a quantidade, a cota disponível e a confirmação de custo.',
+      );
       return;
     }
 
@@ -164,7 +163,12 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
               <Notice message="Essa tentativa não será repetida automaticamente. Verifique a fila de perguntas antes de solicitar outra; uma falha ou timeout pode ter gerado custo." />
             )}
             <div className="questions-admin-actions">
-              <Button type="submit" variant="secondary" busy={busy} disabled={attempted}>
+              <Button
+                type="submit"
+                variant="secondary"
+                busy={busy}
+                disabled={attempted}
+              >
                 Solicitar geração
               </Button>
               <Button variant="outline" disabled={busy} onClick={onCancel}>
