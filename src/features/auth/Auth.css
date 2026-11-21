@@ -200,3 +200,8 @@
   border-radius: 16px;
   background: var(--color-primary-soft);
 }
+
+.auth-recovery {
+  max-width: 660px;
+  margin: 24px auto 40px;
+}
