@@ -6,6 +6,7 @@ import { ApiHealth } from './app/ApiHealth';
 import { DesignSystem } from './features/design-system/DesignSystem';
 import { Categories } from './features/categories/Categories';
 import { CategoriesAdmin } from './features/categories/CategoriesAdmin';
+import { QuestionsAdmin } from './features/questions/QuestionsAdmin';
 import { Themes } from './features/themes/Themes';
 import { ThemesAdmin } from './features/themes/ThemesAdmin';
 import { VotingHistory } from './features/themes/VotingHistory';
@@ -16,6 +17,7 @@ import { Lobby } from './features/room/Lobby';
 import { useRoomStore } from './features/room/store';
 import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
+import { PasswordRecovery } from './features/auth/PasswordRecovery';
 import { AuthLifecycle } from './features/auth/AuthLifecycle';
 import { logout as revokeSession } from './features/auth/api';
 import { ApiError } from './services/http';
@@ -35,6 +37,7 @@ function Pages() {
   const isCommunityView =
     view === 'categories' ||
     view === 'categories-admin' ||
+    view === 'questions-admin' ||
     view === 'themes' ||
     view === 'themes-admin' ||
     view === 'history' ||
@@ -79,27 +82,33 @@ function Pages() {
   const previousView = useRef(screenId);
   useEffect(() => {
     document.title =
-      view === 'login'
-        ? 'Entrar · Genius Quest'
-        : view === 'register'
-          ? 'Criar conta · Genius Quest'
-          : view === 'categories'
-            ? 'Categorias · Genius Quest'
-            : view === 'categories-admin'
-              ? 'Moderação de categorias · Genius Quest'
-              : view === 'themes'
-                ? 'Temas · Genius Quest'
-                : view === 'themes-admin'
-                  ? 'Moderação de temas · Genius Quest'
-                  : view === 'history'
-                    ? 'Resultados e histórico · Genius Quest'
-                    : view === 'quiz'
-                      ? 'Minhas partidas · Genius Quest'
-                      : view === 'lobby'
-                        ? 'Sua sala · Genius Quest'
-                        : view === 'design-system'
-                          ? 'Design System · Genius Quest'
-                          : 'Genius Quest · Cada pergunta, uma nova memória';
+      view === 'forgot-password'
+        ? 'Recuperar senha · Genius Quest'
+        : view === 'reset-password'
+          ? 'Redefinir senha · Genius Quest'
+          : view === 'login'
+            ? 'Entrar · Genius Quest'
+            : view === 'register'
+              ? 'Criar conta · Genius Quest'
+              : view === 'categories'
+                ? 'Categorias · Genius Quest'
+                : view === 'categories-admin'
+                  ? 'Moderação de categorias · Genius Quest'
+                  : view === 'themes'
+                    ? 'Temas · Genius Quest'
+                    : view === 'questions-admin'
+                      ? 'Curadoria de perguntas · Genius Quest'
+                      : view === 'themes-admin'
+                        ? 'Moderação de temas · Genius Quest'
+                        : view === 'history'
+                          ? 'Resultados e histórico · Genius Quest'
+                          : view === 'quiz'
+                            ? 'Minhas partidas · Genius Quest'
+                            : view === 'lobby'
+                              ? 'Sua sala · Genius Quest'
+                              : view === 'design-system'
+                                ? 'Design System · Genius Quest'
+                                : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -207,6 +216,15 @@ function Pages() {
               Moderação
             </a>
           )}
+          {auth && hasAdminClaim(auth.token) && (
+            <a
+              href="?view=questions-admin"
+              aria-current={view === 'questions-admin' ? 'page' : undefined}
+              onClick={(event) => open(event, 'questions-admin')}
+            >
+              Moderar perguntas
+            </a>
+          )}
           {session && (
             <a
               href="?view=lobby"
@@ -301,7 +319,13 @@ function Pages() {
             </div>
           </div>
         )}
-        {isAuthView ? (
+        {view === 'forgot-password' || view === 'reset-password' ? (
+          <PasswordRecovery
+            key={`${view}:${window.location.search}`}
+            mode={view}
+            onNavigate={navigate}
+          />
+        ) : isAuthView ? (
           auth ? (
             <ConnectedAccount
               onHome={() => navigate('home')}
@@ -315,6 +339,7 @@ function Pages() {
               initialEmail={registeredEmail}
               registered={!!registeredEmail}
               onSwitch={(mode) => navigate(mode)}
+              onForgotPassword={() => navigate('forgot-password')}
               onRegistered={(email) => {
                 setRegisteredEmail(email);
                 useAuthStore.getState().dismissNotice();
@@ -363,6 +388,13 @@ function Pages() {
               navigate('login');
             }}
             onViewHistory={() => navigate('history')}
+          />
+        ) : view === 'questions-admin' ? (
+          <QuestionsAdmin
+            onSignIn={() => {
+              setAfterLogin('questions-admin');
+              navigate('login');
+            }}
           />
         ) : view === 'themes-admin' ? (
           <ThemesAdmin
