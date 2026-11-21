@@ -18,7 +18,8 @@ export function CreateManualQuestion({ onCancel, onCreated }: Props) {
     retry: false,
     refetchOnReconnect: false,
   });
-  const approvedThemes = themes.data?.filter((theme) => theme.status === 'APROVADO') ?? [];
+  const approvedThemes =
+    themes.data?.filter((theme) => theme.status === 'APROVADO') ?? [];
   const [temaId, setTemaId] = useState('');
   const [enunciado, setEnunciado] = useState('');
   const [alternativas, setAlternativas] = useState(['', '', '', '']);
@@ -33,7 +34,9 @@ export function CreateManualQuestion({ onCancel, onCreated }: Props) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || request.current) return;
-    const normalized = alternativas.map((text) => text.trim().toLocaleLowerCase('pt-BR'));
+    const normalized = alternativas.map((text) =>
+      text.trim().toLocaleLowerCase('pt-BR'),
+    );
     if (
       !approvedThemes.some((theme) => theme.id === temaId) ||
       enunciado.trim().length < 15 ||
