@@ -113,7 +113,7 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
         <Notice message="É necessário haver um tema aprovado para solicitar geração." />
       ) : (
         <form onSubmit={(event) => void submit(event)}>
-          <fieldset disabled={busy || attempted}>
+          <fieldset disabled={busy}>
             <legend>Solicitação de geração</legend>
             <p role="status">
               Cota de hoje: {status.data.requisicoesHoje} de{' '}
@@ -164,7 +164,7 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
               <Notice message="Essa tentativa não será repetida automaticamente. Verifique a fila de perguntas antes de solicitar outra; uma falha ou timeout pode ter gerado custo." />
             )}
             <div className="questions-admin-actions">
-              <Button type="submit" variant="secondary" busy={busy}>
+              <Button type="submit" variant="secondary" busy={busy} disabled={attempted}>
                 Solicitar geração
               </Button>
               <Button variant="outline" disabled={busy} onClick={onCancel}>
