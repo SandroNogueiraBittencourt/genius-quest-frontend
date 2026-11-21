@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { CreateManualQuestion } from './CreateManualQuestion';
+import { GenerateAIQuestions } from './GenerateAIQuestions';
 import { useAuthStore } from '../auth/store';
 import { hasAdminClaim } from '../categories/permissions';
 import {
@@ -69,6 +70,7 @@ function AdminPanel() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<QuestionStatus | 'TODAS'>('PENDENTE');
   const [creating, setCreating] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [temaId, setTemaId] = useState('');
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -204,6 +206,20 @@ function AdminPanel() {
     void queryClient.invalidateQueries({ queryKey: ['questions-admin'] });
   }
 
+  function generatedQuestions(ids: string[]) {
+    setGenerating(false);
+    setStatus('PENDENTE');
+    setTemaId('');
+    setPage(0);
+    setSelectedId(ids[0] ?? null);
+    setEditing(false);
+    setShowHistory(false);
+    setDecision(null);
+    setMessage(`${ids.length} candidata(s) gerada(s) e enviada(s) para revisão humana.`);
+    setError('');
+    void queryClient.invalidateQueries({ queryKey: ['questions-admin'] });
+  }
+
   return (
     <div className="questions-admin-body">
       <p className="questions-admin-security">
@@ -222,10 +238,20 @@ function AdminPanel() {
             onCreated={createdManualQuestion}
             onCancel={() => setCreating(false)}
           />
+        ) : generating ? (
+          <GenerateAIQuestions
+            onGenerated={generatedQuestions}
+            onCancel={() => setGenerating(false)}
+          />
         ) : (
-          <Button variant="secondary" onClick={() => setCreating(true)}>
-            Nova pergunta manual
-          </Button>
+          <div className="questions-admin-actions">
+            <Button variant="secondary" onClick={() => setCreating(true)}>
+              Nova pergunta manual
+            </Button>
+            <Button variant="outline" onClick={() => setGenerating(true)}>
+              Gerar candidatas com IA
+            </Button>
+          </div>
         )}
       </div>
       <div className="questions-admin-layout">
