@@ -66,7 +66,9 @@ it('lista só temas aprovados e cadastra pergunta pendente por POST autenticado'
   });
   vi.stubGlobal('fetch', fetch);
   const { client, onCreated } = setup();
-  expect(await screen.findByRole('option', { name: 'Astronomia' })).toBeInTheDocument();
+  expect(
+    await screen.findByRole('option', { name: 'Astronomia' }),
+  ).toBeInTheDocument();
   expect(screen.queryByRole('option', { name: 'Tema pendente' })).toBeNull();
   fireEvent.change(screen.getByLabelText('Tema aprovado'), {
     target: { value: themeId },
@@ -75,14 +77,19 @@ it('lista só temas aprovados e cadastra pergunta pendente por POST autenticado'
     target: { value: 'Qual planeta é conhecido como planeta vermelho?' },
   });
   for (const [index, text] of ['Terra', 'Marte', 'Vênus', 'Netuno'].entries()) {
-    fireEvent.change(screen.getByLabelText(`Alternativa ${String.fromCharCode(65 + index)}`), {
-      target: { value: text },
-    });
+    fireEvent.change(
+      screen.getByLabelText(`Alternativa ${String.fromCharCode(65 + index)}`),
+      {
+        target: { value: text },
+      },
+    );
   }
   fireEvent.change(screen.getByLabelText('Alternativa correta'), {
     target: { value: '1' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Cadastrar como pendente' }));
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Cadastrar como pendente' }),
+  );
   await waitFor(() => expect(onCreated).toHaveBeenCalledWith(questionId));
   expect(fetch).toHaveBeenCalledWith(
     '/api/admin/perguntas',
@@ -117,8 +124,12 @@ it('bloqueia alternativas duplicadas sem enviar POST', async () => {
       target: { value: 'Marte' },
     });
   }
-  fireEvent.click(screen.getByRole('button', { name: 'Cadastrar como pendente' }));
-  expect(await screen.findByText(/quatro alternativas distintas/)).toBeInTheDocument();
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Cadastrar como pendente' }),
+  );
+  expect(
+    await screen.findByText(/quatro alternativas distintas/),
+  ).toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(1);
   client.clear();
 });
@@ -127,8 +138,12 @@ it('não apresenta formulário quando não há temas aprovados', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(themes.slice(1))));
   const { client } = setup();
   expect(
-    await screen.findByText('Não existem temas aprovados disponíveis para cadastrar perguntas.'),
+    await screen.findByText(
+      'Não existem temas aprovados disponíveis para cadastrar perguntas.',
+    ),
   ).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Cadastrar como pendente' })).toBeNull();
+  expect(
+    screen.queryByRole('button', { name: 'Cadastrar como pendente' }),
+  ).toBeNull();
   client.clear();
 });
