@@ -2,6 +2,8 @@ import { ApiError } from '../../services/http';
 import { authenticatedRequest } from '../auth/authenticatedRequest';
 import { useAuthStore } from '../auth/store';
 import type {
+  AIQuestionGenerationInput,
+  AIQuestionGenerationStatus,
   ManagedQuestion,
   ManagedQuestionPage,
   ManualQuestionInput,
@@ -213,4 +215,75 @@ export async function createManualQuestion(
   )
     throw new ApiError(502, 'A API não confirmou o cadastro da pergunta.');
   return data.id;
+}
+
+/** Consulta quota e flags sem iniciar geração ou consumir tokens. */
+export async function getAIQuestionGenerationStatus(
+  signal?: AbortSignal,
+): Promise<AIQuestionGenerationStatus> {
+  const previous = useAuthStore.getState().session;
+  const data = await authenticatedRequest<unknown>(
+    '/admin/perguntas/geracao/status',
+    { signal },
+  );
+  unchangedSession(previous, signal);
+  if (
+    !record(data) ||
+    typeof data.habilitada !== 'boolean' ||
+    ![
+      'maximoPorSolicitacao',
+      'limiteRequisicoesDiarias',
+      'requisicoesHoje',
+      'limitePerguntasDiarias',
+      'perguntasHoje',
+    ].every(
+      (key) => Number.isInteger(data[key]) && Number(data[key]) >= 0,
+    ) ||
+    Number(data.maximoPorSolicitacao) < 1 ||
+    Number(data.requisicoesHoje) > Number(data.limiteRequisicoesDiarias) ||
+    Number(data.perguntasHoje) > Number(data.limitePerguntasDiarias)
+  )
+    throw new ApiError(502, 'A API retornou limites de geração inválidos.');
+  return data as AIQuestionGenerationStatus;
+}
+
+/** POST explícito, sem retry automático, com UUID de tentativa único. */
+export async function generateAIQuestions(
+  request: AIQuestionGenerationInput,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  if (
+    !Number.isInteger(request.quantidade) ||
+    request.quantidade < 1 ||
+    request.quantidade > 3 ||
+    !/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(
+      request.temaId,
+    )
+  )
+    throw new Error('Solicitação de geração inválida.');
+  const previous = useAuthStore.getState().session;
+  const data = await authenticatedRequest<unknown>(
+    '/admin/perguntas/geracao',
+    {
+      method: 'POST',
+      json: request,
+      idempotencyKey,
+      signal,
+    },
+  );
+  unchangedSession(previous, signal);
+  if (
+    !record(data) ||
+    data.status !== 'PENDENTE' ||
+    !Array.isArray(data.ids) ||
+    data.ids.length !== request.quantidade ||
+    !data.ids.every(
+      (id) =>
+        typeof id === 'string' &&
+        /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(id),
+    )
+  )
+    throw new ApiError(502, 'A API não confirmou a geração de candidatas pendentes.');
+  return data.ids as string[];
 }
