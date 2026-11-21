@@ -215,7 +215,9 @@ function AdminPanel() {
     setEditing(false);
     setShowHistory(false);
     setDecision(null);
-    setMessage(`${ids.length} candidata(s) gerada(s) e enviada(s) para revisão humana.`);
+    setMessage(
+      `${ids.length} candidata(s) gerada(s) e enviada(s) para revisão humana.`,
+    );
     setError('');
     void queryClient.invalidateQueries({ queryKey: ['questions-admin'] });
   }
