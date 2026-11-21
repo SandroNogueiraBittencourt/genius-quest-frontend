@@ -2,6 +2,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useAuthStore } from '../auth/store';
 import {
   createManualQuestion,
+  generateAIQuestions,
+  getAIQuestionGenerationStatus,
   decideQuestion,
   getManagedQuestion,
   getQuestionHistory,
@@ -236,6 +238,69 @@ it('não aceita cadastro manual sem sessão ou resposta sem UUID', async () => {
     vi.fn().mockResolvedValue(json({ id: 'inválido' }, 201)),
   );
   await expect(createManualQuestion(payload)).rejects.toMatchObject({
+    status: 502,
+  });
+});
+
+it('consulta status IA apenas com JWT e valida cotas retornadas', async () => {
+  const usage = {
+    habilitada: false,
+    maximoPorSolicitacao: 3,
+    limiteRequisicoesDiarias: 4,
+    requisicoesHoje: 0,
+    limitePerguntasDiarias: 10,
+    perguntasHoje: 0,
+  };
+  const fetch = vi.fn().mockResolvedValue(json(usage));
+  vi.stubGlobal('fetch', fetch);
+  expect((await getAIQuestionGenerationStatus()).habilitada).toBe(false);
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/admin/perguntas/geracao/status',
+    expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'Bearer jwt-admin' }),
+    }),
+  );
+  useAuthStore.getState().end(null);
+  await expect(getAIQuestionGenerationStatus()).rejects.toMatchObject({
+    status: 401,
+  });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+it('envia geração IA com Idempotency-Key e valida retorno PENDENTE', async () => {
+  const fetch = vi.fn().mockResolvedValue(json({ ids: [id], status: 'PENDENTE' }, 201));
+  vi.stubGlobal('fetch', fetch);
+  const payload = { temaId: themeId, quantidade: 1 };
+  const chave = '550e8400-e29b-41d4-a716-446655440004';
+  expect(await generateAIQuestions(payload, chave)).toEqual([id]);
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/admin/perguntas/geracao',
+    expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: expect.objectContaining({
+        Authorization: 'Bearer jwt-admin',
+        'Idempotency-Key': chave,
+      }),
+    }),
+  );
+});
+
+it('recusa quantidade inválida antes de enviar requisição à IA', async () => {
+  const fetch = vi.fn();
+  vi.stubGlobal('fetch', fetch);
+  const chave = '550e8400-e29b-41d4-a716-446655440004';
+  await expect(
+    generateAIQuestions({ temaId: themeId, quantidade: 4 }, chave),
+  ).rejects.toThrow();
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it('não aceita retorno com IDs inválidos ou status diferente de PENDENTE', async () => {
+  const payload = { temaId: themeId, quantidade: 1 };
+  const chave = '550e8400-e29b-41d4-a716-446655440004';
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ids: [id], status: 'APROVADA' }, 201)));
+  await expect(generateAIQuestions(payload, chave)).rejects.toMatchObject({
     status: 502,
   });
 });
