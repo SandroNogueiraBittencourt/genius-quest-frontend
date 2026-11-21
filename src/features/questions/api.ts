@@ -236,9 +236,7 @@ export async function getAIQuestionGenerationStatus(
       'requisicoesHoje',
       'limitePerguntasDiarias',
       'perguntasHoje',
-    ].every(
-      (key) => Number.isInteger(data[key]) && Number(data[key]) >= 0,
-    ) ||
+    ].every((key) => Number.isInteger(data[key]) && Number(data[key]) >= 0) ||
     Number(data.maximoPorSolicitacao) < 1 ||
     Number(data.requisicoesHoje) > Number(data.limiteRequisicoesDiarias) ||
     Number(data.perguntasHoje) > Number(data.limitePerguntasDiarias)
@@ -263,15 +261,12 @@ export async function generateAIQuestions(
   )
     throw new Error('Solicitação de geração inválida.');
   const previous = useAuthStore.getState().session;
-  const data = await authenticatedRequest<unknown>(
-    '/admin/perguntas/geracao',
-    {
-      method: 'POST',
-      json: request,
-      idempotencyKey,
-      signal,
-    },
-  );
+  const data = await authenticatedRequest<unknown>('/admin/perguntas/geracao', {
+    method: 'POST',
+    json: request,
+    idempotencyKey,
+    signal,
+  });
   unchangedSession(previous, signal);
   if (
     !record(data) ||
@@ -284,6 +279,9 @@ export async function generateAIQuestions(
         /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(id),
     )
   )
-    throw new ApiError(502, 'A API não confirmou a geração de candidatas pendentes.');
+    throw new ApiError(
+      502,
+      'A API não confirmou a geração de candidatas pendentes.',
+    );
   return data.ids as string[];
 }
