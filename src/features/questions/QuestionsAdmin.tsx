@@ -197,7 +197,9 @@ function AdminPanel() {
     setEditing(false);
     setShowHistory(false);
     setDecision(null);
-    setMessage('Pergunta cadastrada como pendente. Revise o conteúdo antes de aprovar.');
+    setMessage(
+      'Pergunta cadastrada como pendente. Revise o conteúdo antes de aprovar.',
+    );
     setError('');
     void queryClient.invalidateQueries({ queryKey: ['questions-admin'] });
   }
