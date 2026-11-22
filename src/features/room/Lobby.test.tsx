@@ -1,80 +1,141 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { createQueryClient } from '../../app/queryClient';
-import { demoGateway, resetDemoRooms } from '../demo/roomGateway';
-import type { RoomSession } from './types';
-import { useRoomStore } from './store';
+import { useAuthStore } from '../auth/store';
+import { getRoom, getRoomVoting, openRoomVoting, setRoomVote } from './api';
+import { getThemes } from '../themes/api';
 import { Lobby } from './Lobby';
+import { useRoomStore } from './store';
+
+vi.mock('./api', () => ({
+  getRoom: vi.fn(),
+  getRoomVoting: vi.fn(),
+  openRoomVoting: vi.fn(),
+  setRoomVote: vi.fn(),
+  closeRoomVoting: vi.fn(),
+}));
+vi.mock('../themes/api', () => ({ getThemes: vi.fn() }));
+const codigo = '12345678-1234-1234-1234-123456789abc';
+
 beforeEach(() => {
-  resetDemoRooms();
-  useRoomStore.getState().leave();
+  vi.mocked(getRoomVoting).mockResolvedValue({
+    aberta: false,
+    meuVoto: null,
+    totais: [],
+  });
+  useRoomStore.getState().enter({ code: codigo });
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'token', tipo: 'Bearer', expiraEm: 3600 },
+      'ana@example.test',
+    );
 });
-function setup(session: RoomSession | null) {
-  if (session) useRoomStore.getState().enter(session);
+afterEach(() => {
+  useRoomStore.getState().leave();
+  useAuthStore.setState({ session: null, notice: null });
+  vi.resetAllMocks();
+});
+
+it('mostra os participantes da API e atualiza a lista no lobby', async () => {
+  const sala = {
+    codigo,
+    partidaId: null,
+    temaId: null,
+    anfitriaoId: 'ana',
+    status: 'PREPARACAO' as const,
+    participantes: [{ id: 'ana', nome: 'Ana' }],
+  };
+  vi.mocked(getRoom)
+    .mockResolvedValueOnce(sala)
+    .mockResolvedValue({
+      ...sala,
+      participantes: [...sala.participantes, { id: 'bia', nome: 'Bia' }],
+    });
+  const client = createQueryClient();
   const onLeave = vi.fn();
   render(
-    <QueryClientProvider client={createQueryClient()}>
+    <QueryClientProvider client={client}>
       <Lobby onLeave={onLeave} />
     </QueryClientProvider>,
   );
-  return onLeave;
-}
-it('passa de aguardando para pronta e em andamento na prévia do anfitrião', async () => {
-  const session = await demoGateway.createRoom({
-    name: 'Sandro',
-    themeId: 'nature',
-  });
-  setup(session);
-  expect(await screen.findByText('Aguardando jogadores')).toBeInTheDocument();
-  const start = screen.getByRole('button', {
-    name: 'Iniciar rodada demonstrativa',
-  });
-  expect(start).toBeDisabled();
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Adicionar pessoa de exemplo' }),
-  );
-  await screen.findByText('Pronta para começar');
-  expect(start).toBeEnabled();
-  expect(screen.getByText('2/20')).toBeInTheDocument();
-  fireEvent.click(start);
-  expect(await screen.findByText('Em andamento')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Voltar ao lobby' }));
-  expect(await screen.findByText('Pronta para começar')).toBeInTheDocument();
-});
-it('mostra o convidado sem ações do anfitrião e permite sair', async () => {
-  const session = await demoGateway.joinRoom({
-    name: 'Sandro',
-    code: 'GQ2026',
-  });
-  const onLeave = setup(session);
-  await screen.findByText('Sandro');
+
+  expect(await screen.findByText('Anfitrião')).toBeInTheDocument();
+  expect(screen.getByText(codigo)).toBeInTheDocument();
   expect(
-    screen.queryByRole('button', { name: 'Iniciar rodada demonstrativa' }),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole('button', { name: 'Adicionar pessoa de exemplo' }),
-  ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Sair da sala' }));
-  await vi.waitFor(() => expect(onLeave).toHaveBeenCalledOnce());
-  expect(useRoomStore.getState().session).toBeNull();
-});
-it('oferece cópia manual quando a área de transferência não está disponível', async () => {
-  const session = await demoGateway.joinRoom({
-    name: 'Sandro',
-    code: 'GQ2026',
-  });
-  setup(session);
-  fireEvent.click(await screen.findByRole('button', { name: 'Copiar código' }));
-  expect(
-    await screen.findByText(/Selecione o código GQ2026/),
+    screen.getByText('Aguardando o anfitrião abrir a votação.'),
   ).toBeInTheDocument();
-});
-it('orienta a recuperação quando a sala é perdida após recarregar', () => {
-  const onLeave = setup(null);
+  expect(getThemes).not.toHaveBeenCalled();
   expect(
-    screen.getByRole('heading', { name: 'Nenhuma sala aberta.' }),
+    await screen.findByText('Bia', {}, { timeout: 5000 }),
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Voltar ao início' }));
   expect(onLeave).toHaveBeenCalledOnce();
+});
+
+it('abre a votação e permite confirmar e retirar o voto', async () => {
+  const token =
+    'header.' + btoa(JSON.stringify({ usuarioId: 'ana' })) + '.signature';
+  useAuthStore
+    .getState()
+    .start({ token, tipo: 'Bearer', expiraEm: 3600 }, 'ana@example.test');
+  const sala = {
+    codigo,
+    partidaId: null,
+    temaId: null,
+    anfitriaoId: 'ana',
+    status: 'PREPARACAO' as const,
+    participantes: [{ id: 'ana', nome: 'Ana' }],
+  };
+  const aberta = { aberta: true, meuVoto: null, totais: [] };
+  vi.mocked(getRoom).mockResolvedValue(sala);
+  vi.mocked(openRoomVoting).mockImplementation(async () => {
+    vi.mocked(getRoomVoting).mockResolvedValue(aberta);
+    return aberta;
+  });
+  vi.mocked(setRoomVote).mockImplementation(async (_codigo, temaId) => {
+    const voto = {
+      ...aberta,
+      meuVoto: temaId,
+      totais: temaId ? [{ temaId, votos: 1 }] : [],
+    };
+    vi.mocked(getRoomVoting).mockResolvedValue(voto);
+    return voto;
+  });
+  vi.mocked(getThemes).mockResolvedValue([
+    {
+      id: 'tema-1',
+      titulo: 'Astronomia',
+      status: 'APROVADO',
+      descricao: null,
+      categoriaId: 'categoria',
+      autorId: 'ana',
+      criadoEm: '',
+      atualizadoEm: '',
+    },
+  ]);
+  render(
+    <QueryClientProvider client={createQueryClient()}>
+      <Lobby onLeave={vi.fn()} />
+    </QueryClientProvider>,
+  );
+
+  const abrir = await screen.findByRole('button', {
+    name: 'Começar seleção do tema',
+  });
+  await vi.waitFor(() => expect(abrir).toBeEnabled());
+  fireEvent.click(abrir);
+  const opcao = await screen.findByRole('radio', { name: /Astronomia/ });
+  fireEvent.click(opcao);
+  fireEvent.click(screen.getByRole('button', { name: 'Desfazer escolha' }));
+  expect(opcao).not.toBeChecked();
+  fireEvent.click(opcao);
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmar voto' }));
+  const retirar = await screen.findByRole('button', { name: 'Retirar voto' });
+  await vi.waitFor(() => expect(retirar).toBeEnabled());
+  fireEvent.click(retirar);
+  await vi.waitFor(() =>
+    expect(setRoomVote).toHaveBeenLastCalledWith(codigo, null),
+  );
 });
