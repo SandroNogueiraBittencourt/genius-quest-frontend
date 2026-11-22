@@ -154,10 +154,7 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
               value={quantidade}
               onChange={(event) => setQuantidade(Number(event.target.value))}
             >
-              {Array.from(
-                { length: maxAvailable },
-                (_, index) => index + 1,
-              ).map((number) => (
+              {[1, 2, 3].slice(0, maxAvailable).map((number) => (
                 <option key={number} value={number}>
                   {number}
                 </option>
@@ -192,11 +189,12 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
           </fieldset>
         </form>
       )}
-      {!busy && (!status.data?.habilitada || status.isError || quotaExhausted) && (
-        <Button variant="outline" onClick={onCancel}>
-          Fechar
-        </Button>
-      )}
+      {!busy &&
+        (!status.data?.habilitada || status.isError || quotaExhausted) && (
+          <Button variant="outline" onClick={onCancel}>
+            Fechar
+          </Button>
+        )}
     </Card>
   );
 }
