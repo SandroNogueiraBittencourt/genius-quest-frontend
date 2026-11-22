@@ -347,3 +347,36 @@
   color: var(--color-muted);
   line-height: 1.45;
 }
+
+.room-close-confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.room-close-confirmation h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+.room-close-confirmation p {
+  margin: 0;
+  color: var(--color-muted);
+}
+.room-close-confirmation .room-inline-actions {
+  margin: 0;
+  gap: 8px;
+}
+.room-vote-finish {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+.room-vote-finish .room-theme-options {
+  width: 100%;
+  margin: 0;
+}

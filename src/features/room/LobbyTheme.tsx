@@ -160,30 +160,31 @@ export function LobbyTheme({
             </form>
           )}
           {isHost && (
-            <div className="room-inline-actions">
+            <div className="room-vote-finish">
               {tied && (
-                <label>
-                  Desempate
-                  <select
-                    value={tieChoice}
-                    onChange={(event) => setTieChoice(event.target.value)}
-                    disabled={busy}
-                  >
-                    <option value="">Escolher entre os empatados</option>
-                    {leaders.map(({ temaId }) => {
-                      const item = approved.find(
-                        (option) => option.id === temaId,
-                      );
-                      return (
-                        item && (
-                          <option key={temaId} value={temaId}>
-                            {item.titulo}
-                          </option>
-                        )
-                      );
-                    })}
-                  </select>
-                </label>
+                <fieldset className="room-theme-options" disabled={busy}>
+                  <legend>Escolha o tema vencedor entre os empatados</legend>
+                  <div className="room-theme-grid">
+                    {approved
+                      .filter((item) =>
+                        leaders.some(({ temaId }) => temaId === item.id),
+                      )
+                      .map((item) => (
+                        <label className="room-theme-option" key={item.id}>
+                          <input
+                            type="radio"
+                            name="room-theme-tiebreak"
+                            value={item.id}
+                            checked={tieChoice === item.id}
+                            onChange={() => setTieChoice(item.id)}
+                          />
+                          <span>
+                            <strong>{item.titulo}</strong>
+                          </span>
+                        </label>
+                      ))}
+                  </div>
+                </fieldset>
               )}
               <Button
                 type="button"
