@@ -82,7 +82,9 @@ it('não oferece geração quando a cota diária está esgotada', async () => {
   expect(
     await screen.findByText(/cota diária de geração por IA esgotada/i),
   ).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Solicitar geração' })).toBeNull();
+  expect(
+    screen.queryByRole('button', { name: 'Solicitar geração' }),
+  ).toBeNull();
   expect(fetch).toHaveBeenCalledTimes(1);
   client.clear();
 });
