@@ -262,15 +262,6 @@ function Pages() {
           )}
         </nav>
       </header>
-      {(view === 'home' || view === 'lobby') && (
-        <div className="gq-demo-banner">
-          <span className="gq-demo-label">Demonstração</span>
-          <p>
-            Salas e participantes de exemplo, somente nesta aba. Sem conexão
-            entre dispositivos.
-          </p>
-        </div>
-      )}
       <main id="conteudo" tabIndex={-1} className="gq-main">
         {logoutError && (
           <p className="auth-logout-error" role="alert">
@@ -374,7 +365,13 @@ function Pages() {
         ) : view === 'lobby' ? (
           <Lobby onLeave={() => navigate('home')} />
         ) : (
-          <Home onEnter={() => navigate('lobby')} />
+          <Home
+            onEnter={() => navigate('lobby')}
+            onSignIn={() => {
+              setAfterLogin('home');
+              navigate('login');
+            }}
+          />
         )}
       </main>
       <footer className="gq-footer">

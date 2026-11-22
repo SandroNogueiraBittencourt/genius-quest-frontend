@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { RoomSession } from './types';
+type RoomSession = { code: string; playerId?: string };
 type RoomState = {
   session: RoomSession | null;
   enter: (session: RoomSession) => void;

@@ -1,25 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { demoGateway } from '../demo/roomGateway';
-import type { RoomSession } from './types';
-export const roomKey = (session: RoomSession | null) =>
-  ['demo', 'room', session?.code, session?.playerId] as const;
-export function useDemoThemes() {
+import { useAuthStore } from '../auth/store';
+import { getRoom } from './api';
+
+export function useOnlineRoom(code: string | undefined) {
+  const session = useAuthStore((state) => state.session);
   return useQuery({
-    queryKey: ['demo', 'themes'],
-    queryFn: demoGateway.getThemes,
-    retry: false,
-    networkMode: 'always',
-  });
-}
-export function useDemoRoom(session: RoomSession | null) {
-  return useQuery({
-    queryKey: roomKey(session),
-    queryFn: () => {
-      if (!session) throw new Error('Entre em uma sala para continuar.');
-      return demoGateway.getRoom(session);
+    queryKey: ['room', session?.email, session?.expiresAt, code],
+    queryFn: ({ signal }) => {
+      if (!code) throw new Error('Entre em uma sala para continuar.');
+      return getRoom(code, signal);
     },
-    enabled: !!session,
+    enabled: !!session && !!code,
     retry: false,
-    networkMode: 'always',
+    refetchInterval: 3000,
   });
 }

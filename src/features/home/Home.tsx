@@ -1,44 +1,51 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Avatar, Button, Card, Input, Notice } from '../../components/ui';
-import { demoGateway } from '../demo/roomGateway';
-import { useDemoThemes } from '../room/queries';
+import { useAuthStore } from '../auth/store';
+import { createRoom, joinRoom, type OnlineRoom } from '../room/api';
 import { useRoomStore } from '../room/store';
-import type { RoomSession } from '../room/types';
 import './Home.css';
-type Mode = 'create' | 'join';
-export function Home({ onEnter }: { onEnter: () => void }) {
-  const [mode, setMode] = useState<Mode | null>(null);
-  const [name, setName] = useState('');
+export function Home({
+  onEnter,
+  onSignIn,
+}: {
+  onEnter: () => void;
+  onSignIn: () => void;
+}) {
+  const [joining, setJoining] = useState(false);
   const [code, setCode] = useState('');
-  const [themeId, setThemeId] = useState('nature');
   const formRef = useRef<HTMLFormElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const session = useRoomStore((state) => state.session);
-  const themes = useDemoThemes();
+  const auth = useAuthStore((state) => state.session);
   const enter = useRoomStore((state) => state.enter);
-  function roomCreated(session: RoomSession) {
-    enter(session);
+  function roomCreated(room: OnlineRoom) {
+    enter({ code: room.codigo });
     onEnter();
   }
   const create = useMutation({
-    mutationFn: demoGateway.createRoom,
+    mutationFn: createRoom,
     onSuccess: roomCreated,
     networkMode: 'always',
   });
   const join = useMutation({
-    mutationFn: demoGateway.joinRoom,
+    mutationFn: joinRoom,
     onSuccess: roomCreated,
     networkMode: 'always',
   });
-  const activeMutation = mode === 'join' ? join : create;
   useEffect(() => {
-    if (mode) formRef.current?.querySelector('input')?.focus();
-  }, [mode]);
-  function chooseMode(next: Mode) {
+    if (joining) formRef.current?.querySelector('input')?.focus();
+  }, [joining]);
+
+  function chooseMode(next: 'create' | 'join') {
+    if (!auth) {
+      onSignIn();
+      return;
+    }
     create.reset();
     join.reset();
-    setMode(next);
+    setJoining(next === 'join');
+    if (next === 'create') create.mutate();
   }
   return (
     <>
@@ -75,16 +82,17 @@ export function Home({ onEnter }: { onEnter: () => void }) {
           <div className="home-actions" ref={actionsRef}>
             <Button
               variant="secondary"
-              disabled={!!session}
-              aria-expanded={mode === 'create'}
+              disabled={!!session || join.isPending}
+              busy={create.isPending}
+              loadingLabel="Criando sala…"
               onClick={() => chooseMode('create')}
             >
               Reunir a turma <span aria-hidden="true">↗</span>
             </Button>
             <Button
               variant="outline"
-              disabled={!!session}
-              aria-expanded={mode === 'join'}
+              disabled={!!session || create.isPending}
+              aria-expanded={joining}
               onClick={() => chooseMode('join')}
             >
               Entrar em uma sala
@@ -119,7 +127,7 @@ export function Home({ onEnter }: { onEnter: () => void }) {
             <span>Tempo para pensar e conversar</span>
           </li>
           <li>
-            <strong>2 a 20 pessoas</strong>
+            <strong>Salas online</strong>
             <span>Uma sala para a sua turma</span>
           </li>
           <li>
@@ -128,27 +136,23 @@ export function Home({ onEnter }: { onEnter: () => void }) {
           </li>
         </ul>
       </section>
-      {mode && (
+      {create.error && <Notice message={create.error.message} />}
+      {joining && auth && (
         <section className="home-entry" aria-labelledby="entry-title">
           <Card>
             <div className="home-entry-heading">
               <div>
                 <span className="gq-kicker">Vamos começar</span>
-                <h2 id="entry-title">
-                  {mode === 'create'
-                    ? 'Um convite para descobrir.'
-                    : 'Sua turma está esperando.'}
-                </h2>
+                <h2 id="entry-title">Sua turma está esperando.</h2>
               </div>
               <Button
                 variant="ghost"
-                disabled={activeMutation.isPending}
+                disabled={join.isPending}
                 onClick={() => {
                   actionsRef.current
-                    ?.querySelectorAll<HTMLButtonElement>('button')
-                    [mode === 'create' ? 0 : 1]?.focus();
-                  setMode(null);
-                  setName('');
+                    ?.querySelectorAll<HTMLButtonElement>('button')[1]
+                    ?.focus();
+                  setJoining(false);
                   setCode('');
                 }}
               >
@@ -159,93 +163,25 @@ export function Home({ onEnter }: { onEnter: () => void }) {
               ref={formRef}
               onSubmit={(event) => {
                 event.preventDefault();
-                if (activeMutation.isPending) return;
-                if (mode === 'create') create.mutate({ name, themeId });
-                else join.mutate({ name, code });
+                if (join.isPending) return;
+                join.mutate(code);
               }}
             >
               <Input
-                label="Como podemos chamar você?"
-                autoComplete="given-name"
-                maxLength={40}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Seu nome"
+                label="Código da sala"
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
                 required
-                hint="Seu nome aparece para a turma nesta demonstração."
-                disabled={activeMutation.isPending}
+                minLength={36}
+                autoComplete="off"
+                spellCheck={false}
+                disabled={join.isPending}
               />
-              {mode === 'join' ? (
-                <Input
-                  label="Código da sala"
-                  value={code}
-                  onChange={(event) =>
-                    setCode(event.target.value.toUpperCase())
-                  }
-                  placeholder="Ex.: GQ2026"
-                  required
-                  minLength={6}
-                  maxLength={6}
-                  autoComplete="off"
-                  spellCheck={false}
-                  hint="Para experimentar, use o código de exemplo GQ2026."
-                  disabled={activeMutation.isPending}
-                />
-              ) : (
-                <fieldset
-                  className="home-theme-picker"
-                  disabled={create.isPending}
-                >
-                  <legend>O que vamos descobrir?</legend>
-                  {themes.isPending && (
-                    <p role="status">Carregando temas de exemplo…</p>
-                  )}
-                  {themes.isError && (
-                    <div>
-                      <Notice message="Não foi possível carregar os temas. Tente novamente." />
-                      <Button
-                        variant="outline"
-                        type="button"
-                        onClick={() => void themes.refetch()}
-                      >
-                        Tentar carregar temas
-                      </Button>
-                    </div>
-                  )}
-                  <div>
-                    {themes.data?.map((theme, index) => (
-                      <label
-                        key={theme.id}
-                        className={
-                          themeId === theme.id
-                            ? 'home-theme home-theme--selected'
-                            : 'home-theme'
-                        }
-                      >
-                        <input
-                          type="radio"
-                          name="theme"
-                          value={theme.id}
-                          checked={themeId === theme.id}
-                          onChange={() => setThemeId(theme.id)}
-                        />
-                        <span className="home-theme-number" aria-hidden="true">
-                          0{index + 1}
-                        </span>
-                        <span>
-                          <strong>{theme.name}</strong>
-                          <span>{theme.description}</span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              )}
-              {activeMutation.error && (
+              {join.error && (
                 <Notice
                   message={
-                    activeMutation.error instanceof Error
-                      ? activeMutation.error.message
+                    join.error instanceof Error
+                      ? join.error.message
                       : 'Não foi possível abrir a sala. Tente novamente.'
                   }
                 />
@@ -254,15 +190,10 @@ export function Home({ onEnter }: { onEnter: () => void }) {
                 <Button
                   variant="secondary"
                   type="submit"
-                  busy={activeMutation.isPending}
-                  loadingLabel={
-                    mode === 'create' ? 'Criando sala…' : 'Entrando na sala…'
-                  }
-                  disabled={mode === 'create' && !themes.data?.length}
+                  busy={join.isPending}
+                  loadingLabel="Entrando na sala…"
                 >
-                  {mode === 'create'
-                    ? 'Criar sala demonstrativa'
-                    : 'Entrar na sala demonstrativa'}
+                  Entrar na sala
                 </Button>
                 <span>Sem pressa, com espaço para todo mundo.</span>
               </div>
@@ -280,10 +211,10 @@ export function Home({ onEnter }: { onEnter: () => void }) {
         <div className="home-steps">
           <Card>
             <span className="home-step">01</span>
-            <h3>Escolha um tema</h3>
+            <h3>Crie uma sala</h3>
             <p>
-              De curiosidades do dia a dia a memórias de cinema. Encontre algo
-              que desperte a turma.
+              Abra o lobby para reunir a turma. O anfitrião pode escolher o tema
+              depois.
             </p>
           </Card>
           <Card>
