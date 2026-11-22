@@ -72,6 +72,42 @@ it('com flags desativadas exibe aviso e nunca envia POST', async () => {
   client.clear();
 });
 
+it('não oferece geração quando a cota diária está esgotada', async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(json({ ...status, requisicoesHoje: 4 }));
+  vi.stubGlobal('fetch', fetch);
+  const { client } = setup();
+
+  expect(
+    await screen.findByText(/cota diária de geração por IA esgotada/i),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Solicitar geração' })).toBeNull();
+  expect(fetch).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it('limita a quantidade ao saldo disponível de perguntas', async () => {
+  const fetch = vi.fn().mockImplementation((url: string) => {
+    if (url.endsWith('/geracao/status'))
+      return Promise.resolve(json({ ...status, perguntasHoje: 9 }));
+    if (url.endsWith('/temas/moderacao')) return Promise.resolve(json([tema]));
+    throw new Error('POST inesperado');
+  });
+  vi.stubGlobal('fetch', fetch);
+  const { client } = setup();
+
+  await screen.findByRole('option', { name: 'Animais Selvagens' });
+  const select = screen.getByLabelText(
+    'Quantidade de perguntas',
+  ) as HTMLSelectElement;
+  expect(Array.from(select.options).map((option) => option.value)).toEqual([
+    '1',
+  ]);
+  expect(fetch).toHaveBeenCalledTimes(2);
+  client.clear();
+});
+
 it('exige confirmacao de custo e só gera ao clicar em solicitar', async () => {
   const fetch = vi.fn().mockImplementation((url: string) => {
     if (url.endsWith('/geracao/status')) return Promise.resolve(json(status));
