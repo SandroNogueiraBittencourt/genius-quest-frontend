@@ -8,6 +8,7 @@ export type OnlineRoom = {
   partidaId: string | null;
   temaId: string | null;
   anfitriaoId: string;
+  encerrada?: boolean;
   status: PreparedMatch['status'];
   participantes: { id: string; nome: string }[];
 };
@@ -67,5 +68,95 @@ export function closeRoomVoting(code: string, desempate?: string) {
   const query = desempate ? `?desempate=${encodeURIComponent(desempate)}` : '';
   return requestRoom(`${votingPath(code)}/encerrar${query}`, {
     method: 'POST',
+  });
+}
+
+export type RoomQuestion = {
+  partidaId: string;
+  numero: number;
+  totalPerguntas: number;
+  enunciado: string;
+  alternativas: string[];
+};
+
+type RoomAnswer = {
+  perguntaRespondida: number;
+  status: OnlineRoom['status'];
+  perguntaAtual: number | null;
+};
+
+function matchPath(code: string) {
+  return `/salas/${encodeURIComponent(code)}/partida`;
+}
+
+export function startRoomMatch(code: string) {
+  return requestRoom<RoomQuestion>(`${matchPath(code)}/iniciar`, {
+    method: 'POST',
+  });
+}
+
+export function getRoomQuestion(code: string, signal: AbortSignal) {
+  return requestRoom<RoomQuestion>(`${matchPath(code)}/pergunta-atual`, {
+    signal,
+  });
+}
+
+export function answerRoomQuestion(
+  code: string,
+  numero: number,
+  alternativaIndice: number,
+) {
+  return requestRoom<RoomAnswer>(`${matchPath(code)}/respostas`, {
+    method: 'POST',
+    json: { numero, alternativaIndice },
+  });
+}
+
+type RoomContinuationState = {
+  status: 'AGUARDANDO' | 'APROVADA' | 'ENCERRADA';
+  meuVoto: boolean | null;
+  favoraveis: number;
+  contrarios: number;
+  totalJogadores: number;
+};
+
+function continuationPath(codigo: string, partidaId: string) {
+  return `/salas/${encodeURIComponent(codigo)}/partidas/${encodeURIComponent(partidaId)}/continuacao`;
+}
+
+export function getRoomContinuation(
+  codigo: string,
+  partidaId: string,
+  signal: AbortSignal,
+) {
+  return requestRoom<RoomContinuationState>(
+    continuationPath(codigo, partidaId),
+    { signal },
+  );
+}
+
+export function voteRoomContinuation(
+  codigo: string,
+  partidaId: string,
+  continuar: boolean,
+) {
+  return requestRoom<RoomContinuationState>(
+    continuationPath(codigo, partidaId),
+    {
+      method: 'PUT',
+      json: { continuar },
+    },
+  );
+}
+
+export function leaveRoom(code: string) {
+  return requestRoom<void>(`/salas/${encodeURIComponent(code)}/entrada`, {
+    method: 'DELETE',
+  });
+}
+
+export function closeRoom(code: string) {
+  return requestRoom<void>(`/salas/${encodeURIComponent(code)}`, {
+    method: 'DELETE',
   });
 }
