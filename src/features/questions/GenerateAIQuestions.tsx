@@ -22,10 +22,22 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });
+  const remainingQuestions = status.data
+    ? status.data.limitePerguntasDiarias - status.data.perguntasHoje
+    : 0;
+  const quotaExhausted =
+    status.data?.habilitada === true &&
+    (remainingQuestions <= 0 ||
+      status.data.requisicoesHoje >= status.data.limiteRequisicoesDiarias);
+  const maxAvailable = Math.max(
+    0,
+    Math.min(3, status.data?.maximoPorSolicitacao ?? 0, remainingQuestions),
+  );
+
   const themes = useQuery({
     queryKey: ['questions-admin', 'ai-approved-themes'],
     queryFn: ({ signal }) => getManagedThemes(signal),
-    enabled: status.data?.habilitada === true,
+    enabled: status.data?.habilitada === true && !quotaExhausted,
     retry: false,
     refetchOnReconnect: false,
   });
@@ -104,6 +116,8 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
         <Notice message="O serviço de geração ainda não está disponível. Aguardando publicação do backend." />
       ) : !status.data.habilitada ? (
         <Notice message="A geração por IA está desativada no servidor. O cadastro manual continua disponível." />
+      ) : quotaExhausted ? (
+        <Notice message="Cota diária de geração por IA esgotada. A renovação ocorre à meia-noite UTC." />
       ) : themes.isPending ? (
         <p role="status">Consultando temas aprovados…</p>
       ) : themes.isError ? (
@@ -141,7 +155,7 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
               onChange={(event) => setQuantidade(Number(event.target.value))}
             >
               {Array.from(
-                { length: Math.min(3, status.data.maximoPorSolicitacao) },
+                { length: maxAvailable },
                 (_, index) => index + 1,
               ).map((number) => (
                 <option key={number} value={number}>
@@ -178,7 +192,7 @@ export function GenerateAIQuestions({ onCancel, onGenerated }: Props) {
           </fieldset>
         </form>
       )}
-      {!busy && (!status.data?.habilitada || status.isError) && (
+      {!busy && (!status.data?.habilitada || status.isError || quotaExhausted) && (
         <Button variant="outline" onClick={onCancel}>
           Fechar
         </Button>
