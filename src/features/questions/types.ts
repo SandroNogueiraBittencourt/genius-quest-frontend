@@ -61,3 +61,18 @@ export type ManualQuestionInput = {
   dificuldadeInicial: QuestionDifficulty;
   fonteReferencia: string | null;
 };
+
+/** Estado ADMIN da geração; GET é seguro e não consome tokens. */
+export type AIQuestionGenerationStatus = {
+  habilitada: boolean;
+  maximoPorSolicitacao: number;
+  limiteRequisicoesDiarias: number;
+  requisicoesHoje: number;
+  limitePerguntasDiarias: number;
+  perguntasHoje: number;
+};
+
+export type AIQuestionGenerationInput = {
+  temaId: string;
+  quantidade: number;
+};

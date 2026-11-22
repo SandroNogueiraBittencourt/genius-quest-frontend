@@ -16,6 +16,7 @@ export type ApiOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   json?: unknown;
   token?: string;
+  idempotencyKey?: string;
   signal?: AbortSignal;
 };
 function record(value: unknown): value is Record<string, unknown> {
@@ -30,6 +31,15 @@ export async function apiRequest<T>(
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.json !== undefined) headers['Content-Type'] = 'application/json';
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
+  if (options.idempotencyKey) {
+    if (
+      !/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(
+        options.idempotencyKey,
+      )
+    )
+      throw new Error('Chave de idempotência inválida.');
+    headers['Idempotency-Key'] = options.idempotencyKey;
+  }
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
