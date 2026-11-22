@@ -4,8 +4,8 @@ import { useAuthStore } from '../auth/store';
 
 export type PreparedMatch = {
   id: string;
-  cicloId: string;
-  cicloNome: string;
+  cicloId: string | null;
+  cicloNome: string | null;
   temaId: string;
   temaTitulo: string;
   categoriaNome: string;
@@ -18,8 +18,9 @@ function validMatch(data: unknown): data is PreparedMatch {
   const match = data as Record<string, unknown>;
   return (
     typeof match.id === 'string' &&
-    typeof match.cicloId === 'string' &&
-    typeof match.cicloNome === 'string' &&
+    ((typeof match.cicloId === 'string' &&
+      typeof match.cicloNome === 'string') ||
+      (match.cicloId === null && match.cicloNome === null)) &&
     typeof match.temaId === 'string' &&
     typeof match.temaTitulo === 'string' &&
     typeof match.categoriaNome === 'string' &&

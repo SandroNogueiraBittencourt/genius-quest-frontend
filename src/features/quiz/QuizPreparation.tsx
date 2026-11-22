@@ -94,7 +94,10 @@ function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
                   Categoria: <strong>{match.categoriaNome}</strong>
                 </p>
                 <p>
-                  Origem: <strong>{match.cicloNome}</strong>
+                  Origem:{' '}
+                  <strong>
+                    {match.cicloNome ?? 'Tema escolhido no lobby'}
+                  </strong>
                 </p>
                 <p>
                   <time dateTime={match.criadoEm}>
