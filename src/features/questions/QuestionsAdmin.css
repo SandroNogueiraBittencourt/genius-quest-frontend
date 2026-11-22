@@ -1,0 +1,191 @@
+.questions-admin {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 0 64px;
+}
+.questions-admin-heading {
+  margin-bottom: 28px;
+}
+.questions-admin-heading h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+.questions-admin-heading p,
+.questions-admin-security {
+  color: var(--color-muted);
+}
+.questions-admin-security {
+  margin: 0 0 24px;
+}
+.questions-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: start;
+  gap: 24px;
+}
+.questions-admin-layout > section {
+  min-width: 0;
+}
+.questions-admin-layout h2 {
+  font-size: 1.35rem;
+  margin: 0 0 16px;
+}
+.questions-admin-toolbar,
+.questions-admin-actions,
+.questions-admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.questions-admin-toolbar {
+  justify-content: space-between;
+}
+.questions-admin-filters,
+.questions-admin-editor fieldset {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+.questions-admin-editor fieldset {
+  border: 0;
+  padding: 0;
+}
+.questions-admin-filters select,
+.questions-admin-editor select,
+.questions-admin-editor textarea,
+.questions-admin-confirm textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px;
+  background: white;
+  color: var(--color-dark);
+  font: inherit;
+}
+.questions-admin-editor textarea,
+.questions-admin-confirm textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+.questions-admin-list {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+  display: grid;
+  gap: 12px;
+}
+.questions-admin-item {
+  display: grid;
+  gap: 12px;
+}
+.questions-admin-item p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.questions-admin-item button {
+  justify-self: start;
+}
+.questions-admin-status {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.questions-admin-detail {
+  display: grid;
+  gap: 14px;
+}
+.questions-admin-detail h3 {
+  overflow-wrap: anywhere;
+}
+.questions-admin-detail p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.questions-admin-detail code {
+  font-size: 0.83em;
+}
+.questions-admin-options {
+  padding-left: 26px;
+  display: grid;
+  gap: 10px;
+}
+.questions-admin-options li {
+  overflow-wrap: anywhere;
+}
+.questions-admin-pagination {
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.questions-admin-confirm {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+}
+.questions-admin-success {
+  margin: 16px 0;
+  color: var(--color-success);
+  font-weight: 600;
+}
+.questions-admin-history {
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+.questions-admin-history ol {
+  padding-left: 24px;
+  display: grid;
+  gap: 18px;
+}
+.questions-admin-history pre {
+  overflow: auto;
+  max-height: 230px;
+  padding: 12px;
+  background: var(--color-primary-soft);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .questions-admin-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .questions-admin {
+    padding: 20px 0 36px;
+  }
+}
+
+.questions-admin-create-area {
+  margin: 0 0 24px;
+}
+.questions-admin-create h2 {
+  margin-top: 0;
+}
+.questions-admin-create p {
+  margin-bottom: 16px;
+}
+.questions-admin-create fieldset {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.questions-admin-create select,
+.questions-admin-create textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px;
+  background: white;
+  color: var(--color-dark);
+  font: inherit;
+}
+.questions-admin-create textarea {
+  min-height: 110px;
+  resize: vertical;
+}
