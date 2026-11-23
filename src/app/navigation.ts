@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 export type View =
   | 'home'
   | 'lobby'
+  | 'real-room'
   | 'design-system'
   | 'login'
   | 'register'
@@ -18,6 +19,7 @@ function currentView(): View {
   if (window.location.pathname === '/redefinir-senha') return 'reset-password';
   const view = new URLSearchParams(window.location.search).get('view');
   return view === 'lobby' ||
+    view === 'real-room' ||
     view === 'design-system' ||
     view === 'login' ||
     view === 'register' ||
