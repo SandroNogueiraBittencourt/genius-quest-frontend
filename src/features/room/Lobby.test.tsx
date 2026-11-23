@@ -81,6 +81,7 @@ it('mostra os participantes da API e atualiza a lista no lobby', async () => {
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Sair da sala' }));
   await vi.waitFor(() => expect(onLeave).toHaveBeenCalledOnce());
+  expect(leaveRoom).toHaveBeenCalledWith(codigo);
 });
 
 it('abre a votação e permite confirmar e retirar o voto', async () => {
