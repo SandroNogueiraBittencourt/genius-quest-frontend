@@ -124,3 +124,7 @@
     grid-template-columns: 1fr;
   }
 }
+
+.themes-suggestion {
+  max-width: 680px;
+}
