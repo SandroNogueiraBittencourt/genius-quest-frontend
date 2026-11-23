@@ -26,10 +26,18 @@ export function LobbyTheme({
     !!auth && readTokenClaims(auth.token)?.usuarioId === room.anfitriaoId;
   const waiting = !room.partidaId && room.status === 'PREPARACAO';
   const voting = useQuery({
-    queryKey: ['room', 'voting', room.codigo, auth?.email, auth?.expiresAt],
+    queryKey: [
+      'room',
+      'voting',
+      room.codigo,
+      room.partidaId,
+      auth?.email,
+      auth?.expiresAt,
+    ],
     queryFn: ({ signal }) => getRoomVoting(room.codigo, signal),
     enabled: !!auth && waiting,
     retry: false,
+    gcTime: 0,
     refetchInterval: 3000,
   });
   const opened = voting.data?.aberta === true;

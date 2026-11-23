@@ -184,7 +184,7 @@ export function Lobby({ onLeave }: { onLeave: () => void }) {
               />
             )}
             <LobbyTheme
-              key={room.codigo}
+              key={room.codigo + ':' + (room.partidaId ?? '')}
               room={room}
               onChosen={() => query.refetch()}
             />

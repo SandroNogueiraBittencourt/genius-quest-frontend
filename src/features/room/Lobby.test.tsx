@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { createQueryClient } from '../../app/queryClient';
 import { useAuthStore } from '../auth/store';
@@ -81,6 +81,7 @@ it('mostra os participantes da API e atualiza a lista no lobby', async () => {
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Sair da sala' }));
   await vi.waitFor(() => expect(onLeave).toHaveBeenCalledOnce());
+  expect(leaveRoom).toHaveBeenCalledWith(codigo);
 });
 
 it('abre a votação e permite confirmar e retirar o voto', async () => {
@@ -147,6 +148,90 @@ it('abre a votação e permite confirmar e retirar o voto', async () => {
   await vi.waitFor(() =>
     expect(setRoomVote).toHaveBeenLastCalledWith(codigo, null),
   );
+});
+
+it('descarta o voto e a escolha de desempate da rodada anterior', async () => {
+  const email = 'ana@example.test';
+  const token =
+    'header.' + btoa(JSON.stringify({ usuarioId: 'ana' })) + '.signature';
+  useAuthStore
+    .getState()
+    .start({ token, tipo: 'Bearer', expiraEm: 3600 }, email);
+  const sala = {
+    codigo,
+    partidaId: null,
+    temaId: null,
+    anfitriaoId: 'ana',
+    status: 'PREPARACAO' as const,
+    participantes: [
+      { id: 'ana', nome: 'Ana' },
+      { id: 'bia', nome: 'Bia' },
+      { id: 'caio', nome: 'Caio' },
+    ],
+  };
+  const temas = [
+    { id: 'tema-1', titulo: 'Astronomia' },
+    { id: 'tema-2', titulo: 'Geografia' },
+  ];
+  const totais = temas.map(({ id }) => ({ temaId: id, votos: 1 }));
+  vi.mocked(getThemes).mockResolvedValue(
+    temas.map((tema) => ({
+      ...tema,
+      status: 'APROVADO',
+      descricao: null,
+      categoriaId: 'categoria',
+      autorId: 'ana',
+      criadoEm: '',
+      atualizadoEm: '',
+    })),
+  );
+  vi.mocked(getRoom).mockResolvedValue(sala);
+  vi.mocked(getRoomVoting).mockResolvedValue({
+    aberta: true,
+    meuVoto: 'tema-1',
+    totais,
+  });
+
+  const client = createQueryClient();
+  render(
+    <QueryClientProvider client={client}>
+      <Lobby onLeave={vi.fn()} />
+    </QueryClientProvider>,
+  );
+  const grupo = { name: 'Escolha o tema vencedor entre os empatados' };
+  const fechar = { name: 'Encerrar votação' };
+  const desempate = await screen.findByRole('group', grupo);
+  fireEvent.click(
+    await within(desempate).findByRole('radio', { name: 'Astronomia' }),
+  );
+  expect(screen.getByRole('button', fechar)).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'Retirar voto' })).toBeVisible();
+
+  vi.mocked(getRoom).mockResolvedValue({
+    ...sala,
+    partidaId: 'partida-1',
+    temaId: 'tema-1',
+  });
+  await act(async () =>
+    client.invalidateQueries({ queryKey: ['room', email] }),
+  );
+  await screen.findByRole('button', { name: 'Iniciar partida' });
+
+  vi.mocked(getRoomVoting).mockResolvedValue({
+    aberta: true,
+    meuVoto: null,
+    totais,
+  });
+  vi.mocked(getRoom).mockResolvedValue(sala);
+  await act(async () =>
+    client.invalidateQueries({ queryKey: ['room', email] }),
+  );
+  const novoDesempate = await screen.findByRole('group', grupo);
+  expect(
+    await within(novoDesempate).findByRole('radio', { name: 'Astronomia' }),
+  ).not.toBeChecked();
+  expect(screen.getByRole('button', fechar)).toBeDisabled();
+  expect(screen.queryByRole('button', { name: 'Retirar voto' })).toBeNull();
 });
 
 it('confirma o fechamento dentro do lobby e permite cancelar', async () => {
