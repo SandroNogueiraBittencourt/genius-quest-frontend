@@ -25,8 +25,9 @@ export function readRoomCode(jogadorId: string | null): string | null {
 export function rememberRoomCode(jogadorId: string | null, code: string): void {
   const key = chave(jogadorId);
   if (!key) return;
+  const normalizado = validRoomCode(code);
   try {
-    sessionStorage.setItem(key, validRoomCode(code));
+    sessionStorage.setItem(key, normalizado);
   } catch {
     // O jogo continua mesmo com storage desativado.
   }
