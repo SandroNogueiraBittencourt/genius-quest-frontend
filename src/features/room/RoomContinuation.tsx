@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
 import { getRoomContinuation, voteRoomContinuation } from './api';
+import { RoomResults } from './RoomResults';
 
 export function RoomContinuation({
   codigo,
@@ -41,6 +42,7 @@ export function RoomContinuation({
   return (
     <Card className="room-theme">
       <h2>Partida concluída</h2>
+      <RoomResults codigo={codigo} partidaId={partidaId} />
       {query.isPending && <p role="status">Carregando votação…</p>}
       {query.error && (
         <>
