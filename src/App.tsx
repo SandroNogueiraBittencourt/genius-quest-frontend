@@ -9,7 +9,7 @@ import { CategoriesAdmin } from './features/categories/CategoriesAdmin';
 import { QuestionsAdmin } from './features/questions/QuestionsAdmin';
 import { Themes } from './features/themes/Themes';
 import { ThemesAdmin } from './features/themes/ThemesAdmin';
-import { VotingHistory } from './features/themes/VotingHistory';
+import { MatchResultsPage } from './features/quiz/MatchResultsPage';
 import { QuizPreparation } from './features/quiz/QuizPreparation';
 import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
@@ -101,7 +101,7 @@ function Pages() {
                       : view === 'themes-admin'
                         ? 'Moderação de temas · Genius Quest'
                         : view === 'history'
-                          ? 'Resultados e histórico · Genius Quest'
+                          ? 'Resultados · Genius Quest'
                           : view === 'quiz'
                             ? 'Minhas partidas · Genius Quest'
                             : view === 'lobby'
@@ -182,7 +182,7 @@ function Pages() {
             aria-current={view === 'themes' ? 'page' : undefined}
             onClick={(event) => open(event, 'themes')}
           >
-            Temas e votação
+            Sugerir temas
           </a>
           <a
             href="?view=history"
@@ -365,12 +365,11 @@ function Pages() {
             }}
           />
         ) : view === 'history' ? (
-          <VotingHistory
+          <MatchResultsPage
             onSignIn={() => {
               setAfterLogin('history');
               navigate('login');
             }}
-            onOpenMatch={() => navigate('quiz')}
           />
         ) : view === 'quiz' ? (
           <QuizPreparation

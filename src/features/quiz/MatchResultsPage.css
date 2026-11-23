@@ -1,0 +1,25 @@
+.history-page {
+  margin: 24px 0 48px;
+}
+
+.history-heading {
+  padding-bottom: 30px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.history-heading h1 {
+  margin: 12px 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.2;
+}
+
+.history-match-results {
+  margin-bottom: 24px;
+}
+.history-match-results li {
+  min-width: 0;
+}
+.history-match-results li > .ui-button {
+  margin-inline-start: 12px;
+}
