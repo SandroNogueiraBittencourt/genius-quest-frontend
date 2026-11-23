@@ -17,24 +17,20 @@ vi.mock('./api', () => ({
   answerRoomQuestion: vi.fn(),
   getRoomQuestion: vi.fn(),
   startRoomMatch: vi.fn(),
-  getRoomContinuation: vi
-    .fn()
-    .mockResolvedValue({
-      status: 'AGUARDANDO',
-      meuVoto: null,
-      favoraveis: 0,
-      contrarios: 0,
-      totalJogadores: 2,
-    }),
-  voteRoomContinuation: vi
-    .fn()
-    .mockResolvedValue({
-      status: 'APROVADA',
-      meuVoto: true,
-      favoraveis: 2,
-      contrarios: 0,
-      totalJogadores: 2,
-    }),
+  getRoomContinuation: vi.fn().mockResolvedValue({
+    status: 'AGUARDANDO',
+    meuVoto: null,
+    favoraveis: 0,
+    contrarios: 0,
+    totalJogadores: 2,
+  }),
+  voteRoomContinuation: vi.fn().mockResolvedValue({
+    status: 'APROVADA',
+    meuVoto: true,
+    favoraveis: 2,
+    contrarios: 0,
+    totalJogadores: 2,
+  }),
 }));
 
 const room: OnlineRoom = {
