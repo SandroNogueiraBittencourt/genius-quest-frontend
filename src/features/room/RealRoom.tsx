@@ -4,12 +4,18 @@ import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
 import { getThemes } from '../themes/api';
 import { playerIdFromJwt, realRoomApi, validRoomCode } from './realApi';
+import { forgetRoomCode, readRoomCode, rememberRoomCode } from './savedRoom';
 import './RealRoom.css';
 
 /** Conexão real. A demonstração em memória continua em ?view=lobby. */
 export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
   const auth = useAuthStore((s) => s.session);
-  const [codigo, setCodigo] = useState<string | null>(null);
+  // Só o UUID da sala é guardado nesta aba, associado ao UUID do usuário.
+  // Nunca persistir JWT ou dados de autenticação no storage.
+  const [selecionada, setSelecionada] = useState<{
+    jogadorId: string;
+    codigo: string;
+  } | null>(null);
   const [entrada, setEntrada] = useState('');
   const [temaId, setTemaId] = useState('');
   const [respondida, setRespondida] = useState<number | null>(null);
@@ -17,6 +23,16 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
   const [erro, setErro] = useState('');
   const client = useQueryClient();
   const meuId = auth ? playerIdFromJwt(auth.token) : null;
+  const codigo =
+    selecionada?.jogadorId === meuId && meuId
+      ? selecionada.codigo
+      : readRoomCode(meuId);
+
+  function setCodigo(novo: string | null) {
+    if (novo) rememberRoomCode(meuId, novo);
+    else forgetRoomCode(meuId);
+    setSelecionada(meuId && novo ? { jogadorId: meuId, codigo: novo } : null);
+  }
 
   const sala = useQuery({
     queryKey: ['real-room', auth?.email, codigo],
@@ -208,7 +224,14 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
               </Button>
             </div>
             {sala.isPending && <p role="status">Consultando participantes…</p>}
-            {sala.isError && <Notice message={sala.error.message} />}
+            {sala.isError && (
+              <>
+                <Notice message={sala.error.message} />
+                <Button variant="outline" onClick={() => setCodigo(null)}>
+                  Esquecer esta sala e entrar em outra
+                </Button>
+              </>
+            )}
             {room && (
               <>
                 <p role="status">
