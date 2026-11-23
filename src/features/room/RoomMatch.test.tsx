@@ -1,5 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { createQueryClient } from '../../app/queryClient';
 import { useAuthStore } from '../auth/store';
@@ -9,32 +15,30 @@ import {
   startRoomMatch,
   type OnlineRoom,
   getRoomContinuation,
+  getRoomResult,
   voteRoomContinuation,
 } from './api';
 import { RoomMatch } from './RoomMatch';
 
 vi.mock('./api', () => ({
   answerRoomQuestion: vi.fn(),
+  getRoomResult: vi.fn(),
   getRoomQuestion: vi.fn(),
   startRoomMatch: vi.fn(),
-  getRoomContinuation: vi
-    .fn()
-    .mockResolvedValue({
-      status: 'AGUARDANDO',
-      meuVoto: null,
-      favoraveis: 0,
-      contrarios: 0,
-      totalJogadores: 2,
-    }),
-  voteRoomContinuation: vi
-    .fn()
-    .mockResolvedValue({
-      status: 'APROVADA',
-      meuVoto: true,
-      favoraveis: 2,
-      contrarios: 0,
-      totalJogadores: 2,
-    }),
+  getRoomContinuation: vi.fn().mockResolvedValue({
+    status: 'AGUARDANDO',
+    meuVoto: null,
+    favoraveis: 0,
+    contrarios: 0,
+    totalJogadores: 2,
+  }),
+  voteRoomContinuation: vi.fn().mockResolvedValue({
+    status: 'APROVADA',
+    meuVoto: true,
+    favoraveis: 2,
+    contrarios: 0,
+    totalJogadores: 2,
+  }),
 }));
 
 const room: OnlineRoom = {
@@ -73,6 +77,10 @@ function signIn(usuarioId: string) {
 
 beforeEach(() => {
   signIn('ana');
+  vi.mocked(getRoomResult).mockResolvedValue({
+    partidaId: 'partida',
+    classificacao: [],
+  });
   vi.mocked(getRoomContinuation).mockResolvedValue({
     status: 'AGUARDANDO',
     meuVoto: null,
@@ -173,4 +181,49 @@ it('envia voto de continuação e atualiza a sala quando alcança maioria', asyn
     await screen.findByRole('button', { name: 'Jogar outra rodada' }),
   );
   await waitFor(() => expect(onStatusChange).toHaveBeenCalledOnce());
+});
+
+it('mostra o placar com o empate e mantém a votação disponível', async () => {
+  vi.mocked(getRoomResult).mockResolvedValue({
+    partidaId: 'partida',
+    classificacao: [
+      { id: 'ana', nome: 'Ana', posicao: 1, pontos: 40, acertos: 2, erros: 8 },
+      { id: 'bia', nome: 'Bia', posicao: 1, pontos: 40, acertos: 3, erros: 7 },
+    ],
+  });
+  setup({ ...room, status: 'CONCLUIDA' });
+  const table = await screen.findByRole('table', {
+    name: 'Classificação final',
+  });
+  expect(within(table).getAllByText('1º')).toHaveLength(2);
+  const ana = within(table).getByRole('row', { name: /Ana/ });
+  expect(
+    within(ana)
+      .getAllByRole('cell')
+      .map((cell) => cell.textContent),
+  ).toEqual(['1º', '40', '2', '8']);
+  expect(
+    within(table).getByRole('rowheader', { name: 'Bia' }),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByRole('button', { name: 'Jogar outra rodada' }),
+  ).toBeEnabled();
+});
+
+it('permite tentar carregar o placar novamente após erro', async () => {
+  vi.mocked(getRoomResult)
+    .mockRejectedValueOnce(new Error('Falha ao consultar o placar'))
+    .mockResolvedValueOnce({ partidaId: 'partida', classificacao: [] });
+  setup({ ...room, status: 'CONCLUIDA' });
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Falha ao consultar o placar',
+  );
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Tentar carregar placar novamente' }),
+  );
+  expect(
+    await screen.findByText(
+      'Esta partida terminou sem pontuações registradas.',
+    ),
+  ).toBeInTheDocument();
 });
