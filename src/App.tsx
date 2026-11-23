@@ -14,6 +14,7 @@ import { QuizPreparation } from './features/quiz/QuizPreparation';
 import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
+import { RealRoom } from './features/room/RealRoom';
 import { useRoomStore } from './features/room/store';
 import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
@@ -41,7 +42,8 @@ function Pages() {
     view === 'themes' ||
     view === 'themes-admin' ||
     view === 'history' ||
-    view === 'quiz';
+    view === 'quiz' ||
+    view === 'real-room';
   async function logout() {
     const current = useAuthStore.getState().session;
     if (!current || logoutInFlight.current) return;
@@ -106,9 +108,11 @@ function Pages() {
                             ? 'Minhas partidas · Genius Quest'
                             : view === 'lobby'
                               ? 'Sua sala · Genius Quest'
-                              : view === 'design-system'
-                                ? 'Design System · Genius Quest'
-                                : 'Genius Quest · Cada pergunta, uma nova memória';
+                              : view === 'real-room'
+                                ? 'Multiplayer real · Genius Quest'
+                                : view === 'design-system'
+                                  ? 'Design System · Genius Quest'
+                                  : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -225,6 +229,13 @@ function Pages() {
               Moderar perguntas
             </a>
           )}
+          <a
+            href="?view=real-room"
+            aria-current={view === 'real-room' ? 'page' : undefined}
+            onClick={(event) => open(event, 'real-room')}
+          >
+            Sala real
+          </a>
           {session && (
             <a
               href="?view=lobby"
@@ -403,10 +414,21 @@ function Pages() {
               navigate('login');
             }}
           />
+        ) : view === 'real-room' ? (
+          <RealRoom
+            key={auth?.token ?? 'signed-out'}
+            onSignIn={() => {
+              setAfterLogin('real-room');
+              navigate('login');
+            }}
+          />
         ) : view === 'lobby' ? (
           <Lobby onLeave={() => navigate('home')} />
         ) : (
-          <Home onEnter={() => navigate('lobby')} />
+          <Home
+            onEnter={() => navigate('lobby')}
+            onRealRoom={() => navigate('real-room')}
+          />
         )}
       </main>
       <footer className="gq-footer">

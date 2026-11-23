@@ -7,7 +7,13 @@ import { useRoomStore } from '../room/store';
 import type { RoomSession } from '../room/types';
 import './Home.css';
 type Mode = 'create' | 'join';
-export function Home({ onEnter }: { onEnter: () => void }) {
+export function Home({
+  onEnter,
+  onRealRoom,
+}: {
+  onEnter: () => void;
+  onRealRoom?: () => void;
+}) {
   const [mode, setMode] = useState<Mode | null>(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -90,6 +96,13 @@ export function Home({ onEnter }: { onEnter: () => void }) {
               Entrar em uma sala
             </Button>
           </div>
+          {onRealRoom && (
+            <div className="home-actions" style={{ marginTop: 16 }}>
+              <Button variant="outline" onClick={onRealRoom}>
+                Jogar multiplayer real (login necessário)
+              </Button>
+            </div>
+          )}
           <div className="home-people">
             <div aria-hidden="true">
               <Avatar name="Ana Lima" />
