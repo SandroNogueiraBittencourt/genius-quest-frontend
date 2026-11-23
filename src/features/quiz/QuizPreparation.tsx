@@ -1,8 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
-import { getMyMatches } from './api';
+import type { PreparedMatch } from './api';
+import { useMyMatches } from './queries';
+import { RoomResults } from '../room/RoomResults';
 import './QuizPreparation.css';
+
+const statusLabels: Record<PreparedMatch['status'], string> = {
+  PREPARACAO: 'Em preparação',
+  PRONTA: 'Pronta',
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDA: 'Concluída',
+  CANCELADA: 'Cancelada',
+};
 
 export function QuizPreparation({
   onSignIn,
@@ -15,18 +25,14 @@ export function QuizPreparation({
   return (
     <section className="quiz-preparation">
       <header className="quiz-preparation-heading">
-        <span className="gq-kicker">Do tema vencedor à nova descoberta</span>
-        <h1>Minhas partidas.</h1>
-        <p>
-          Prepare partidas a partir dos temas que venceram as votações. O quiz
-          com perguntas e pontuação será liberado em outra etapa.
-        </p>
+        <h1>Minhas partidas</h1>
+        <p>Acompanhe as partidas que você criou ou jogou.</p>
       </header>
       {session ? (
         <SignedInMatches key={session.token} onViewHistory={onViewHistory} />
       ) : (
         <Card>
-          <h2>Entre para preparar uma partida.</h2>
+          <h2>Entre para ver suas partidas.</h2>
           <p>As partidas ficam vinculadas à sua conta.</p>
           <Button variant="secondary" onClick={onSignIn}>
             Entrar na minha conta
@@ -38,21 +44,16 @@ export function QuizPreparation({
 }
 
 function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
-  const session = useAuthStore((state) => state.session);
-  const matches = useQuery({
-    queryKey: ['quiz', 'my-matches', session?.email, session?.expiresAt],
-    queryFn: ({ signal }) => getMyMatches(signal),
-    enabled: !!session,
-    retry: false,
-  });
+  const matches = useMyMatches();
+  const [selected, setSelected] = useState<string | null>(null);
 
   return (
     <>
       <div className="quiz-preparation-toolbar">
-        <h2>Partidas em preparação</h2>
+        <h2>Histórico de partidas</h2>
         <div className="quiz-preparation-actions">
           <Button variant="outline" onClick={onViewHistory}>
-            Ver vencedores
+            Ver resultados
           </Button>
           <Button
             variant="outline"
@@ -74,11 +75,8 @@ function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
         </Card>
       ) : matches.data.length === 0 ? (
         <Card>
-          <h3>Você ainda não preparou nenhuma partida.</h3>
-          <p>
-            Escolha uma votação encerrada com vencedor na página Resultados e
-            clique em “Preparar partida com este tema”.
-          </p>
+          <h3>Você ainda não tem partidas.</h3>
+          <p>Crie uma sala ou entre pelo código de um convite.</p>
           <Button variant="secondary" onClick={onViewHistory}>
             Explorar resultados
           </Button>
@@ -88,7 +86,9 @@ function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
           {matches.data.map((match) => (
             <li key={match.id}>
               <Card className="quiz-preparation-card">
-                <span className="quiz-preparation-status">Em preparação</span>
+                <span className="quiz-preparation-status">
+                  {statusLabels[match.status]}
+                </span>
                 <h3>{match.temaTitulo}</h3>
                 <p>
                   Categoria: <strong>{match.categoriaNome}</strong>
@@ -105,9 +105,25 @@ function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
                     {new Date(match.criadoEm).toLocaleString('pt-BR')}
                   </time>
                 </p>
-                <p className="quiz-preparation-disclaimer">
-                  Ainda não há perguntas disponíveis nesta partida.
-                </p>
+                {match.status === 'CONCLUIDA' && match.codigoSala && (
+                  <>
+                    <Button
+                      variant="outline"
+                      aria-expanded={selected === match.id}
+                      onClick={() =>
+                        setSelected(selected === match.id ? null : match.id)
+                      }
+                    >
+                      {selected === match.id ? 'Ocultar placar' : 'Ver placar'}
+                    </Button>
+                    {selected === match.id && (
+                      <RoomResults
+                        codigo={match.codigoSala}
+                        partidaId={match.id}
+                      />
+                    )}
+                  </>
+                )}
               </Card>
             </li>
           ))}

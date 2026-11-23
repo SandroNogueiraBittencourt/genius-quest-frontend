@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useAuthStore } from '../auth/store';
 import { QuizPreparation } from './QuizPreparation';
@@ -65,8 +65,50 @@ it('mostra a partida preparada sem oferecer gameplay inexistente', async () => {
   expect(
     await screen.findByRole('heading', { name: 'Animais Selvagens' }),
   ).toBeInTheDocument();
-  expect(
-    screen.getByText('Ainda não há perguntas disponíveis nesta partida.'),
-  ).toBeInTheDocument();
+  expect(screen.getByText('Em preparação')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Iniciar quiz' })).toBeNull();
+});
+
+it('mostra a partida concluída e abre seu placar', async () => {
+  const response = (body: unknown) =>
+    new Response(JSON.stringify(body), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(
+      response([{ ...partida, status: 'CONCLUIDA', codigoSala: 'sala-01' }]),
+    )
+    .mockResolvedValueOnce(
+      response({
+        partidaId: partida.id,
+        classificacao: [
+          {
+            id: 'ana',
+            nome: 'Ana',
+            posicao: 1,
+            pontos: 100,
+            acertos: 10,
+            erros: 0,
+          },
+        ],
+      }),
+    );
+  vi.stubGlobal('fetch', fetch);
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-partida', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@geniusquest.test',
+    );
+  mount();
+  expect(await screen.findByText('Concluída')).toBeInTheDocument();
+  expect(screen.queryByText('Em andamento')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Ver placar' }));
+  expect(
+    await screen.findByRole('rowheader', { name: 'Ana' }),
+  ).toBeInTheDocument();
+  expect(fetch.mock.calls[1][0]).toMatch(
+    /\/salas\/sala-01\/partidas\/partida-01\/resultado$/,
+  );
 });
