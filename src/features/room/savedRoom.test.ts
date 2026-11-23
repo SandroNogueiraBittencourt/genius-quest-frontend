@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  forgetRoomCode,
-  readRoomCode,
-  rememberRoomCode,
-} from './savedRoom';
+import { forgetRoomCode, readRoomCode, rememberRoomCode } from './savedRoom';
 
 const anfitriao = '5af3c27d-6ed8-4850-8e4a-48642f38089c';
 const convidado = '60b23d15-7c6b-4f92-b882-7b9615f1c6b3';
