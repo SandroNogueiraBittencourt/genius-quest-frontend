@@ -10,15 +10,23 @@ vi.mock('../auth/authenticatedRequest', () => ({
 const request = vi.mocked(authenticatedRequest);
 const code = 'ad8b73e1-e1f1-4e03-8d43-92c51c87bfa1';
 const sala = {
-  codigo: code, partidaId: null, anfitriaoId: code, temaId: null,
-  status: 'PREPARACAO', encerrada: false,
+  codigo: code,
+  partidaId: null,
+  anfitriaoId: code,
+  temaId: null,
+  status: 'PREPARACAO',
+  encerrada: false,
   participantes: [{ id: code, nome: 'Pessoa Teste' }],
 };
 
 beforeEach(() => {
   request.mockReset();
   useAuthStore.setState({
-    session: { token: 'token-teste', email: 'teste@geniusquest.test', expiresAt: Date.now() + 60_000 },
+    session: {
+      token: 'token-teste',
+      email: 'teste@geniusquest.test',
+      expiresAt: Date.now() + 60_000,
+    },
   });
 });
 
@@ -37,27 +45,48 @@ describe('cliente de salas multiplayer reais', () => {
     request.mockResolvedValue(sala);
     await realRoomApi.entrar(code);
     await realRoomApi.consultar(code);
-    expect(request).toHaveBeenNthCalledWith(1, '/salas/' + code + '/entrada', { method: 'POST' });
-    expect(request).toHaveBeenNthCalledWith(2, '/salas/' + code, { signal: undefined });
+    expect(request).toHaveBeenNthCalledWith(1, '/salas/' + code + '/entrada', {
+      method: 'POST',
+    });
+    expect(request).toHaveBeenNthCalledWith(2, '/salas/' + code, {
+      signal: undefined,
+    });
   });
   it('não confirma sessão trocada durante a resposta', async () => {
     request.mockImplementationOnce(async () => {
       useAuthStore.setState({ session: null });
       return sala;
     });
-    await expect(realRoomApi.criar()).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(realRoomApi.criar()).rejects.toMatchObject({
+      name: 'AbortError',
+    });
   });
   it('vota e responde somente pelas rotas autenticadas', async () => {
-    request.mockResolvedValueOnce({ aberta: true, meuVoto: code, totais: [] })
-      .mockResolvedValueOnce({ perguntaRespondida: 1, status: 'EM_ANDAMENTO', perguntaAtual: 2 });
+    request
+      .mockResolvedValueOnce({ aberta: true, meuVoto: code, totais: [] })
+      .mockResolvedValueOnce({
+        perguntaRespondida: 1,
+        status: 'EM_ANDAMENTO',
+        perguntaAtual: 2,
+      });
     await realRoomApi.votar(code, code);
     await realRoomApi.responder(code, 1, 2);
-    expect(request).toHaveBeenNthCalledWith(1, '/salas/' + code + '/votacao/voto', {
-      method: 'PUT', json: { temaId: code },
-    });
-    expect(request).toHaveBeenNthCalledWith(2, '/salas/' + code + '/partida/respostas', {
-      method: 'POST', json: { numero: 1, alternativaIndice: 2 },
-    });
+    expect(request).toHaveBeenNthCalledWith(
+      1,
+      '/salas/' + code + '/votacao/voto',
+      {
+        method: 'PUT',
+        json: { temaId: code },
+      },
+    );
+    expect(request).toHaveBeenNthCalledWith(
+      2,
+      '/salas/' + code + '/partida/respostas',
+      {
+        method: 'POST',
+        json: { numero: 1, alternativaIndice: 2 },
+      },
+    );
   });
   it('recusa payload incompleto de sala', async () => {
     request.mockResolvedValueOnce({ codigo: code });

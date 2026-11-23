@@ -110,9 +110,9 @@ function Pages() {
                               ? 'Sua sala · Genius Quest'
                               : view === 'real-room'
                                 ? 'Multiplayer real · Genius Quest'
-                              : view === 'design-system'
-                                ? 'Design System · Genius Quest'
-                                : 'Genius Quest · Cada pergunta, uma nova memória';
+                                : view === 'design-system'
+                                  ? 'Design System · Genius Quest'
+                                  : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -229,8 +229,11 @@ function Pages() {
               Moderar perguntas
             </a>
           )}
-          <a href="?view=real-room" aria-current={view === 'real-room' ? 'page' : undefined}
-            onClick={(event) => open(event, 'real-room')}>
+          <a
+            href="?view=real-room"
+            aria-current={view === 'real-room' ? 'page' : undefined}
+            onClick={(event) => open(event, 'real-room')}
+          >
             Sala real
           </a>
           {session && (
@@ -412,14 +415,20 @@ function Pages() {
             }}
           />
         ) : view === 'real-room' ? (
-          <RealRoom key={auth?.token ?? 'signed-out'} onSignIn={() => {
-            setAfterLogin('real-room');
-            navigate('login');
-          }} />
+          <RealRoom
+            key={auth?.token ?? 'signed-out'}
+            onSignIn={() => {
+              setAfterLogin('real-room');
+              navigate('login');
+            }}
+          />
         ) : view === 'lobby' ? (
           <Lobby onLeave={() => navigate('home')} />
         ) : (
-          <Home onEnter={() => navigate('lobby')} onRealRoom={() => navigate('real-room')} />
+          <Home
+            onEnter={() => navigate('lobby')}
+            onRealRoom={() => navigate('real-room')}
+          />
         )}
       </main>
       <footer className="gq-footer">

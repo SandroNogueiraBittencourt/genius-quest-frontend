@@ -21,6 +21,7 @@ publicação do frontend depende da aprovação do CI e de deploy manual.
 O protótipo e os testes atuais devem continuar passando.
 
 ## Homologação recomendada
+
 Entrar com duas contas de teste em navegadores diferentes, criar sala e
 compartilhar UUID, votar no mesmo tema, consultar a pergunta, responder
 por ambos, continuar e encerrar. São necessárias 10 perguntas aprovadas
