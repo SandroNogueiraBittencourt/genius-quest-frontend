@@ -1,0 +1,38 @@
+name: PR24 one-time formatting
+
+on:
+  push:
+    branches:
+      - feat/room-real-api-demo-20261123
+    paths:
+      - .github/workflows/pr24-format-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/room-real-api-demo-20261123
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Prettier on changed files
+        run: |
+          npx prettier --write docs/INTEGRACAO-SALAS-REAIS.md src/App.tsx src/features/home/Home.tsx src/features/room/realApi.test.ts src/features/room/realApi.ts src/features/room/RealRoom.css src/features/room/RealRoom.tsx
+      - name: Commit formatted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/INTEGRACAO-SALAS-REAIS.md src/App.tsx src/features/home/Home.tsx src/features/room/realApi.test.ts src/features/room/realApi.ts src/features/room/RealRoom.css src/features/room/RealRoom.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m "style(room): formatar integração multiplayer com Prettier"
+            git push origin HEAD:feat/room-real-api-demo-20261123
+          fi
