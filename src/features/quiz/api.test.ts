@@ -50,7 +50,9 @@ it('consulta somente as partidas retornadas para a sessão atual', async () => {
   const fetch = vi.fn().mockResolvedValue(response([partida]));
   vi.stubGlobal('fetch', fetch);
   expect(await getMyMatches()).toEqual([partida]);
-  expect(fetch.mock.calls[0][0]).toMatch(/\/partidas\/minhas$/);
+  expect(fetch.mock.calls[0][0]).toMatch(
+    /\/partidas\/minhas\?incluirSalas=true$/,
+  );
 });
 
 it('não mascara conflitos quando ciclo ainda não tem vencedor', async () => {

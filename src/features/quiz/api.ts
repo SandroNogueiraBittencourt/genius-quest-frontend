@@ -11,6 +11,7 @@ export type PreparedMatch = {
   categoriaNome: string;
   status: 'PREPARACAO' | 'PRONTA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
   criadoEm: string;
+  codigoSala?: string | null;
 };
 
 function validMatch(data: unknown): data is PreparedMatch {
@@ -25,6 +26,7 @@ function validMatch(data: unknown): data is PreparedMatch {
     typeof match.temaTitulo === 'string' &&
     typeof match.categoriaNome === 'string' &&
     typeof match.criadoEm === 'string' &&
+    (match.codigoSala == null || typeof match.codigoSala === 'string') &&
     ['PREPARACAO', 'PRONTA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'].includes(
       String(match.status),
     )
@@ -55,9 +57,12 @@ export async function getMyMatches(
   signal?: AbortSignal,
 ): Promise<PreparedMatch[]> {
   const session = useAuthStore.getState().session;
-  const data = await authenticatedRequest<unknown>('/partidas/minhas', {
-    signal,
-  });
+  const data = await authenticatedRequest<unknown>(
+    '/partidas/minhas?incluirSalas=true',
+    {
+      signal,
+    },
+  );
   assertSessionUnchanged(session, signal);
   if (!Array.isArray(data) || !data.every(validMatch))
     throw new ApiError(502, 'A API retornou partidas inválidas.');
