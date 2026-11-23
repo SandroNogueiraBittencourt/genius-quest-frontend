@@ -160,3 +160,26 @@ export function closeRoom(code: string) {
     method: 'DELETE',
   });
 }
+
+type RoomResult = {
+  partidaId: string;
+  classificacao: {
+    id: string;
+    nome: string;
+    posicao: number;
+    pontos: number;
+    acertos: number;
+    erros: number;
+  }[];
+};
+
+export function getRoomResult(
+  codigo: string,
+  partidaId: string,
+  signal: AbortSignal,
+) {
+  return requestRoom<RoomResult>(
+    `/salas/${encodeURIComponent(codigo)}/partidas/${encodeURIComponent(partidaId)}/resultado`,
+    { signal },
+  );
+}
