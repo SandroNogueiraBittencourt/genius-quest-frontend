@@ -380,3 +380,46 @@
   width: 100%;
   margin: 0;
 }
+
+.room-results {
+  margin: 20px 0 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+.room-results h3 {
+  margin: 0 0 12px;
+}
+.room-results-scroll {
+  overflow-x: auto;
+}
+.room-results table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.room-results th,
+.room-results td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+.room-results thead th {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+.room-results tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.room-results tbody th {
+  overflow-wrap: anywhere;
+}
+.room-results-points {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+@media (max-width: 480px) {
+  .room-results th,
+  .room-results td {
+    padding-inline: 5px;
+  }
+}
