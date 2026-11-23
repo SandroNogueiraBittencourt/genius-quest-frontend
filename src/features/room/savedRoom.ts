@@ -6,7 +6,9 @@ const PREFIX = 'gq-real-room-code-v1:';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function chave(jogadorId: string | null): string | null {
-  return jogadorId && UUID.test(jogadorId) ? PREFIX + jogadorId.toLowerCase() : null;
+  return jogadorId && UUID.test(jogadorId)
+    ? PREFIX + jogadorId.toLowerCase()
+    : null;
 }
 
 export function readRoomCode(jogadorId: string | null): string | null {
