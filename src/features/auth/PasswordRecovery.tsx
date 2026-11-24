@@ -5,9 +5,8 @@ import { requestPasswordReset, resetPassword } from './api';
 import './Auth.css';
 
 type Mode = 'forgot-password' | 'reset-password';
-const CODIGO_VALIDO = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{16}$/;
-const normalizarCodigo = (value: string) =>
-  value.replace(/[\s-]/g, '').toUpperCase();
+const CODIGO_VALIDO = /^[0-9]{10}$/;
+const normalizarCodigo = (value: string) => value.replace(/[\s-]/g, '');
 
 export function PasswordRecovery({
   mode,
@@ -56,7 +55,7 @@ export function PasswordRecovery({
     const next: Record<string, string> = {};
     if (resetting) {
       if (!CODIGO_VALIDO.test(normalizarCodigo(codigo)))
-        next.codigo = 'Informe o código de 16 caracteres recebido por e-mail.';
+        next.codigo = 'Informe o código de 10 dígitos recebido por e-mail.';
       if (!password.trim() || password.length < 8 || password.length > 72)
         next.password = 'Use uma senha entre 8 e 72 caracteres.';
       if (!confirmation || confirmation !== password)
@@ -101,7 +100,7 @@ export function PasswordRecovery({
       ) {
         // Evita distinguir entre codigo inexistente, expirado ou consumido.
         setMessage(
-          'Código inválido, expirado ou já utilizado. Confira ou solicite outro código.',
+          'Código inválido, expirado ou já utilizado. Confira o código ou solicite outro.',
         );
       } else if (error instanceof ApiError) {
         setErrors(
@@ -131,14 +130,14 @@ export function PasswordRecovery({
         </h1>
         <p className="auth-intro">
           {resetting
-            ? 'Digite o código enviado para seu e-mail e escolha uma nova senha. O código expira em 30 minutos.'
+            ? 'Digite o código enviado para seu e-mail e escolha uma nova senha. O código expira em 15 minutos.'
             : 'Informe seu e-mail para receber um código de recuperação de senha.'}
         </p>
         {done ? (
           <p className="auth-success" role="status">
             {resetting
               ? 'Senha redefinida! Entre com sua nova senha.'
-              : 'Se houver uma conta com este e-mail, você receberá um código para redefinir sua senha. O código expira em 30 minutos.'}
+              : 'Se houver uma conta com este e-mail, você receberá um código para redefinir sua senha. O código expira em 15 minutos.'}
           </p>
         ) : (
           <form
@@ -160,14 +159,15 @@ export function PasswordRecovery({
                     type="text"
                     value={codigo}
                     onChange={(event) => {
-                      setCodigo(event.target.value.toUpperCase());
+                      setCodigo(event.target.value);
                       setErrors({});
                       setMessage('');
                     }}
                     autoComplete="one-time-code"
+                    inputMode="numeric"
                     maxLength={24}
                     required
-                    hint="16 caracteres. Você pode digitar com ou sem hífens."
+                    hint="10 dígitos."
                     error={errors.codigo}
                   />
                   <Input
