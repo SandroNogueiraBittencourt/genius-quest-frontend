@@ -18,6 +18,7 @@ export type ApiOptions = {
   token?: string;
   idempotencyKey?: string;
   signal?: AbortSignal;
+  allowEmptyAccepted?: boolean;
 };
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -82,7 +83,11 @@ export async function apiRequest<T>(
           : `Não foi possível concluir a solicitação (HTTP ${response.status}).`;
     throw new ApiError(response.status, message, fields);
   }
-  if (response.status === 204) return undefined as T;
+  if (
+    response.status === 204 ||
+    (response.status === 202 && !text && options.allowEmptyAccepted)
+  )
+    return undefined as T;
   if (
     data === undefined ||
     !response.headers
