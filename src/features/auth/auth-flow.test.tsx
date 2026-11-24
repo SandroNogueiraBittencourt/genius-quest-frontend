@@ -11,7 +11,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 it('percorre cadastro, login, conta conectada e saída pela navegação real', async () => {
   const fetch = vi.fn().mockImplementation((url: string) => {
-    if (url.endsWith('/auth/logout'))
+    if (url.endsWith('/auth/logout') || url.endsWith('/auth/verificar-email'))
       return Promise.resolve(new Response(null, { status: 204 }));
     const body = url.endsWith('/health')
       ? {
@@ -54,8 +54,25 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
     target: { value: 'SenhaTeste123!' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Criar minha conta' }));
+  await screen.findByRole('heading', { name: 'Confirme seu e-mail' });
+  expect(screen.getByLabelText('E-mail')).toHaveValue('lia@example.test');
+  expect(window.location.search).toBe('?view=verify-email');
+  fireEvent.change(screen.getByLabelText('Código de verificação'), {
+    target: { value: '01234-56789' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmar e-mail' }));
   await screen.findByText(
-    'Conta criada! Entre com seu e-mail e senha para continuar.',
+    'E-mail confirmado! Entre com seu e-mail e senha para continuar.',
+  );
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/auth/verificar-email',
+    expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'lia@example.test',
+        codigo: '0123456789',
+      }),
+    }),
   );
   expect(window.location.search).toBe('?view=login');
   expect(screen.getByLabelText('E-mail')).toHaveValue('lia@example.test');

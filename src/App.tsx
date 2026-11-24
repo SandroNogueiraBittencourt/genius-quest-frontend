@@ -20,6 +20,7 @@ import { useRoomStore } from './features/room/store';
 import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
 import { PasswordRecovery } from './features/auth/PasswordRecovery';
+import { EmailVerification } from './features/auth/EmailVerification';
 import { AuthLifecycle } from './features/auth/AuthLifecycle';
 import { logout as revokeSession } from './features/auth/api';
 import { ApiError } from './services/http';
@@ -30,7 +31,8 @@ function Pages() {
   const { view, navigate } = useNavigation();
   const auth = useAuthStore((state) => state.session);
   const notice = useAuthStore((state) => state.notice);
-  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [registrationEmail, setRegistrationEmail] = useState('');
+  const [emailVerified, setEmailVerified] = useState(false);
   const [afterLogin, setAfterLogin] = useState<View>('home');
   const [logoutPending, setLogoutPending] = useState(false);
   const [logoutError, setLogoutError] = useState('');
@@ -59,7 +61,7 @@ function Pages() {
       // Uma resposta antiga não pode encerrar um login feito durante o logout.
       if (useAuthStore.getState().session?.token === current.token) {
         useAuthStore.getState().end('signed-out', current.token);
-        setRegisteredEmail('');
+        setRegistrationEmail('');
         navigate('home');
       }
     } catch (error) {
@@ -68,7 +70,7 @@ function Pages() {
       if (error instanceof ApiError && error.status === 401) {
         // O servidor já considera esse JWT inválido ou revogado.
         useAuthStore.getState().end('unauthorized', current.token);
-        setRegisteredEmail('');
+        setRegistrationEmail('');
         navigate('home');
       } else {
         // Não afirmar que houve revogação se a API não confirmou o logout.
@@ -86,37 +88,39 @@ function Pages() {
   const previousView = useRef(screenId);
   useEffect(() => {
     document.title =
-      view === 'forgot-password'
-        ? 'Recuperar senha · Genius Quest'
-        : view === 'reset-password'
-          ? 'Redefinir senha · Genius Quest'
-          : view === 'login'
-            ? 'Entrar · Genius Quest'
-            : view === 'register'
-              ? 'Criar conta · Genius Quest'
-              : view === 'categories'
-                ? 'Categorias · Genius Quest'
-                : view === 'categories-admin'
-                  ? 'Moderação de categorias · Genius Quest'
-                  : view === 'themes'
-                    ? 'Temas · Genius Quest'
-                    : view === 'questions-admin'
-                      ? 'Curadoria de perguntas · Genius Quest'
-                      : view === 'themes-admin'
-                        ? 'Moderação de temas · Genius Quest'
-                        : view === 'history'
-                          ? 'Histórico de votação · Genius Quest'
-                          : view === 'match-results'
-                            ? 'Resultados · Genius Quest'
-                            : view === 'quiz'
-                              ? 'Minhas partidas · Genius Quest'
-                              : view === 'lobby'
-                                ? 'Sua sala · Genius Quest'
-                                : view === 'real-room'
-                                  ? 'Multiplayer real · Genius Quest'
-                                  : view === 'design-system'
-                                    ? 'Design System · Genius Quest'
-                                    : 'Genius Quest · Cada pergunta, uma nova memória';
+      view === 'verify-email'
+        ? 'Confirmar e-mail · Genius Quest'
+        : view === 'forgot-password'
+          ? 'Recuperar senha · Genius Quest'
+          : view === 'reset-password'
+            ? 'Redefinir senha · Genius Quest'
+            : view === 'login'
+              ? 'Entrar · Genius Quest'
+              : view === 'register'
+                ? 'Criar conta · Genius Quest'
+                : view === 'categories'
+                  ? 'Categorias · Genius Quest'
+                  : view === 'categories-admin'
+                    ? 'Moderação de categorias · Genius Quest'
+                    : view === 'themes'
+                      ? 'Temas · Genius Quest'
+                      : view === 'questions-admin'
+                        ? 'Curadoria de perguntas · Genius Quest'
+                        : view === 'themes-admin'
+                          ? 'Moderação de temas · Genius Quest'
+                          : view === 'history'
+                            ? 'Histórico de votação · Genius Quest'
+                            : view === 'match-results'
+                              ? 'Resultados · Genius Quest'
+                              : view === 'quiz'
+                                ? 'Minhas partidas · Genius Quest'
+                                : view === 'lobby'
+                                  ? 'Sua sala · Genius Quest'
+                                  : view === 'real-room'
+                                    ? 'Multiplayer real · Genius Quest'
+                                    : view === 'design-system'
+                                      ? 'Design System · Genius Quest'
+                                      : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -341,7 +345,17 @@ function Pages() {
             </div>
           </div>
         )}
-        {view === 'forgot-password' || view === 'reset-password' ? (
+        {view === 'verify-email' ? (
+          <EmailVerification
+            initialEmail={registrationEmail}
+            onBack={() => navigate('login')}
+            onVerified={(email) => {
+              setRegistrationEmail(email);
+              setEmailVerified(true);
+              navigate('login');
+            }}
+          />
+        ) : view === 'forgot-password' || view === 'reset-password' ? (
           <PasswordRecovery
             key={`${view}:${window.location.search}`}
             mode={view}
@@ -358,17 +372,24 @@ function Pages() {
             <AuthPage
               key={view}
               mode={view}
-              initialEmail={registeredEmail}
-              registered={!!registeredEmail}
+              initialEmail={view === 'login' ? registrationEmail : ''}
+              emailVerified={emailVerified}
               onSwitch={(mode) => navigate(mode)}
               onForgotPassword={() => navigate('forgot-password')}
               onRegistered={(email) => {
-                setRegisteredEmail(email);
+                setRegistrationEmail(email);
+                setEmailVerified(false);
                 useAuthStore.getState().dismissNotice();
-                navigate('login');
+                navigate('verify-email');
+              }}
+              onVerifyEmail={(email) => {
+                setRegistrationEmail(email);
+                setEmailVerified(false);
+                navigate('verify-email');
               }}
               onSignedIn={() => {
-                setRegisteredEmail('');
+                setRegistrationEmail('');
+                setEmailVerified(false);
                 navigate(afterLogin);
                 setAfterLogin('home');
               }}
