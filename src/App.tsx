@@ -380,7 +380,7 @@ function Pages() {
                 setRegistrationEmail(email);
                 setEmailVerified(false);
                 useAuthStore.getState().dismissNotice();
-                navigate('verify-email');
+                navigate('login');
               }}
               onVerifyEmail={(email) => {
                 setRegistrationEmail(email);

@@ -29,6 +29,7 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
             ativo: true,
             criadoEm: '2026-10-25',
             atualizadoEm: '2026-10-25',
+            emailVerificado: false,
           }
         : { token: 'jwt', tipo: 'Bearer', expiraEm: 3600 };
     return Promise.resolve(
