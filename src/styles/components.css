@@ -139,17 +139,11 @@
   color: var(--color-primary);
 }
 .ui-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
   padding: var(--space-2);
   background: #ffe6e6;
   color: var(--color-dark);
   border: 1px solid var(--color-error-text);
   border-radius: var(--radius-control);
-}
-.ui-notice > span {
-  font-weight: 700;
 }
 .ui-notice p {
   margin: 0;
