@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useAuthStore } from '../auth/store';
 import { QuizPreparation } from './QuizPreparation';
@@ -23,6 +23,8 @@ function mount() {
       <QuizPreparation
         onSignIn={() => undefined}
         onViewHistory={() => undefined}
+        onRealRoom={() => undefined}
+        onViewResults={() => undefined}
       />
     </QueryClientProvider>,
   );
@@ -69,4 +71,69 @@ it('mostra a partida preparada sem oferecer gameplay inexistente', async () => {
     screen.getByText('Ainda não há perguntas disponíveis nesta partida.'),
   ).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Iniciar quiz' })).toBeNull();
+});
+
+it('mostra estados reais no histórico e oferece placar apenas para sala concluída', async () => {
+  const id = '44444444-0000-4000-8000-000000000001';
+  const codigoSala = '44444444-0000-4000-8000-000000000002';
+  const real = {
+    ...partida,
+    id,
+    cicloId: null,
+    cicloNome: null,
+    codigoSala,
+    temaTitulo: 'Ciência',
+    status: 'CONCLUIDA',
+  };
+  const running = {
+    ...real,
+    id: '44444444-0000-4000-8000-000000000003',
+    temaTitulo: 'Geografia',
+    status: 'EM_ANDAMENTO',
+  };
+  const cancelled = {
+    ...real,
+    id: '44444444-0000-4000-8000-000000000004',
+    temaTitulo: 'História',
+    status: 'CANCELADA',
+  };
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-partida', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@geniusquest.test',
+    );
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(
+          JSON.stringify(
+            url.endsWith('/resultado')
+              ? { partidaId: id, classificacao: [] }
+              : [partida, real, running, cancelled],
+          ),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
+    ),
+  );
+  mount();
+  await screen.findByRole('heading', { name: real.temaTitulo });
+  expect(screen.getByText('Em preparação')).toBeInTheDocument();
+  expect(screen.getByText('Concluída')).toBeInTheDocument();
+  expect(screen.getByText('Em andamento')).toBeInTheDocument();
+  expect(screen.getByText('Cancelada')).toBeInTheDocument();
+  const list = screen.getByRole('list');
+  expect(
+    within(list).getAllByRole('button', { name: 'Ver placar' }),
+  ).toHaveLength(1);
+  fireEvent.click(within(list).getByRole('button', { name: 'Ver placar' }));
+  expect(
+    await screen.findByText(
+      'Esta partida terminou sem pontuações registradas.',
+    ),
+  ).toBeInTheDocument();
 });

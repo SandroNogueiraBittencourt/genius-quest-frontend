@@ -50,7 +50,12 @@ it('consulta somente as partidas retornadas para a sessão atual', async () => {
   const fetch = vi.fn().mockResolvedValue(response([partida]));
   vi.stubGlobal('fetch', fetch);
   expect(await getMyMatches()).toEqual([partida]);
-  expect(fetch.mock.calls[0][0]).toMatch(/\/partidas\/minhas$/);
+  expect(fetch.mock.calls[0][0]).toMatch(
+    /\/partidas\/minhas\?incluirSalas=true$/,
+  );
+  expect(fetch.mock.calls[0][1].headers.Authorization).toBe(
+    'Bearer token-partida',
+  );
 });
 
 it('não mascara conflitos quando ciclo ainda não tem vencedor', async () => {
@@ -63,4 +68,54 @@ it('não mascara conflitos quando ciclo ainda não tem vencedor', async () => {
 it('rejeita estrutura inválida de partida', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([{ id: '1' }])));
   await expect(getMyMatches()).rejects.toMatchObject({ status: 502 });
+});
+
+const realMatch = {
+  ...partida,
+  id: '11111111-0000-4000-8000-000000000001',
+  cicloId: null,
+  cicloNome: null,
+  status: 'CONCLUIDA',
+  codigoSala: '11111111-0000-4000-8000-000000000002',
+};
+
+it('aceita partida real sem ciclo e mantém compatibilidade com a preparação individual', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(response([realMatch, partida])),
+  );
+  await expect(getMyMatches()).resolves.toEqual([realMatch, partida]);
+});
+
+it.each([
+  { ...realMatch, cicloNome: 'Ciclo inconsistente' },
+  { ...realMatch, codigoSala: 'GQ2026' },
+  { ...realMatch, codigoSala: null },
+  { ...realMatch, id: 'partida-invalida' },
+  { ...realMatch, status: 'DESCONHECIDO' },
+  { ...realMatch, criadoEm: 'data inválida' },
+])('recusa metadados inconsistentes da partida real %#', async (invalid) => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([invalid])));
+  await expect(getMyMatches()).rejects.toMatchObject({ status: 502 });
+});
+
+it('não confirma como preparação individual uma resposta de sala real', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(realMatch, 201)));
+  await expect(prepareMatch('ciclo-01')).rejects.toMatchObject({ status: 502 });
+});
+
+it('descarta histórico que chega depois da troca de conta', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => {
+      useAuthStore
+        .getState()
+        .start(
+          { token: 'nova-sessao', tipo: 'Bearer', expiraEm: 3600 },
+          'outra@geniusquest.test',
+        );
+      return response([realMatch]);
+    }),
+  );
+  await expect(getMyMatches()).rejects.toMatchObject({ name: 'AbortError' });
 });

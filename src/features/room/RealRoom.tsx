@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Notice } from '../../components/ui';
+import { ApiError } from '../../services/http';
 import { useAuthStore } from '../auth/store';
 import { getThemes } from '../themes/api';
 import { playerIdFromJwt, realRoomApi, validRoomCode } from './realApi';
+import { RoomResults } from './RoomResults';
 import { forgetRoomCode, readRoomCode, rememberRoomCode } from './savedRoom';
 import './RealRoom.css';
 
 /** Conexão real. A demonstração em memória continua em ?view=lobby. */
-export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
+export function RealRoom({
+  onSignIn,
+  onViewResults,
+}: {
+  onSignIn: () => void;
+  onViewResults: () => void;
+}) {
   const auth = useAuthStore((s) => s.session);
   // Só o UUID da sala é guardado nesta aba, associado ao UUID do usuário.
   // Nunca persistir JWT ou dados de autenticação no storage.
@@ -18,11 +26,15 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
   } | null>(null);
   const [entrada, setEntrada] = useState('');
   const [temaId, setTemaId] = useState('');
-  const [respondida, setRespondida] = useState<number | null>(null);
+  const [respondida, setRespondida] = useState<{
+    partidaId: string;
+    numero: number;
+  } | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState('');
   const client = useQueryClient();
   const meuId = auth ? playerIdFromJwt(auth.token) : null;
+  const identity = [auth?.email, auth?.expiresAt];
   const codigo =
     selecionada?.jogadorId === meuId && meuId
       ? selecionada.codigo
@@ -32,69 +44,80 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
     if (novo) rememberRoomCode(meuId, novo);
     else forgetRoomCode(meuId);
     setSelecionada(meuId && novo ? { jogadorId: meuId, codigo: novo } : null);
+    setRespondida(null);
   }
 
   const sala = useQuery({
-    queryKey: ['real-room', auth?.email, codigo],
+    queryKey: ['real-room', ...identity, codigo],
     queryFn: ({ signal }) => realRoomApi.consultar(codigo!, signal),
     enabled: Boolean(auth && codigo),
     refetchInterval: 5000,
+    staleTime: 0,
     retry: false,
   });
+  const room = sala.isError ? undefined : sala.data;
   const temas = useQuery({
-    queryKey: ['real-room', 'themes', auth?.email],
+    queryKey: ['real-room', 'themes', ...identity],
     queryFn: ({ signal }) => getThemes(signal),
     enabled: Boolean(auth),
     retry: false,
     staleTime: 30_000,
   });
   const votacao = useQuery({
-    queryKey: ['real-room', 'votes', auth?.email, codigo],
+    queryKey: ['real-room', 'votes', ...identity, codigo, room?.partidaId],
     queryFn: ({ signal }) => realRoomApi.consultarVotacao(codigo!, signal),
     enabled: Boolean(
-      auth &&
-      codigo &&
-      sala.data &&
-      !sala.data.encerrada &&
-      sala.data.status === 'PREPARACAO',
+      auth && codigo && room && !room.encerrada && room.status === 'PREPARACAO',
     ),
     refetchInterval: 5000,
+    staleTime: 0,
     retry: false,
   });
   const pergunta = useQuery({
-    queryKey: ['real-room', 'question', auth?.email, codigo],
+    queryKey: ['real-room', 'question', ...identity, codigo, room?.partidaId],
     queryFn: ({ signal }) => realRoomApi.perguntaAtual(codigo!, signal),
     enabled: Boolean(
       auth &&
       codigo &&
-      sala.data &&
-      !sala.data.encerrada &&
-      sala.data.status === 'EM_ANDAMENTO',
+      room?.partidaId &&
+      !room.encerrada &&
+      room.status === 'EM_ANDAMENTO',
     ),
     refetchInterval: 5000,
+    staleTime: 0,
     retry: false,
   });
+  const continuationKey = [
+    'real-room',
+    'continuation',
+    ...identity,
+    codigo,
+    room?.partidaId,
+  ];
   const continuacao = useQuery({
-    queryKey: [
-      'real-room',
-      'continuation',
-      auth?.email,
-      codigo,
-      sala.data?.partidaId,
-    ],
+    queryKey: continuationKey,
     queryFn: ({ signal }) =>
-      realRoomApi.consultarContinuacao(codigo!, sala.data!.partidaId!, signal),
+      realRoomApi.consultarContinuacao(codigo!, room!.partidaId!, signal),
     enabled: Boolean(
       auth &&
       codigo &&
-      sala.data?.partidaId &&
-      sala.data.status === 'CONCLUIDA' &&
-      !sala.data.encerrada,
+      room?.partidaId &&
+      room.status === 'CONCLUIDA' &&
+      !room.encerrada,
     ),
-    refetchInterval: 5000,
+    refetchInterval: (query) =>
+      query.state.data?.status === 'ENCERRADA' ||
+      query.state.data?.status === 'APROVADA'
+        ? false
+        : 5000,
+    staleTime: 0,
     retry: false,
   });
-  const room = sala.data;
+  const questao =
+    !pergunta.isError && pergunta.data?.partidaId === room?.partidaId
+      ? pergunta.data
+      : undefined;
+  const estadoContinuacao = continuacao.isError ? undefined : continuacao.data;
   const anfitriao = Boolean(room && meuId && room.anfitriaoId === meuId);
 
   async function executar(acao: () => Promise<unknown>, sair = false) {
@@ -105,9 +128,9 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
       await acao();
       if (sair) {
         setCodigo(null);
-        setRespondida(null);
       }
       await client.invalidateQueries({ queryKey: ['real-room'] });
+      await client.invalidateQueries({ queryKey: ['quiz', 'my-matches'] });
     } catch (error) {
       setErro(
         error instanceof Error ? error.message : 'Falha ao acessar a sala.',
@@ -115,6 +138,38 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
     } finally {
       setOcupado(false);
     }
+  }
+
+  async function votarContinuacao(continuar: boolean) {
+    if (!codigo || !room?.partidaId) return;
+    const partidaId = room.partidaId;
+    function conferirSessao() {
+      if (useAuthStore.getState().session !== auth)
+        throw new DOMException('Sessão alterada.', 'AbortError');
+    }
+    await executar(async () => {
+      await client.cancelQueries({ queryKey: continuationKey, exact: true });
+      conferirSessao();
+      try {
+        const atual = await realRoomApi.votarContinuacao(
+          codigo,
+          partidaId,
+          continuar,
+        );
+        conferirSessao();
+        client.setQueryData(continuationKey, atual);
+      } catch (error) {
+        // Outro jogador pode ter decidido a rodada entre a consulta e o voto.
+        // Só tratamos o conflito como estado normal se a API o confirmar.
+        if (!(error instanceof ApiError) || error.status !== 409) throw error;
+        conferirSessao();
+        const atual = await realRoomApi.consultarContinuacao(codigo, partidaId);
+        conferirSessao();
+        client.setQueryData(continuationKey, atual);
+        if (atual.status === 'AGUARDANDO' && atual.meuVoto === null)
+          throw error;
+      }
+    });
   }
 
   if (!auth) {
@@ -221,6 +276,9 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
                 }
               >
                 Sair da sala
+              </Button>
+              <Button variant="outline" onClick={onViewResults}>
+                Meus resultados
               </Button>
             </div>
             {sala.isPending && <p role="status">Consultando participantes…</p>}
@@ -378,20 +436,23 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
               <h2>Pergunta da partida</h2>
               {pergunta.isPending && <p role="status">Carregando pergunta…</p>}
               {pergunta.isError && <Notice message={pergunta.error.message} />}
-              {pergunta.data && (
+              {!questao && !pergunta.isPending && !pergunta.isError && (
+                <p role="status">Atualizando partida…</p>
+              )}
+              {questao && (
                 <>
                   <p>
-                    Pergunta {pergunta.data.numero} de{' '}
-                    {pergunta.data.totalPerguntas}
+                    Pergunta {questao.numero} de {questao.totalPerguntas}
                   </p>
-                  <h3>{pergunta.data.enunciado}</h3>
-                  {respondida === pergunta.data.numero ? (
+                  <h3>{questao.enunciado}</h3>
+                  {respondida?.partidaId === questao.partidaId &&
+                  respondida.numero === questao.numero ? (
                     <p role="status">
                       Resposta registrada. Aguardando os outros participantes…
                     </p>
                   ) : (
                     <div className="real-room-answers">
-                      {pergunta.data.alternativas.map((texto, indice) => (
+                      {questao.alternativas.map((texto, indice) => (
                         <Button
                           key={indice}
                           variant="outline"
@@ -400,10 +461,13 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
                             void executar(async () => {
                               await realRoomApi.responder(
                                 codigo,
-                                pergunta.data!.numero,
+                                questao.numero,
                                 indice,
                               );
-                              setRespondida(pergunta.data!.numero);
+                              setRespondida({
+                                partidaId: questao.partidaId,
+                                numero: questao.numero,
+                              });
                             })
                           }
                         >
@@ -416,59 +480,80 @@ export function RealRoom({ onSignIn }: { onSignIn: () => void }) {
               )}
             </Card>
           )}
-          {room &&
-            !room.encerrada &&
-            room.status === 'CONCLUIDA' &&
-            room.partidaId && (
-              <Card>
-                <h2>Partida concluída!</h2>
-                <p>Vocês querem continuar e votar em outro tema?</p>
-                {continuacao.isPending && <p>Consultando votos…</p>}
-                {continuacao.isError && (
-                  <Notice message={continuacao.error.message} />
-                )}
-                {continuacao.data && (
-                  <p role="status">
-                    Continuação: {continuacao.data.status} —{' '}
-                    {continuacao.data.favoraveis} sim,
-                    {continuacao.data.contrarios} não.
-                  </p>
-                )}
-                {continuacao.data?.status === 'AGUARDANDO' && (
-                  <div className="real-room-actions">
-                    <Button
-                      disabled={ocupado}
-                      onClick={() =>
-                        void executar(() =>
-                          realRoomApi.votarContinuacao(
-                            codigo,
-                            room.partidaId!,
-                            true,
-                          ),
-                        )
-                      }
-                    >
-                      Sim, continuar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={ocupado}
-                      onClick={() =>
-                        void executar(() =>
-                          realRoomApi.votarContinuacao(
-                            codigo,
-                            room.partidaId!,
-                            false,
-                          ),
-                        )
-                      }
-                    >
-                      Não, encerrar rodada
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            )}
+          {room && room.status === 'CONCLUIDA' && room.partidaId && (
+            <Card>
+              <h2>Partida concluída!</h2>
+              <RoomResults codigo={codigo} partidaId={room.partidaId} />
+              {!room.encerrada && (
+                <>
+                  {continuacao.isPending && (
+                    <p role="status">Consultando votos…</p>
+                  )}
+                  {continuacao.isError && (
+                    <>
+                      <Notice message={continuacao.error.message} />
+                      <Button
+                        variant="outline"
+                        busy={continuacao.isFetching}
+                        onClick={() => void continuacao.refetch()}
+                      >
+                        Tentar consultar votos novamente
+                      </Button>
+                    </>
+                  )}
+                  {estadoContinuacao && (
+                    <p role="status">
+                      Continuação: {estadoContinuacao.favoraveis} sim,{' '}
+                      {estadoContinuacao.contrarios} não.
+                    </p>
+                  )}
+                  {estadoContinuacao?.status === 'AGUARDANDO' && (
+                    <>
+                      <h3>Vocês querem continuar e votar em outro tema?</h3>
+                      {estadoContinuacao.meuVoto === null ? (
+                        <div className="real-room-actions">
+                          <Button
+                            disabled={ocupado}
+                            onClick={() => void votarContinuacao(true)}
+                          >
+                            Sim, continuar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            disabled={ocupado}
+                            onClick={() => void votarContinuacao(false)}
+                          >
+                            Não, encerrar rodada
+                          </Button>
+                        </div>
+                      ) : (
+                        <p role="status">
+                          Seu voto foi registrado. Aguardando os outros
+                          participantes…
+                        </p>
+                      )}
+                    </>
+                  )}
+                  {estadoContinuacao?.status === 'ENCERRADA' && (
+                    <p role="status">
+                      Votação encerrada. A turma não continuará para outra
+                      rodada.
+                    </p>
+                  )}
+                  {estadoContinuacao?.status === 'APROVADA' && (
+                    <p role="status">
+                      Nova rodada aprovada. Atualizando a sala…
+                    </p>
+                  )}
+                </>
+              )}
+              <div className="real-room-actions">
+                <Button variant="secondary" onClick={onViewResults}>
+                  Ver histórico de resultados
+                </Button>
+              </div>
+            </Card>
+          )}
         </>
       )}
     </section>

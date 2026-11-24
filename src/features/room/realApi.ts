@@ -36,6 +36,16 @@ export type RealContinuation = {
   contrarios: number;
   totalJogadores: number;
 };
+export type RealRank = RealParticipant & {
+  posicao: number;
+  pontos: number;
+  acertos: number;
+  erros: number;
+};
+export type RealResult = {
+  partidaId: string;
+  classificacao: RealRank[];
+};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function validRoomCode(value: string) {
@@ -49,9 +59,10 @@ function roomPath(code: string) {
 }
 function checkSession(
   session: ReturnType<typeof useAuthStore.getState>['session'],
+  signal?: AbortSignal,
 ) {
-  if (session !== useAuthStore.getState().session)
-    throw new DOMException('Sessão alterada.', 'AbortError');
+  if (signal?.aborted || session !== useAuthStore.getState().session)
+    throw new DOMException('Solicitação encerrada.', 'AbortError');
 }
 function ensureRoom(value: unknown): RealRoom {
   if (!value || typeof value !== 'object')
@@ -79,13 +90,58 @@ function ensureRoom(value: unknown): RealRoom {
     throw new ApiError(502, 'A API retornou uma sala inválida.');
   return value as RealRoom;
 }
+function nonNegativeInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+function validRank(value: unknown): value is RealRank {
+  if (!value || typeof value !== 'object') return false;
+  const player = value as Record<string, unknown>;
+  return (
+    typeof player.id === 'string' &&
+    UUID.test(player.id) &&
+    typeof player.nome === 'string' &&
+    player.nome.trim().length > 0 &&
+    nonNegativeInteger(player.posicao) &&
+    player.posicao > 0 &&
+    nonNegativeInteger(player.pontos) &&
+    nonNegativeInteger(player.acertos) &&
+    nonNegativeInteger(player.erros)
+  );
+}
+function ensureResult(value: unknown, partidaId: string): RealResult {
+  if (!value || typeof value !== 'object')
+    throw new ApiError(502, 'A API retornou um placar inválido.');
+  const result = value as Record<string, unknown>;
+  if (
+    typeof result.partidaId !== 'string' ||
+    result.partidaId.toLowerCase() !== partidaId ||
+    !Array.isArray(result.classificacao) ||
+    !result.classificacao.every(validRank) ||
+    new Set(result.classificacao.map((p: RealRank) => p.id.toLowerCase()))
+      .size !== result.classificacao.length
+  )
+    throw new ApiError(502, 'A API retornou um placar inválido.');
+  return {
+    partidaId,
+    classificacao: result.classificacao.map(
+      ({ id, nome, posicao, pontos, acertos, erros }: RealRank) => ({
+        id,
+        nome,
+        posicao,
+        pontos,
+        acertos,
+        erros,
+      }),
+    ),
+  };
+}
 async function request<T>(
   path: string,
   options: Parameters<typeof authenticatedRequest>[1] = {},
 ) {
   const session = useAuthStore.getState().session;
   const response = await authenticatedRequest<T>(path, options);
-  checkSession(session);
+  checkSession(session, options.signal);
   return response;
 }
 
@@ -164,6 +220,19 @@ export const realRoomApi = {
       method: 'POST',
       json: { numero, alternativaIndice },
     });
+  },
+  async consultarResultado(
+    code: string,
+    partidaId: string,
+    signal?: AbortSignal,
+  ): Promise<RealResult> {
+    const id = partidaId.toLowerCase();
+    if (!UUID.test(id)) throw new Error('Identificador da partida inválido.');
+    const result = await request<unknown>(
+      roomPath(code) + '/partidas/' + encodeURIComponent(id) + '/resultado',
+      { signal },
+    );
+    return ensureResult(result, id);
   },
   consultarContinuacao(code: string, partidaId: string, signal?: AbortSignal) {
     return request<RealContinuation>(

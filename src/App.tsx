@@ -11,6 +11,7 @@ import { Themes } from './features/themes/Themes';
 import { ThemesAdmin } from './features/themes/ThemesAdmin';
 import { VotingHistory } from './features/themes/VotingHistory';
 import { QuizPreparation } from './features/quiz/QuizPreparation';
+import { MatchResultsPage } from './features/quiz/MatchResultsPage';
 import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
@@ -42,6 +43,7 @@ function Pages() {
     view === 'themes' ||
     view === 'themes-admin' ||
     view === 'history' ||
+    view === 'match-results' ||
     view === 'quiz' ||
     view === 'real-room';
   async function logout() {
@@ -103,16 +105,18 @@ function Pages() {
                       : view === 'themes-admin'
                         ? 'Moderação de temas · Genius Quest'
                         : view === 'history'
-                          ? 'Resultados e histórico · Genius Quest'
-                          : view === 'quiz'
-                            ? 'Minhas partidas · Genius Quest'
-                            : view === 'lobby'
-                              ? 'Sua sala · Genius Quest'
-                              : view === 'real-room'
-                                ? 'Multiplayer real · Genius Quest'
-                                : view === 'design-system'
-                                  ? 'Design System · Genius Quest'
-                                  : 'Genius Quest · Cada pergunta, uma nova memória';
+                          ? 'Histórico de votação · Genius Quest'
+                          : view === 'match-results'
+                            ? 'Resultados · Genius Quest'
+                            : view === 'quiz'
+                              ? 'Minhas partidas · Genius Quest'
+                              : view === 'lobby'
+                                ? 'Sua sala · Genius Quest'
+                                : view === 'real-room'
+                                  ? 'Multiplayer real · Genius Quest'
+                                  : view === 'design-system'
+                                    ? 'Design System · Genius Quest'
+                                    : 'Genius Quest · Cada pergunta, uma nova memória';
     if (previousView.current !== screenId) {
       const heading = document.querySelector<HTMLElement>('main h1');
       heading?.setAttribute('tabindex', '-1');
@@ -192,6 +196,13 @@ function Pages() {
             href="?view=history"
             aria-current={view === 'history' ? 'page' : undefined}
             onClick={(event) => open(event, 'history')}
+          >
+            Histórico de votação
+          </a>
+          <a
+            href="?view=match-results"
+            aria-current={view === 'match-results' ? 'page' : undefined}
+            onClick={(event) => open(event, 'match-results')}
           >
             Resultados
           </a>
@@ -392,6 +403,14 @@ function Pages() {
             }}
             onOpenMatch={() => navigate('quiz')}
           />
+        ) : view === 'match-results' ? (
+          <MatchResultsPage
+            onSignIn={() => {
+              setAfterLogin('match-results');
+              navigate('login');
+            }}
+            onViewMatches={() => navigate('quiz')}
+          />
         ) : view === 'quiz' ? (
           <QuizPreparation
             onSignIn={() => {
@@ -399,6 +418,8 @@ function Pages() {
               navigate('login');
             }}
             onViewHistory={() => navigate('history')}
+            onRealRoom={() => navigate('real-room')}
+            onViewResults={() => navigate('match-results')}
           />
         ) : view === 'questions-admin' ? (
           <QuestionsAdmin
@@ -417,6 +438,7 @@ function Pages() {
         ) : view === 'real-room' ? (
           <RealRoom
             key={auth?.token ?? 'signed-out'}
+            onViewResults={() => navigate('match-results')}
             onSignIn={() => {
               setAfterLogin('real-room');
               navigate('login');

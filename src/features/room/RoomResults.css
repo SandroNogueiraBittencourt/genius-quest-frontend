@@ -1,0 +1,39 @@
+.room-results {
+  min-width: 0;
+  margin: 12px 0;
+}
+.room-results h3,
+.room-results h4 {
+  margin: 0 0 12px;
+}
+.room-results-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+.room-results table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.room-results th,
+.room-results td {
+  padding: 12px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-border);
+}
+.room-results thead {
+  background: var(--color-primary-soft);
+}
+.room-results tbody th {
+  overflow-wrap: anywhere;
+  min-width: 100px;
+}
+.room-results tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.room-results-points {
+  font-weight: 700;
+  color: var(--color-primary);
+}
