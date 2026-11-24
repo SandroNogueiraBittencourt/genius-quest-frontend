@@ -4,26 +4,35 @@ import { useAuthStore } from '../auth/store';
 
 export type PreparedMatch = {
   id: string;
-  cicloId: string;
-  cicloNome: string;
+  cicloId: string | null;
+  cicloNome: string | null;
   temaId: string;
   temaTitulo: string;
   categoriaNome: string;
   status: 'PREPARACAO' | 'PRONTA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
   criadoEm: string;
+  codigoSala?: string | null;
 };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function validMatch(data: unknown): data is PreparedMatch {
   if (!data || typeof data !== 'object') return false;
   const match = data as Record<string, unknown>;
   return (
     typeof match.id === 'string' &&
-    typeof match.cicloId === 'string' &&
-    typeof match.cicloNome === 'string' &&
+    ((typeof match.cicloId === 'string' &&
+      typeof match.cicloNome === 'string') ||
+      (match.cicloId === null && match.cicloNome === null)) &&
     typeof match.temaId === 'string' &&
     typeof match.temaTitulo === 'string' &&
     typeof match.categoriaNome === 'string' &&
     typeof match.criadoEm === 'string' &&
+    Number.isFinite(Date.parse(match.criadoEm)) &&
+    ((match.cicloId !== null && match.codigoSala == null) ||
+      (typeof match.codigoSala === 'string' &&
+        UUID.test(match.codigoSala) &&
+        UUID.test(match.id))) &&
     ['PREPARACAO', 'PRONTA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'].includes(
       String(match.status),
     )
@@ -45,7 +54,7 @@ export async function prepareMatch(cicloId: string): Promise<PreparedMatch> {
     json: { cicloId },
   });
   assertSessionUnchanged(session);
-  if (!validMatch(data))
+  if (!validMatch(data) || data.cicloId === null || data.codigoSala)
     throw new ApiError(502, 'A API retornou uma partida inválida.');
   return data;
 }
@@ -54,9 +63,10 @@ export async function getMyMatches(
   signal?: AbortSignal,
 ): Promise<PreparedMatch[]> {
   const session = useAuthStore.getState().session;
-  const data = await authenticatedRequest<unknown>('/partidas/minhas', {
-    signal,
-  });
+  const data = await authenticatedRequest<unknown>(
+    '/partidas/minhas?incluirSalas=true',
+    { signal },
+  );
   assertSessionUnchanged(session, signal);
   if (!Array.isArray(data) || !data.every(validMatch))
     throw new ApiError(502, 'A API retornou partidas inválidas.');

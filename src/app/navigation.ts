@@ -14,6 +14,7 @@ export type View =
   | 'themes'
   | 'themes-admin'
   | 'history'
+  | 'match-results'
   | 'quiz';
 function currentView(): View {
   if (window.location.pathname === '/redefinir-senha') return 'reset-password';
@@ -31,6 +32,7 @@ function currentView(): View {
     view === 'themes' ||
     view === 'themes-admin' ||
     view === 'history' ||
+    view === 'match-results' ||
     view === 'quiz'
     ? view
     : 'home';

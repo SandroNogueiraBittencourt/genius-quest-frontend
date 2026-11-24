@@ -1,32 +1,41 @@
-import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
-import { getMyMatches } from './api';
+import { MatchList } from './MatchList';
+import { useMyMatches } from './queries';
 import './QuizPreparation.css';
 
 export function QuizPreparation({
   onSignIn,
   onViewHistory,
+  onRealRoom,
+  onViewResults,
 }: {
   onSignIn: () => void;
   onViewHistory: () => void;
+  onRealRoom: () => void;
+  onViewResults: () => void;
 }) {
   const session = useAuthStore((state) => state.session);
   return (
     <section className="quiz-preparation">
       <header className="quiz-preparation-heading">
-        <span className="gq-kicker">Do tema vencedor à nova descoberta</span>
+        <span className="gq-kicker">Cada rodada, uma nova lembrança</span>
         <h1>Minhas partidas.</h1>
         <p>
-          Prepare partidas a partir dos temas que venceram as votações. O quiz
-          com perguntas e pontuação será liberado em outra etapa.
+          Acompanhe as partidas vinculadas à sua conta, da preparação ao
+          resultado. Jogue com outras pessoas na Sala real.
         </p>
       </header>
       {session ? (
-        <SignedInMatches key={session.token} onViewHistory={onViewHistory} />
+        <SignedInMatches
+          key={session.token}
+          onViewHistory={onViewHistory}
+          onRealRoom={onRealRoom}
+          onViewResults={onViewResults}
+        />
       ) : (
         <Card>
-          <h2>Entre para preparar uma partida.</h2>
+          <h2>Entre para consultar suas partidas.</h2>
           <p>As partidas ficam vinculadas à sua conta.</p>
           <Button variant="secondary" onClick={onSignIn}>
             Entrar na minha conta
@@ -37,26 +46,36 @@ export function QuizPreparation({
   );
 }
 
-function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
-  const session = useAuthStore((state) => state.session);
-  const matches = useQuery({
-    queryKey: ['quiz', 'my-matches', session?.email, session?.expiresAt],
-    queryFn: ({ signal }) => getMyMatches(signal),
-    enabled: !!session,
-    retry: false,
-  });
+function SignedInMatches({
+  onViewHistory,
+  onRealRoom,
+  onViewResults,
+}: {
+  onViewHistory: () => void;
+  onRealRoom: () => void;
+  onViewResults: () => void;
+}) {
+  const matches = useMyMatches();
 
   return (
     <>
       <div className="quiz-preparation-toolbar">
-        <h2>Partidas em preparação</h2>
+        <h2>Histórico de partidas</h2>
         <div className="quiz-preparation-actions">
           <Button variant="outline" onClick={onViewHistory}>
             Ver vencedores
           </Button>
+          <Button variant="outline" onClick={onViewResults}>
+            Resultados
+          </Button>
+          <Button variant="secondary" onClick={onRealRoom}>
+            Ir para a sala real
+          </Button>
           <Button
             variant="outline"
             disabled={matches.isPending}
+            busy={matches.isFetching && !matches.isPending}
+            loadingLabel="Atualizando…"
             onClick={() => void matches.refetch()}
           >
             Atualizar
@@ -74,41 +93,17 @@ function SignedInMatches({ onViewHistory }: { onViewHistory: () => void }) {
         </Card>
       ) : matches.data.length === 0 ? (
         <Card>
-          <h3>Você ainda não preparou nenhuma partida.</h3>
+          <h3>Você ainda não tem partidas.</h3>
           <p>
-            Escolha uma votação encerrada com vencedor na página Resultados e
-            clique em “Preparar partida com este tema”.
+            Participe de uma sala real ou escolha um tema vencedor no Histórico
+            de votação para preparar uma partida.
           </p>
-          <Button variant="secondary" onClick={onViewHistory}>
-            Explorar resultados
+          <Button variant="secondary" onClick={onRealRoom}>
+            Jogar na sala real
           </Button>
         </Card>
       ) : (
-        <ul className="quiz-preparation-list">
-          {matches.data.map((match) => (
-            <li key={match.id}>
-              <Card className="quiz-preparation-card">
-                <span className="quiz-preparation-status">Em preparação</span>
-                <h3>{match.temaTitulo}</h3>
-                <p>
-                  Categoria: <strong>{match.categoriaNome}</strong>
-                </p>
-                <p>
-                  Origem: <strong>{match.cicloNome}</strong>
-                </p>
-                <p>
-                  <time dateTime={match.criadoEm}>
-                    Preparada em{' '}
-                    {new Date(match.criadoEm).toLocaleString('pt-BR')}
-                  </time>
-                </p>
-                <p className="quiz-preparation-disclaimer">
-                  Ainda não há perguntas disponíveis nesta partida.
-                </p>
-              </Card>
-            </li>
-          ))}
-        </ul>
+        <MatchList matches={matches.data} />
       )}
     </>
   );

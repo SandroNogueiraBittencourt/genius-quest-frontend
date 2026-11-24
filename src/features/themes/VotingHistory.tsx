@@ -28,7 +28,7 @@ export function VotingHistory({
     <section className="history-page">
       <header className="history-heading">
         <span className="gq-kicker">A curiosidade deixa lembranças</span>
-        <h1>Resultados e histórico.</h1>
+        <h1>Histórico de votação.</h1>
         <p>
           Relembre as votações encerradas, conheça os temas vencedores e
           descubra como cada assunto foi escolhido.
@@ -218,8 +218,8 @@ function SignedInHistory({ onOpenMatch }: { onOpenMatch?: () => void }) {
               {selected.vencedorTemaId && (
                 <div className="history-prepare-match">
                   <p>
-                    Crie uma partida vinculada a este vencedor. As perguntas
-                    ainda serão implementadas na próxima subetapa.
+                    Prepare uma partida individual vinculada a este vencedor.
+                    Para jogar com outras pessoas, acesse a Sala real.
                   </p>
                   <Button
                     variant="secondary"
