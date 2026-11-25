@@ -25,7 +25,11 @@ export function RealRoom({
     codigo: string;
   } | null>(null);
   const [entrada, setEntrada] = useState('');
-  const [temaId, setTemaId] = useState('');
+  const [escolhaTema, setEscolhaTema] = useState({
+    fase: '',
+    abertaEm: 0,
+    temaId: '',
+  });
   const [respondida, setRespondida] = useState<{
     partidaId: string;
     numero: number;
@@ -56,6 +60,20 @@ export function RealRoom({
     retry: false,
   });
   const room = sala.isError ? undefined : sala.data;
+  const faseTema = JSON.stringify([
+    meuId,
+    codigo,
+    room?.status,
+    room?.partidaId,
+  ]);
+  if (escolhaTema.fase !== faseTema) {
+    setEscolhaTema({
+      fase: faseTema,
+      abertaEm: sala.dataUpdatedAt,
+      temaId: '',
+    });
+  }
+  const { temaId } = escolhaTema;
   const temas = useQuery({
     queryKey: ['real-room', 'themes', ...identity],
     queryFn: ({ signal }) => getThemes(signal),
@@ -64,7 +82,15 @@ export function RealRoom({
     staleTime: 30_000,
   });
   const votacao = useQuery({
-    queryKey: ['real-room', 'votes', ...identity, codigo, room?.partidaId],
+    // A nova rodada pode repetir o UUID da sala e ter partidaId nulo novamente.
+    queryKey: [
+      'real-room',
+      'votes',
+      ...identity,
+      codigo,
+      faseTema,
+      escolhaTema.abertaEm,
+    ],
     queryFn: ({ signal }) => realRoomApi.consultarVotacao(codigo!, signal),
     enabled: Boolean(
       auth && codigo && room && !room.encerrada && room.status === 'PREPARACAO',
@@ -325,23 +351,32 @@ export function RealRoom({
             )}
           </Card>
           {room && !room.encerrada && room.status === 'PREPARACAO' && (
-            <Card>
+            <Card className="real-room-theme">
               <h2>Escolha do tema</h2>
               {temas.isPending && <p>Carregando temas aprovados…</p>}
               {temas.isError && <Notice message={temas.error.message} />}
-              <label htmlFor="real-room-theme">Tema aprovado</label>
-              <select
-                id="real-room-theme"
-                value={temaId}
-                onChange={(e) => setTemaId(e.target.value)}
-              >
-                <option value="">Selecione um tema</option>
-                {temas.data?.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.titulo}
-                  </option>
-                ))}
-              </select>
+              {!room.temaId && (
+                <div className="real-room-theme-picker">
+                  <label htmlFor="real-room-theme">Tema aprovado</label>
+                  <select
+                    id="real-room-theme"
+                    value={temaId}
+                    onChange={(event) =>
+                      setEscolhaTema({
+                        ...escolhaTema,
+                        temaId: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Selecione um tema</option>
+                    {temas.data?.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.titulo}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {votacao.isError && <Notice message={votacao.error.message} />}
               {room.temaId ? (
                 <p>
@@ -353,7 +388,7 @@ export function RealRoom({
                 </p>
               ) : (
                 <>
-                  {anfitriao && !votacao.data?.aberta && (
+                  {anfitriao && votacao.data?.aberta === false && (
                     <div className="real-room-actions">
                       <Button
                         disabled={!temaId || ocupado}

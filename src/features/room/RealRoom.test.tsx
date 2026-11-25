@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -53,13 +54,30 @@ function mockServer(initial: RoomState = baseRoom) {
     room: initial,
     continuation: waiting,
     voteFailure: null as RealContinuation | null,
+    themeVote: {
+      aberta: true,
+      meuVoto: null as string | null,
+      totais: [] as { temaId: string; votos: number }[],
+    },
+    onContinue: undefined as (() => void) | undefined,
   };
   const fetch = vi.fn(async (url: string, init: RequestInit) => {
-    if (url.endsWith('/temas')) return json([]);
+    if (url.endsWith('/temas'))
+      return json([
+        {
+          id: 'tema-01',
+          categoriaId: 'categoria-01',
+          autorId: playerId,
+          titulo: 'Astronomia',
+          descricao: null,
+          status: 'APROVADO',
+          criadoEm: '2026-11-24T12:00:00Z',
+          atualizadoEm: '2026-11-24T12:00:00Z',
+        },
+      ]);
     if (url.endsWith(roomPath) || url.endsWith(roomPath + '/entrada'))
       return json(server.room);
-    if (url.endsWith(roomPath + '/votacao'))
-      return json({ aberta: true, meuVoto: null, totais: [] });
+    if (url.endsWith(roomPath + '/votacao')) return json(server.themeVote);
     if (url.endsWith(roomPath + '/partida/pergunta-atual'))
       return json({
         partidaId: server.room.partidaId,
@@ -108,6 +126,7 @@ function mockServer(initial: RoomState = baseRoom) {
             409,
           );
         }
+        server.onContinue?.();
         server.continuation = {
           ...waiting,
           meuVoto: true,
@@ -121,8 +140,8 @@ function mockServer(initial: RoomState = baseRoom) {
   vi.stubGlobal('fetch', fetch);
   return { server, fetch };
 }
-function mount(resume = true) {
-  if (resume) rememberRoomCode(playerId, code);
+function mount(resume = true, jogador = playerId) {
+  if (resume) rememberRoomCode(jogador, code);
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -132,18 +151,20 @@ function mount(resume = true) {
       <RealRoom onSignIn={() => undefined} onViewResults={onViewResults} />
     </QueryClientProvider>,
   );
-  return { onViewResults };
+  return { onViewResults, client };
+}
+
+function autenticar(id: string) {
+  const token =
+    'header.' + btoa(JSON.stringify({ usuarioId: id })) + '.assinatura-teste';
+  useAuthStore
+    .getState()
+    .start({ token, tipo: 'Bearer', expiraEm: 3600 }, 'jogador@gq.test');
 }
 
 beforeEach(() => {
   sessionStorage.clear();
-  const token =
-    'header.' +
-    btoa(JSON.stringify({ usuarioId: playerId })) +
-    '.assinatura-teste';
-  useAuthStore
-    .getState()
-    .start({ token, tipo: 'Bearer', expiraEm: 3600 }, 'jogador@gq.test');
+  autenticar(playerId);
 });
 afterEach(() => {
   useAuthStore.setState({ session: null, notice: null });
@@ -292,3 +313,74 @@ it('não carrega a resposta da primeira rodada para a questão de mesmo número 
   ).toBeNull();
   expect(screen.queryByRole('table')).toBeNull();
 });
+
+it.each([
+  { papel: 'anfitrião', jogador: playerId, votaContinuidade: true },
+  { papel: 'convidado', jogador: guestId, votaContinuidade: false },
+])(
+  'limpa a seleção e os totais ao reabrir a votação para $papel',
+  async ({ jogador, votaContinuidade }) => {
+    const preparacao = {
+      ...baseRoom,
+      partidaId: null,
+      temaId: null,
+      status: 'PREPARACAO',
+    } as const;
+    autenticar(jogador);
+    const { server } = mockServer(preparacao);
+    server.themeVote = {
+      aberta: true,
+      meuVoto: 'tema-01',
+      totais: [{ temaId: 'tema-01', votos: 2 }],
+    };
+    const { client, onViewResults } = mount(true, jogador);
+    const tema = await screen.findByRole('combobox', { name: 'Tema aprovado' });
+    await screen.findByRole('option', { name: 'Astronomia' });
+    await screen.findByText('Astronomia: 2 voto(s)');
+    fireEvent.change(tema, { target: { value: 'tema-01' } });
+    expect(tema).toHaveValue('tema-01');
+
+    server.room = { ...baseRoom, status: 'PREPARACAO' };
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar sala' }));
+    expect(await screen.findByText(/Tema escolhido:/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('combobox', { name: 'Tema aprovado' }),
+    ).toBeNull();
+
+    server.room = baseRoom;
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar sala' }));
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver histórico de resultados' }),
+    );
+    expect(onViewResults).toHaveBeenCalledOnce();
+
+    function reabrirVotacao() {
+      server.room = preparacao;
+      server.themeVote = { aberta: true, meuVoto: null, totais: [] };
+    }
+    if (votaContinuidade) {
+      server.onContinue = reabrirVotacao;
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Sim, continuar' }),
+      );
+    } else {
+      reabrirVotacao();
+      await act(() =>
+        client.refetchQueries({ queryKey: ['real-room', 'jogador@gq.test'] }),
+      );
+    }
+
+    const novaEscolha = await screen.findByRole('combobox', {
+      name: 'Tema aprovado',
+    });
+    const votar = await screen.findByRole('button', {
+      name: 'Votar neste tema',
+    });
+    expect(novaEscolha).toHaveValue('');
+    expect(screen.queryByText('Astronomia: 2 voto(s)')).toBeNull();
+    await waitFor(() => expect(votar).toBeDisabled());
+    fireEvent.change(novaEscolha, { target: { value: 'tema-01' } });
+    await waitFor(() => expect(votar).toBeEnabled());
+  },
+);
