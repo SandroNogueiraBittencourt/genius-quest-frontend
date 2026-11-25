@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './http';
+import { API_BASE_URL, ApiError } from './http';
 export type HealthResponse = {
   status: string;
   application: string;
@@ -13,7 +13,10 @@ export async function getHealth(): Promise<HealthResponse> {
   });
 
   if (!response.ok) {
-    throw new Error(`Falha ao consultar a API: HTTP ${response.status}`);
+    throw new ApiError(
+      response.status,
+      'Não foi possível consultar o serviço.',
+    );
   }
 
   return response.json() as Promise<HealthResponse>;
