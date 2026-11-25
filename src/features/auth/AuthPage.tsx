@@ -95,7 +95,9 @@ export function AuthPage({
         if (controller.signal.aborted) return;
         setSenha('');
         setConfirmacao('');
-        onRegistered(user.email);
+        if (user.emailVerificado === false && onVerifyEmail)
+          onVerifyEmail(user.email);
+        else onRegistered(user.email);
       } else {
         const response = await login({ email, senha }, controller.signal);
         if (controller.signal.aborted) return;

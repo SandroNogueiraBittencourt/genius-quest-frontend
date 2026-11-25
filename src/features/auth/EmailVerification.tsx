@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function EmailVerification({ initialEmail, onVerified, onBack }: Props) {
-  const [email, setEmail] = useState(initialEmail);
+  const address = initialEmail.trim().toLowerCase();
   const [codigo, setCodigo] = useState('');
   const [pending, setPending] = useState<'verify' | 'resend' | null>(null);
   const [error, setError] = useState('');
@@ -27,10 +27,8 @@ export function EmailVerification({ initialEmail, onVerified, onBack }: Props) {
   }
 
   async function send(action: 'verify' | 'resend') {
-    if (request.current || !form.current) return;
+    if (request.current || !form.current || !address) return;
     clearFeedback();
-    const input = form.current.elements.namedItem('email') as HTMLInputElement;
-    if (!input.reportValidity()) return;
     const normalizedCode = codigo.replace(/[\s-]/g, '');
     if (action === 'verify' && !/^[0-9]{10}$/.test(normalizedCode)) {
       setError('Informe os 10 dígitos do código recebido.');
@@ -42,7 +40,6 @@ export function EmailVerification({ initialEmail, onVerified, onBack }: Props) {
     const controller = new AbortController();
     request.current = controller;
     setPending(action);
-    const address = email.trim().toLowerCase();
     try {
       if (action === 'verify') {
         await verifyEmail(address, normalizedCode, controller.signal);
@@ -81,82 +78,74 @@ export function EmailVerification({ initialEmail, onVerified, onBack }: Props) {
         <header className="auth-verification-heading">
           <h1 id="verification-title">Confirme seu e-mail</h1>
           <p className="auth-intro">
-            Digite o código enviado ao seu e-mail. Ele expira em 15 minutos.
+            {address
+              ? 'Digite o código enviado ao seu e-mail. Ele expira em 15 minutos.'
+              : 'Volte ao login para continuar a confirmação da sua conta.'}
           </p>
         </header>
-        <form
-          className="auth-verification-form"
-          ref={form}
-          noValidate
-          onSubmit={submit}
-          aria-busy={!!pending}
-        >
-          <fieldset className="auth-fields" disabled={!!pending}>
-            <legend className="gq-sr-only">
-              Dados para confirmar o e-mail
-            </legend>
-            <Input
-              id="verification-email"
-              name="email"
-              label="E-mail"
-              type="email"
-              autoComplete="email"
-              maxLength={150}
-              required
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-                clearFeedback();
-              }}
-            />
-            <Input
-              id="verification-code"
-              name="codigo"
-              label="Código de verificação"
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              autoCapitalize="none"
-              spellCheck={false}
-              maxLength={64}
-              required
-              value={codigo}
-              onChange={(event) => {
-                setCodigo(event.target.value);
-                clearFeedback();
-              }}
-            />
-          </fieldset>
-          {error && <Notice message={error} />}
-          {feedback && (
-            <p className="auth-success" role="status">
-              {feedback}
-            </p>
-          )}
-          <Button
-            type="submit"
-            variant="secondary"
-            className="auth-verification-submit"
-            disabled={!!pending}
-            busy={pending === 'verify'}
-            loadingLabel="Confirmando…"
+        {address && (
+          <form
+            className="auth-verification-form"
+            ref={form}
+            noValidate
+            onSubmit={submit}
+            aria-busy={!!pending}
           >
-            Confirmar e-mail
-          </Button>
-        </form>
+            <fieldset className="auth-fields" disabled={!!pending}>
+              <legend className="gq-sr-only">
+                Dados para confirmar o e-mail
+              </legend>
+              <Input
+                id="verification-code"
+                name="codigo"
+                label="Código de verificação"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={64}
+                required
+                value={codigo}
+                onChange={(event) => {
+                  setCodigo(event.target.value);
+                  clearFeedback();
+                }}
+              />
+            </fieldset>
+            {error && <Notice message={error} />}
+            {feedback && (
+              <p className="auth-success" role="status">
+                {feedback}
+              </p>
+            )}
+            <Button
+              type="submit"
+              variant="secondary"
+              className="auth-verification-submit"
+              disabled={!!pending}
+              busy={pending === 'verify'}
+              loadingLabel="Confirmando…"
+            >
+              Confirmar e-mail
+            </Button>
+          </form>
+        )}
         <div className="auth-verification-actions">
           <Button type="button" variant="ghost" onClick={onBack}>
             Voltar ao login
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!!pending}
-            busy={pending === 'resend'}
-            loadingLabel="Reenviando…"
-            onClick={() => void send('resend')}
-          >
-            Reenviar código
-          </Button>
+          {address && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!!pending}
+              busy={pending === 'resend'}
+              loadingLabel="Reenviando…"
+              onClick={() => void send('resend')}
+            >
+              Reenviar código
+            </Button>
+          )}
         </div>
       </Card>
     </section>

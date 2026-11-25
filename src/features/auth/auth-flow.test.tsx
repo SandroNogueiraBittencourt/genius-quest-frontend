@@ -29,6 +29,7 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
             ativo: true,
             criadoEm: '2026-10-25',
             atualizadoEm: '2026-10-25',
+            emailVerificado: false,
           }
         : { token: 'jwt', tipo: 'Bearer', expiraEm: 3600 };
     return Promise.resolve(
@@ -55,7 +56,9 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
   });
   fireEvent.click(screen.getByRole('button', { name: 'Criar minha conta' }));
   await screen.findByRole('heading', { name: 'Confirme seu e-mail' });
-  expect(screen.getByLabelText('E-mail')).toHaveValue('lia@example.test');
+  expect(
+    screen.queryByLabelText('E-mail', { exact: true }),
+  ).not.toBeInTheDocument();
   expect(window.location.search).toBe('?view=verify-email');
   fireEvent.change(screen.getByLabelText('Código de verificação'), {
     target: { value: '01234-56789' },
@@ -83,6 +86,7 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
     screen.getByRole('button', { name: 'Entrar na minha conta' }),
   );
   await screen.findByRole('button', { name: 'Sair' });
+  fireEvent.click(screen.getByRole('link', { name: 'Minha área' }));
   fireEvent.click(screen.getByRole('link', { name: 'Minha conta' }));
   expect(
     screen.getByRole('heading', { name: 'Você está conectado.' }),

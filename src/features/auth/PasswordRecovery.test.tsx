@@ -4,7 +4,7 @@ import App from '../../App';
 import { PasswordRecovery } from './PasswordRecovery';
 import { requestPasswordReset, resetPassword } from './api';
 import { useAuthStore } from './store';
-const CODIGO = '01234-56789';
+const CODIGO = 'abcd-2345 efgh-6789';
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -42,7 +42,7 @@ it('envia o código em POST sem autenticação ou querystring', async () => {
     .mockResolvedValueOnce(new Response(null, { status: 204 }));
   vi.stubGlobal('fetch', fetch);
   await requestPasswordReset(' LIA@EXAMPLE.TEST ');
-  await resetPassword('0123456789', ' Senha123! ');
+  await resetPassword('ABCD2345EFGH6789', ' Senha123! ');
   expect(fetch).toHaveBeenNthCalledWith(
     1,
     '/api/auth/esqueci-senha',
@@ -57,7 +57,7 @@ it('envia o código em POST sem autenticação ou querystring', async () => {
     expect.objectContaining({
       method: 'POST',
       body: JSON.stringify({
-        token: '0123456789',
+        token: 'ABCD2345EFGH6789',
         novaSenha: ' Senha123! ',
       }),
     }),
@@ -89,13 +89,14 @@ it('valida código e senhas antes da chamada e aceita 204', async () => {
   setup(true);
   fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
   expect(
-    screen.getByText('Informe o código de 10 dígitos recebido por e-mail.'),
+    screen.getByText('Informe o código de 16 caracteres recebido por e-mail.'),
   ).toBeInTheDocument();
   expect(fetch).not.toHaveBeenCalled();
-  fill('curta', 'diferente');
+  fill('senhafraca123');
   fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
-  expect(screen.getByLabelText('Nova senha')).toHaveAccessibleDescription(
-    /maiúscula, minúscula, número e símbolo/,
+  expect(screen.getByLabelText('Nova senha')).toHaveAttribute(
+    'aria-invalid',
+    'true',
   );
   expect(fetch).not.toHaveBeenCalled();
   fill();
@@ -104,7 +105,7 @@ it('valida código e senhas antes da chamada e aceita 204', async () => {
     'Senha redefinida!',
   );
   expect(fetch.mock.calls[0][1].body).toBe(
-    JSON.stringify({ token: '0123456789', novaSenha: ' Senha123! ' }),
+    JSON.stringify({ token: 'ABCD2345EFGH6789', novaSenha: ' Senha123! ' }),
   );
   expect(window.location.search).toBe('');
   expect(useAuthStore.getState().session).toBeNull();
