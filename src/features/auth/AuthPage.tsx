@@ -16,20 +16,22 @@ type Errors = Partial<Record<Field, string>>;
 type Props = {
   mode: AuthMode;
   initialEmail?: string;
-  registered?: boolean;
+  emailVerified?: boolean;
   onSwitch: (mode: AuthMode) => void;
   onRegistered: (email: string) => void;
   onSignedIn: () => void;
   onForgotPassword?: () => void;
+  onVerifyEmail?: (email: string) => void;
 };
 export function AuthPage({
   mode,
   initialEmail = '',
-  registered = false,
+  emailVerified = false,
   onSwitch,
   onRegistered,
   onSignedIn,
   onForgotPassword,
+  onVerifyEmail,
 }: Props) {
   const isRegister = mode === 'register';
   const [nome, setNome] = useState(''),
@@ -89,7 +91,9 @@ export function AuthPage({
         if (controller.signal.aborted) return;
         setSenha('');
         setConfirmacao('');
-        onRegistered(user.email);
+        if (user.emailVerificado === false && onVerifyEmail)
+          onVerifyEmail(user.email);
+        else onRegistered(user.email);
       } else {
         const response = await login({ email, senha }, controller.signal);
         if (controller.signal.aborted) return;
@@ -101,6 +105,15 @@ export function AuthPage({
       if (controller.signal.aborted) return;
       const fields: Errors = {};
       if (error instanceof ApiError) {
+        if (
+          !isRegister &&
+          onVerifyEmail &&
+          error.status === 403 &&
+          error.message === 'Confirme seu e-mail antes de entrar'
+        ) {
+          onVerifyEmail(email.trim().toLowerCase());
+          return;
+        }
         for (const field of ['nome', 'email', 'senha'] as const)
           if (error.fields[field]) fields[field] = error.fields[field];
         if (isRegister && error.status === 409)
@@ -166,9 +179,9 @@ export function AuthPage({
             ? 'Crie sua conta para fazer parte das próximas descobertas.'
             : 'Entre na sua conta e continue sua jornada.'}
         </p>
-        {registered && !isRegister && (
+        {emailVerified && !isRegister && (
           <p className="auth-success" role="status">
-            Conta criada! Entre com seu e-mail e senha para continuar.
+            E-mail confirmado! Entre com seu e-mail e senha para continuar.
           </p>
         )}
         <form

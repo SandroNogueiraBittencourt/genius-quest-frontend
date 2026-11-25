@@ -10,5 +10,6 @@ export type UserResponse = {
   ativo: boolean;
   criadoEm: string;
   atualizadoEm: string;
+  emailVerificado?: boolean;
 };
 export type AuthSession = { token: string; email: string; expiresAt: number };

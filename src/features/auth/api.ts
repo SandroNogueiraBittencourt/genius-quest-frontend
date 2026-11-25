@@ -26,6 +26,30 @@ export async function resetPassword(
     signal,
   });
 }
+export async function verifyEmail(
+  email: string,
+  codigo: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await apiRequest<void>('/auth/verificar-email', {
+    method: 'POST',
+    json: { email: email.trim().toLowerCase(), codigo },
+    signal,
+  });
+}
+
+export async function resendEmailVerification(
+  email: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await apiRequest<void>('/auth/reenviar-verificacao', {
+    method: 'POST',
+    json: { email: email.trim().toLowerCase() },
+    signal,
+    allowEmptyAccepted: true,
+  });
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

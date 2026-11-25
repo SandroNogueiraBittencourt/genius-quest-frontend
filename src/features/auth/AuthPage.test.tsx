@@ -25,6 +25,7 @@ function setup(mode: AuthMode = 'login') {
     mode,
     onSwitch: vi.fn(),
     onRegistered: vi.fn(),
+    onVerifyEmail: vi.fn(),
     onSignedIn: vi.fn(),
   };
   const view = render(<AuthPage {...props} />);
@@ -66,6 +67,7 @@ it('cadastra com o contrato real sem abrir sessão automaticamente', async () =>
   await vi.waitFor(() =>
     expect(page.onRegistered).toHaveBeenCalledWith('lia@example.test'),
   );
+  expect(page.onVerifyEmail).not.toHaveBeenCalled();
   expect(useAuthStore.getState().session).toBeNull();
   expect(fetch).toHaveBeenCalledWith(
     '/api/usuarios',

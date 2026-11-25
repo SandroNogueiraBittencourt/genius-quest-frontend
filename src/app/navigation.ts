@@ -6,6 +6,7 @@ export type View =
   | 'design-system'
   | 'login'
   | 'register'
+  | 'verify-email'
   | 'forgot-password'
   | 'reset-password'
   | 'categories'
@@ -24,6 +25,7 @@ function currentView(): View {
     view === 'design-system' ||
     view === 'login' ||
     view === 'register' ||
+    view === 'verify-email' ||
     view === 'forgot-password' ||
     view === 'reset-password' ||
     view === 'categories' ||
