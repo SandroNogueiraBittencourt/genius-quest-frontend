@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { RoomInvite } from './RoomInvite';
+import { RoomInvite } from './RoomInvitePanel';
 
 const code = '33333333-0000-4000-8000-000000000001';
 afterEach(() => vi.restoreAllMocks());

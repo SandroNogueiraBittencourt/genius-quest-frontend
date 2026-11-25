@@ -2,13 +2,19 @@ export const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(
   /\/$/,
   '',
 );
+const serviceUnavailable =
+  'O serviço está indisponível no momento. Tente novamente em instantes.';
+const requestFailed =
+  'Não foi possível concluir a solicitação. Tente novamente.';
+const httpCode = /\bHTTP(?:\s*\/\s*\d(?:\.\d)?)?\s*[:=-]?\s*[1-5]\d{2}\b/i;
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
     public readonly fields: Record<string, string> = {},
   ) {
-    super(message);
+    super(status >= 500 ? serviceUnavailable : message);
     this.name = 'ApiError';
   }
 }
@@ -74,14 +80,19 @@ export async function apiRequest<T>(
     const fields: Record<string, string> = {};
     if (record(data) && record(data.campos))
       for (const [key, value] of Object.entries(data.campos))
-        if (typeof value === 'string') fields[key] = value;
+        if (typeof value === 'string' && !httpCode.test(value))
+          fields[key] = value;
     const message =
       record(data) && typeof data.mensagem === 'string'
         ? data.mensagem
         : record(data) && typeof data.erro === 'string'
           ? data.erro
-          : `Não foi possível concluir a solicitação (HTTP ${response.status}).`;
-    throw new ApiError(response.status, message, fields);
+          : requestFailed;
+    throw new ApiError(
+      response.status,
+      httpCode.test(message) ? requestFailed : message,
+      response.status >= 500 ? {} : fields,
+    );
   }
   if (
     response.status === 204 ||
@@ -95,9 +106,6 @@ export async function apiRequest<T>(
       ?.toLowerCase()
       .includes('application/json')
   )
-    throw new ApiError(
-      502,
-      'A API retornou uma resposta inválida. Tente novamente.',
-    );
+    throw new ApiError(502, serviceUnavailable);
   return data as T;
 }

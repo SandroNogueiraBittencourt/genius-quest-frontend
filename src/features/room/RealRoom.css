@@ -24,6 +24,18 @@
   flex-wrap: wrap;
   margin: 16px 0;
 }
+.real-room-theme,
+.real-room-theme-picker {
+  display: grid;
+  gap: 12px;
+}
+.real-room-theme > .ui-button {
+  justify-self: start;
+}
+.real-room-theme > .real-room-actions {
+  gap: 20px;
+  margin: 4px 0;
+}
 .real-room-form {
   display: grid;
   gap: 12px;

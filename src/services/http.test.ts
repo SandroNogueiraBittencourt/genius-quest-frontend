@@ -84,8 +84,34 @@ it('rejeita HTML de fallback e não exibe o corpo bruto de erro', async () => {
   await expect(apiRequest('/auth/login')).rejects.toMatchObject({
     status: 502,
   });
-  await expect(apiRequest('/auth/login')).rejects.toThrow('HTTP 500');
+  await expect(apiRequest('/auth/login')).rejects.toMatchObject({
+    status: 500,
+    message:
+      'O serviço está indisponível no momento. Tente novamente em instantes.',
+  });
 });
+it.each([400, 502])(
+  'oculta códigos HTTP enviados pela API (%s)',
+  async (status) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            mensagem: `Não foi possível concluir a solicitação (HTTP ${status}).`,
+            campos: { email: `HTTP ${status}` },
+          }),
+          { status },
+        ),
+      ),
+    );
+    await expect(apiRequest('/usuarios')).rejects.toMatchObject({
+      status,
+      message: expect.not.stringMatching(/HTTP|\b[45]\d{2}\b/i),
+      fields: {},
+    });
+  },
+);
 it('distingue indisponibilidade de rede e cancelamento', async () => {
   const controller = new AbortController();
   vi.stubGlobal(

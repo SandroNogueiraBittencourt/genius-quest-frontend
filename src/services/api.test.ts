@@ -21,7 +21,11 @@ describe('consulta de saúde da API', () => {
       'fetch',
       vi.fn().mockResolvedValue(new Response('', { status: 503 })),
     );
-    await expect(getHealth()).rejects.toThrow('HTTP 503');
+    await expect(getHealth()).rejects.toMatchObject({
+      status: 503,
+      message:
+        'O serviço está indisponível no momento. Tente novamente em instantes.',
+    });
   });
   it('propaga falha de rede para a interface tratar', async () => {
     vi.stubGlobal(
