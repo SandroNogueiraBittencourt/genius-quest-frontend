@@ -69,3 +69,45 @@
     width: 100%;
   }
 }
+
+.real-room-invite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  border: 1px solid var(--color-control-border);
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 16px;
+}
+.real-room-invite-qr {
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.real-room-invite-qr svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.real-room-invite-content {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+.real-room-invite-content input {
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-control-border);
+  background: var(--color-surface, #fff);
+  color: var(--color-text);
+}
+.real-room-invite-content p {
+  margin: 0;
+}

@@ -51,6 +51,19 @@ export function useNavigation() {
     url.hash = '';
     url.pathname = next === 'reset-password' ? '/redefinir-senha' : '/';
     if (next !== 'reset-password') url.searchParams.delete('token');
+    // Mantém o convite durante a autenticação, mas não em páginas alheias.
+    if (
+      ![
+        'real-room',
+        'login',
+        'register',
+        'verify-email',
+        'forgot-password',
+        'reset-password',
+      ].includes(next)
+    ) {
+      url.searchParams.delete('room');
+    }
     if (next === 'home') url.searchParams.delete('view');
     else url.searchParams.set('view', next);
     window.history.pushState({}, '', url);

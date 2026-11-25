@@ -6,6 +6,8 @@ import { useAuthStore } from '../auth/store';
 import { getThemes } from '../themes/api';
 import { playerIdFromJwt, realRoomApi, validRoomCode } from './realApi';
 import { RoomResults } from './RoomResults';
+import { RoomInvite } from './RoomInvite';
+import { clearRoomInvite, readRoomInvite } from './roomInvite';
 import { forgetRoomCode, readRoomCode, rememberRoomCode } from './savedRoom';
 import './RealRoom.css';
 
@@ -24,7 +26,8 @@ export function RealRoom({
     jogadorId: string;
     codigo: string;
   } | null>(null);
-  const [entrada, setEntrada] = useState('');
+  const convite = readRoomInvite();
+  const [entrada, setEntrada] = useState(() => convite ?? '');
   const [temaId, setTemaId] = useState('');
   const [respondida, setRespondida] = useState<{
     partidaId: string;
@@ -181,6 +184,11 @@ export function RealRoom({
           Entre na sua conta para criar ou participar de uma sala compartilhada
           entre dispositivos.
         </p>
+        {convite && (
+          <p role="status">
+            Convite recebido. Entre na sua conta para participar da sala.
+          </p>
+        )}
         <Button variant="secondary" onClick={onSignIn}>
           Entrar para jogar
         </Button>
@@ -194,14 +202,19 @@ export function RealRoom({
         <span className="gq-kicker">Multiplayer conectado ao backend</span>
         <h1>Sua turma em uma sala real</h1>
         <p>
-          Compartilhe o código UUID com pessoas que tenham uma conta.
-          Atualização automática a cada 5 segundos.
+          Compartilhe o QR Code, o link ou o código UUID com pessoas que tenham
+          uma conta. Atualização automática a cada 5 segundos.
         </p>
       </header>
       {erro && <Notice message={erro} />}
       {!codigo ? (
         <Card>
-          <h2>Criar ou entrar</h2>
+          <h2>{convite ? 'Convite recebido' : 'Criar ou entrar'}</h2>
+          {convite && <p>Confirme a entrada na sala compartilhada.</p>}
+          {new URLSearchParams(window.location.search).has('room') &&
+            !convite && (
+              <Notice message="Link de convite inválido. Informe um código de sala válido." />
+            )}
           <div className="real-room-actions">
             <Button
               variant="secondary"
@@ -209,6 +222,8 @@ export function RealRoom({
               onClick={() =>
                 void executar(async () => {
                   const nova = await realRoomApi.criar();
+                  clearRoomInvite();
+                  setEntrada('');
                   setCodigo(nova.codigo);
                 })
               }
@@ -222,6 +237,8 @@ export function RealRoom({
               void executar(async () => {
                 const id = validRoomCode(entrada);
                 const existente = await realRoomApi.entrar(id);
+                clearRoomInvite();
+                setEntrada('');
                 setCodigo(existente.codigo);
               });
             }}
@@ -250,6 +267,9 @@ export function RealRoom({
         <>
           <Card>
             <h2>Lobby: {codigo}</h2>
+            {convite && convite !== codigo && (
+              <Notice message="Você já está em uma sala. Saia dela antes de entrar na sala do convite." />
+            )}
             <div className="real-room-actions">
               <Button
                 variant="outline"
@@ -281,6 +301,9 @@ export function RealRoom({
                 Meus resultados
               </Button>
             </div>
+            {room && !room.encerrada && room.status === 'PREPARACAO' && (
+              <RoomInvite key={codigo} code={codigo} />
+            )}
             {sala.isPending && <p role="status">Consultando participantes…</p>}
             {sala.isError && (
               <>

@@ -16,6 +16,7 @@ import { hasAdminClaim } from './features/categories/permissions';
 import { Home } from './features/home/Home';
 import { Lobby } from './features/room/Lobby';
 import { RealRoom } from './features/room/RealRoom';
+import { readRoomInvite } from './features/room/roomInvite';
 import { useRoomStore } from './features/room/store';
 import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
@@ -344,7 +345,7 @@ function Pages() {
               onSignedIn={() => {
                 setRegistrationEmail('');
                 setEmailVerified(false);
-                navigate(afterLogin);
+                navigate(readRoomInvite() ? 'real-room' : afterLogin);
                 setAfterLogin('home');
               }}
             />

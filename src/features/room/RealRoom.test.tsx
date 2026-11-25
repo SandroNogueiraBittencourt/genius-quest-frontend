@@ -292,3 +292,37 @@ it('não carrega a resposta da primeira rodada para a questão de mesmo número 
   ).toBeNull();
   expect(screen.queryByRole('table')).toBeNull();
 });
+
+it('preenche o UUID do convite e usa a API de entrada após confirmação', async () => {
+  window.history.replaceState({}, '', `/?view=real-room&room=${code}`);
+  try {
+    const { fetch } = mockServer({
+      ...baseRoom,
+      status: 'PREPARACAO',
+      partidaId: null,
+    });
+    mount(false);
+    expect(
+      screen.getByRole('textbox', { name: 'Código completo (UUID)' }),
+    ).toHaveValue(code);
+    expect(
+      fetch.mock.calls.some(
+        ([url, init]) => url.endsWith('/entrada') && init.method === 'POST',
+      ),
+    ).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar na sala' }));
+    await screen.findByRole('heading', { name: `Lobby: ${code}` });
+    expect(
+      fetch.mock.calls.some(
+        ([url, init]) =>
+          url.endsWith(roomPath + '/entrada') && init.method === 'POST',
+      ),
+    ).toBe(true);
+    expect(new URLSearchParams(window.location.search).has('room')).toBe(false);
+    expect(
+      await screen.findByTitle('QR Code do convite para a sala'),
+    ).toBeInTheDocument();
+  } finally {
+    window.history.replaceState({}, '', '/');
+  }
+});
