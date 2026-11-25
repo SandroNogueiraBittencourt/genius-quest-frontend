@@ -24,7 +24,7 @@ function setup(reset = false) {
     />,
   );
 }
-function fill(password = ' senha123 ', confirmation = password) {
+function fill(password = ' Senha123! ', confirmation = password) {
   fireEvent.change(screen.getByLabelText('Código de recuperação'), {
     target: { value: CODIGO },
   });
@@ -42,7 +42,7 @@ it('envia o código em POST sem autenticação ou querystring', async () => {
     .mockResolvedValueOnce(new Response(null, { status: 204 }));
   vi.stubGlobal('fetch', fetch);
   await requestPasswordReset(' LIA@EXAMPLE.TEST ');
-  await resetPassword('0123456789', ' senha123 ');
+  await resetPassword('0123456789', ' Senha123! ');
   expect(fetch).toHaveBeenNthCalledWith(
     1,
     '/api/auth/esqueci-senha',
@@ -58,7 +58,7 @@ it('envia o código em POST sem autenticação ou querystring', async () => {
       method: 'POST',
       body: JSON.stringify({
         token: '0123456789',
-        novaSenha: ' senha123 ',
+        novaSenha: ' Senha123! ',
       }),
     }),
   );
@@ -94,9 +94,9 @@ it('valida código e senhas antes da chamada e aceita 204', async () => {
   expect(fetch).not.toHaveBeenCalled();
   fill('curta', 'diferente');
   fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
-  expect(
-    screen.getByText('Use uma senha entre 8 e 72 caracteres.'),
-  ).toBeInTheDocument();
+  expect(screen.getByLabelText('Nova senha')).toHaveAccessibleDescription(
+    /maiúscula, minúscula, número e símbolo/,
+  );
   expect(fetch).not.toHaveBeenCalled();
   fill();
   fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
@@ -104,7 +104,7 @@ it('valida código e senhas antes da chamada e aceita 204', async () => {
     'Senha redefinida!',
   );
   expect(fetch.mock.calls[0][1].body).toBe(
-    JSON.stringify({ token: '0123456789', novaSenha: ' senha123 ' }),
+    JSON.stringify({ token: '0123456789', novaSenha: ' Senha123! ' }),
   );
   expect(window.location.search).toBe('');
   expect(useAuthStore.getState().session).toBeNull();

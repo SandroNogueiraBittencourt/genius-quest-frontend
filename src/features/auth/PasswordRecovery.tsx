@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { requestPasswordReset, resetPassword } from './api';
+import { passwordError, passwordHint } from './passwordPolicy';
 import './Auth.css';
 
 type Mode = 'forgot-password' | 'reset-password';
@@ -56,8 +57,8 @@ export function PasswordRecovery({
     if (resetting) {
       if (!CODIGO_VALIDO.test(normalizarCodigo(codigo)))
         next.codigo = 'Informe o código de 10 dígitos recebido por e-mail.';
-      if (!password.trim() || password.length < 8 || password.length > 72)
-        next.password = 'Use uma senha entre 8 e 72 caracteres.';
+      const senhaError = passwordError(password);
+      if (senhaError) next.password = senhaError;
       if (!confirmation || confirmation !== password)
         next.confirmation = 'As senhas precisam ser iguais.';
     } else {
@@ -183,7 +184,7 @@ export function PasswordRecovery({
                     autoComplete="new-password"
                     maxLength={72}
                     required
-                    hint="Use entre 8 e 72 caracteres."
+                    hint={passwordHint}
                     error={errors.password}
                   />
                   <Input
