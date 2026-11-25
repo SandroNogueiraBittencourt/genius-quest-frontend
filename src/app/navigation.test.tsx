@@ -64,6 +64,7 @@ it('mantém o catálogo acessível e permite retornar à abertura', async () => 
 
 it('separa o histórico de votação do histórico de placares das partidas', () => {
   render(<App />);
+  fireEvent.click(screen.getByRole('link', { name: 'Minha área' }));
   fireEvent.click(screen.getByRole('link', { name: 'Resultados' }));
   expect(window.location.search).toBe('?view=match-results');
   expect(
@@ -73,6 +74,7 @@ it('separa o histórico de votação do histórico de placares das partidas', ()
     'aria-current',
     'page',
   );
+  fireEvent.click(screen.getByRole('link', { name: 'Comunidade' }));
   fireEvent.click(screen.getByRole('link', { name: 'Histórico de votação' }));
   expect(window.location.search).toBe('?view=history');
   expect(
