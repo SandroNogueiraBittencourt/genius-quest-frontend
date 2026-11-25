@@ -299,3 +299,42 @@ it('acompanha o histórico ao voltar e avançar entre seções', async () => {
     );
   });
 });
+
+it('preserva convite durante login e retorna ao multiplayer', async () => {
+  const code = '33333333-0000-4000-8000-000000000001';
+  window.history.replaceState({}, '', `/?view=real-room&room=${code}`);
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(
+          JSON.stringify(
+            url.endsWith('/auth/login')
+              ? { token: 'sessao-de-teste', tipo: 'Bearer', expiraEm: 3600 }
+              : url.endsWith('/temas')
+                ? []
+                : { status: 'UP' },
+          ),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ),
+  );
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Entrar para jogar' }));
+  expect(new URLSearchParams(window.location.search).get('room')).toBe(code);
+  fireEvent.change(screen.getByLabelText('E-mail'), {
+    target: { value: 'jogador@gq.test' },
+  });
+  fireEvent.change(screen.getByLabelText('Senha'), {
+    target: { value: 'senha-de-teste' },
+  });
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Entrar na minha conta' }),
+  );
+  expect(
+    await screen.findByRole('textbox', { name: 'Código completo (UUID)' }),
+  ).toHaveValue(code);
+  expect(new URLSearchParams(window.location.search).get('view')).toBe(
+    'real-room',
+  );
+});
