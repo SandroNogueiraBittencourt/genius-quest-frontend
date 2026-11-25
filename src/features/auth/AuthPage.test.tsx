@@ -31,12 +31,12 @@ function setup(mode: AuthMode = 'login') {
   const view = render(<AuthPage {...props} />);
   return { ...view, ...props };
 }
-function fillLogin() {
+function fillLogin(senha = 'SenhaTeste123!') {
   fireEvent.change(screen.getByLabelText('E-mail'), {
     target: { value: 'lia@example.test' },
   });
   fireEvent.change(screen.getByLabelText('Senha', { exact: true }), {
-    target: { value: 'SenhaTeste123!' },
+    target: { value: senha },
   });
 }
 it('valida os campos antes de chamar a API e move o foco para o erro', async () => {
@@ -113,7 +113,7 @@ it('credenciais inválidas não iniciam sessão e permitem nova tentativa', asyn
     );
   vi.stubGlobal('fetch', fetch);
   const page = setup();
-  fillLogin();
+  fillLogin('senha123');
   fireEvent.click(
     screen.getByRole('button', { name: 'Entrar na minha conta' }),
   );
@@ -207,3 +207,25 @@ it('impede envio duplicado e descarta login concluído depois de sair da tela', 
   expect(useAuthStore.getState().session).toBeNull();
   expect(page.onSignedIn).not.toHaveBeenCalled();
 });
+
+it.each(['senhafraca123', 'Aa1!' + 'é'.repeat(35)])(
+  'rejeita senha de cadastro fora da política: %s',
+  (senha) => {
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    setup('register');
+    fireEvent.change(screen.getByLabelText('Como podemos chamar você?'), {
+      target: { value: 'Lia Teste' },
+    });
+    fillLogin(senha);
+    fireEvent.change(screen.getByLabelText('Confirme a senha'), {
+      target: { value: senha },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Criar minha conta' }));
+    expect(screen.getByLabelText('Senha', { exact: true })).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  },
+);

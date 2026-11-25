@@ -9,6 +9,7 @@ import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { login, register } from './api';
 import { useAuthStore } from './store';
+import { passwordError, passwordHint } from './passwordPolicy';
 import './Auth.css';
 export type AuthMode = 'login' | 'register';
 type Field = 'nome' | 'email' | 'senha' | 'confirmacao';
@@ -71,9 +72,12 @@ export function AuthPage({
     if (!email.trim()) next.email = 'Informe seu e-mail.';
     else if (emailInput.validity.typeMismatch || email.trim().length > 150)
       next.email = 'Informe um e-mail válido de até 150 caracteres.';
-    if (!senha.trim()) next.senha = 'Informe sua senha.';
-    else if (isRegister && (senha.length < 8 || senha.length > 72))
-      next.senha = 'Use uma senha entre 8 e 72 caracteres.';
+    const senhaError = isRegister
+      ? passwordError(senha)
+      : !senha.trim()
+        ? 'Informe sua senha.'
+        : undefined;
+    if (senhaError) next.senha = senhaError;
     if (isRegister && confirmacao !== senha)
       next.confirmacao = 'As senhas precisam ser iguais.';
     setErrors(next);
@@ -244,7 +248,7 @@ export function AuthPage({
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
                 maxLength={isRegister ? 72 : undefined}
                 required
-                hint={isRegister ? 'Use entre 8 e 72 caracteres.' : undefined}
+                hint={isRegister ? passwordHint : undefined}
                 error={errors.senha}
               />
               <Button
