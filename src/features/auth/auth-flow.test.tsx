@@ -56,7 +56,9 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
   });
   fireEvent.click(screen.getByRole('button', { name: 'Criar minha conta' }));
   await screen.findByRole('heading', { name: 'Confirme seu e-mail' });
-  expect(screen.getByLabelText('E-mail')).toHaveValue('lia@example.test');
+  expect(
+    screen.queryByLabelText('E-mail', { exact: true }),
+  ).not.toBeInTheDocument();
   expect(window.location.search).toBe('?view=verify-email');
   fireEvent.change(screen.getByLabelText('Código de verificação'), {
     target: { value: '01234-56789' },
