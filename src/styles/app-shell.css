@@ -34,7 +34,8 @@
   border-bottom: 2px solid transparent;
 }
 .gq-header nav a:hover,
-.gq-header nav a[aria-current='page'] {
+.gq-header nav a[aria-current='page'],
+.gq-header nav a[aria-current='location'] {
   color: var(--color-primary);
   border-bottom-color: var(--color-primary);
 }
@@ -168,6 +169,7 @@
   color: var(--color-muted);
 }
 .gq-header .gq-primary-nav a[aria-current='page'],
+.gq-header .gq-primary-nav a[aria-current='location'],
 .gq-section-nav a[aria-current='page'] {
   background: var(--color-primary-soft);
   color: var(--color-primary-hover);
@@ -208,8 +210,8 @@
 }
 @media (max-width: 900px) {
   .gq-header .gq-primary-nav {
-    order: 3;
     flex: 0 0 100%;
+    min-width: 0;
     justify-content: flex-start;
   }
   .gq-header .gq-account-actions {
@@ -234,4 +236,16 @@
   .gq-account-actions {
     gap: 8px;
   }
+}
+
+/* UX1.1: o foco visível acompanha a ordem natural do DOM. */
+.gq-header a:focus-visible,
+.gq-section-nav a:focus-visible,
+.gq-footer-links a:focus-visible {
+  outline: 2px solid var(--color-primary-hover);
+  outline-offset: 3px;
+}
+.gq-account-actions a[aria-current='page'] {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }

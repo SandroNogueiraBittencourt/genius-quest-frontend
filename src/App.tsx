@@ -157,8 +157,10 @@ function Pages() {
   function link(next: View, label: string, active = view === next) {
     return (
       <a
-        href={next === 'home' ? '?' : `?view=${next}`}
-        aria-current={active ? 'page' : undefined}
+        href={next === 'home' ? '/' : `/?view=${next}`}
+        aria-current={
+          active ? (view === next ? 'page' : 'location') : undefined
+        }
         onClick={(event) => open(event, next)}
       >
         {label}
@@ -172,7 +174,7 @@ function Pages() {
         backLink={
           <a
             className="gq-catalog-back"
-            href="?"
+            href="/"
             onClick={(event) => open(event, 'home')}
           >
             ← Voltar à abertura
@@ -187,7 +189,7 @@ function Pages() {
       </a>
       <header className="gq-header">
         <a
-          href="?"
+          href="/"
           onClick={(event) => open(event, 'home')}
           aria-label="Genius Quest, início"
         >
@@ -281,7 +283,10 @@ function Pages() {
             </p>
             <div className="auth-notice-actions">
               {!isAuthView && notice !== 'signed-out' && (
-                <a href="?view=login" onClick={(event) => open(event, 'login')}>
+                <a
+                  href="/?view=login"
+                  onClick={(event) => open(event, 'login')}
+                >
                   Entrar novamente
                 </a>
               )}

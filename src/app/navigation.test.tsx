@@ -1,4 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import App from '../App';
 import { resetDemoRooms } from '../features/demo/roomGateway';
@@ -135,4 +141,161 @@ it('retorna à página de resultados depois de autenticar', async () => {
     ),
   ).toBeInTheDocument();
   expect(window.location.search).toBe('?view=match-results');
+});
+
+it('não exibe Administração para visitantes', () => {
+  render(<App />);
+  const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
+  expect(
+    within(nav).queryByRole('link', { name: 'Administração' }),
+  ).not.toBeInTheDocument();
+});
+
+it('não exibe Administração para usuário comum autenticado', () => {
+  useAuthStore.setState({
+    session: {
+      token: `teste.${btoa(JSON.stringify({ perfil: 'USER' }))}.teste`,
+      email: 'jogador@example.test',
+      expiresAt: Date.now() + 3600000,
+    },
+  });
+  render(<App />);
+  const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
+  expect(
+    within(nav).queryByRole('link', { name: 'Administração' }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Sair' })).toBeInTheDocument();
+});
+
+it('exibe as três áreas administrativas para ADMIN', async () => {
+  useAuthStore.setState({
+    session: {
+      token: `teste.${btoa(JSON.stringify({ perfil: 'ADMIN' }))}.teste`,
+      email: 'admin@example.test',
+      expiresAt: Date.now() + 3600000,
+    },
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(
+          JSON.stringify(
+            url.endsWith('/health')
+              ? {
+                  status: 'UP',
+                  application: 'Genius Quest Backend',
+                  timestamp: '2026-11-25',
+                }
+              : [],
+          ),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ),
+  );
+  render(<App />);
+  fireEvent.click(screen.getByRole('link', { name: 'Administração' }));
+  const nav = screen.getByRole('navigation', { name: 'Administração' });
+  expect(within(nav).getByRole('link', { name: 'Categorias' })).toHaveAttribute(
+    'href',
+    '/?view=categories-admin',
+  );
+  expect(within(nav).getByRole('link', { name: 'Temas' })).toHaveAttribute(
+    'href',
+    '/?view=themes-admin',
+  );
+  expect(within(nav).getByRole('link', { name: 'Perguntas' })).toHaveAttribute(
+    'href',
+    '/?view=questions-admin',
+  );
+  await screen.findByRole('heading', { name: 'Moderação de categorias.' });
+});
+
+it('usa URLs de raiz na página de redefinição de senha', () => {
+  window.history.replaceState({}, '', '/redefinir-senha');
+  render(<App />);
+  const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
+  expect(within(nav).getByRole('link', { name: 'Início' })).toHaveAttribute(
+    'href',
+    '/',
+  );
+  expect(within(nav).getByRole('link', { name: 'Jogar' })).toHaveAttribute(
+    'href',
+    '/?view=real-room',
+  );
+  expect(within(nav).getByRole('link', { name: 'Comunidade' })).toHaveAttribute(
+    'href',
+    '/?view=categories',
+  );
+  expect(within(nav).getByRole('link', { name: 'Minha área' })).toHaveAttribute(
+    'href',
+    '/?view=quiz',
+  );
+  expect(
+    screen.getByRole('link', { name: 'Genius Quest, início' }),
+  ).toHaveAttribute('href', '/');
+  expect(screen.getByRole('link', { name: /^Entrar$/ })).toHaveAttribute(
+    'href',
+    '/?view=login',
+  );
+  expect(screen.getByRole('link', { name: /^Criar conta$/ })).toHaveAttribute(
+    'href',
+    '/?view=register',
+  );
+  expect(screen.getByRole('link', { name: 'Design System' })).toHaveAttribute(
+    'href',
+    '/?view=design-system',
+  );
+  fireEvent.click(within(nav).getByRole('link', { name: 'Início' }));
+  expect(window.location.pathname).toBe('/');
+  expect(window.location.search).toBe('');
+});
+
+it('distingue a seção ativa da página ativa', () => {
+  window.history.replaceState({}, '', '/?view=match-results');
+  render(<App />);
+  expect(screen.getByRole('link', { name: 'Minha área' })).toHaveAttribute(
+    'aria-current',
+    'location',
+  );
+  expect(screen.getByRole('link', { name: 'Resultados' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  fireEvent.click(screen.getByRole('link', { name: 'Comunidade' }));
+  expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  fireEvent.click(screen.getByRole('link', { name: 'Histórico de votação' }));
+  expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute(
+    'aria-current',
+    'location',
+  );
+  expect(
+    screen.getByRole('link', { name: 'Histórico de votação' }),
+  ).toHaveAttribute('aria-current', 'page');
+});
+
+it('acompanha o histórico ao voltar e avançar entre seções', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('link', { name: 'Comunidade' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Minha área' }));
+  expect(window.location.search).toBe('?view=quiz');
+  window.history.back();
+  await waitFor(() => {
+    expect(window.location.search).toBe('?view=categories');
+    expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+  window.history.forward();
+  await waitFor(() => {
+    expect(window.location.search).toBe('?view=quiz');
+    expect(screen.getByRole('link', { name: 'Minha área' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
 });
