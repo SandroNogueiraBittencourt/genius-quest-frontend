@@ -86,7 +86,7 @@ it('volta às categorias após login e recarrega os dados ao trocar de conta', a
     });
   vi.stubGlobal('fetch', fetch);
   render(<App />);
-  expect(screen.getByRole('link', { name: 'Categorias' })).toHaveAttribute(
+  expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute(
     'aria-current',
     'page',
   );
@@ -111,7 +111,7 @@ it('volta às categorias após login e recarrega os dados ao trocar de conta', a
   await screen.findByRole('heading', { name: 'Sugestão recebida!' });
   fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
   await screen.findByText('Você saiu da sua conta.');
-  fireEvent.click(screen.getByRole('link', { name: 'Categorias' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Comunidade' }));
   expect(screen.queryByText('Oceanos')).not.toBeInTheDocument();
   expect(
     screen.queryByRole('heading', { name: 'Astronomia' }),
@@ -203,7 +203,7 @@ it('sair da conta durante envio cancela a tela e impede confirmação na próxim
   await act(async () =>
     finish(json({ ...category, nome: 'Oceanos', status: 'PENDENTE' }, 201)),
   );
-  fireEvent.click(screen.getByRole('link', { name: 'Categorias' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Comunidade' }));
   expect(
     screen.getByRole('button', { name: 'Entrar para ver categorias' }),
   ).toBeInTheDocument();

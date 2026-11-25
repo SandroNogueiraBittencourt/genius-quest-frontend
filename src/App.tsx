@@ -142,6 +142,31 @@ function Pages() {
       setAfterLogin(isCommunityView ? view : 'home');
     navigate(next);
   }
+  const communityViews: View[] = ['categories', 'themes', 'history'];
+  const personalViews: View[] = [
+    'quiz',
+    'match-results',
+    ...(auth ? ['login' as const] : []),
+  ];
+  const adminViews: View[] = [
+    'categories-admin',
+    'themes-admin',
+    'questions-admin',
+  ];
+  const admin = Boolean(auth && hasAdminClaim(auth.token));
+  function link(next: View, label: string, active = view === next) {
+    return (
+      <a
+        href={next === 'home' ? '/' : `/?view=${next}`}
+        aria-current={
+          active ? (view === next ? 'page' : 'location') : undefined
+        }
+        onClick={(event) => open(event, next)}
+      >
+        {label}
+      </a>
+    );
+  }
   if (view === 'design-system')
     return (
       <DesignSystem
@@ -149,7 +174,7 @@ function Pages() {
         backLink={
           <a
             className="gq-catalog-back"
-            href="?"
+            href="/"
             onClick={(event) => open(event, 'home')}
           >
             ← Voltar à abertura
@@ -164,7 +189,7 @@ function Pages() {
       </a>
       <header className="gq-header">
         <a
-          href="?"
+          href="/"
           onClick={(event) => open(event, 'home')}
           aria-label="Genius Quest, início"
         >
@@ -174,137 +199,36 @@ function Pages() {
             width="200"
           />
         </a>
-        <nav aria-label="Navegação principal">
-          <a
-            href="?"
-            aria-current={view === 'home' ? 'page' : undefined}
-            onClick={(event) => open(event, 'home')}
-          >
-            Início
-          </a>
-          <a
-            href="?view=categories"
-            aria-current={view === 'categories' ? 'page' : undefined}
-            onClick={(event) => open(event, 'categories')}
-          >
-            Categorias
-          </a>
-          <a
-            href="?view=themes"
-            aria-current={view === 'themes' ? 'page' : undefined}
-            onClick={(event) => open(event, 'themes')}
-          >
-            Temas e votação
-          </a>
-          <a
-            href="?view=history"
-            aria-current={view === 'history' ? 'page' : undefined}
-            onClick={(event) => open(event, 'history')}
-          >
-            Histórico de votação
-          </a>
-          <a
-            href="?view=match-results"
-            aria-current={view === 'match-results' ? 'page' : undefined}
-            onClick={(event) => open(event, 'match-results')}
-          >
-            Resultados
-          </a>
-          <a
-            href="?view=quiz"
-            aria-current={view === 'quiz' ? 'page' : undefined}
-            onClick={(event) => open(event, 'quiz')}
-          >
-            Minhas partidas
-          </a>
-          {auth && hasAdminClaim(auth.token) && (
-            <a
-              href="?view=themes-admin"
-              aria-current={view === 'themes-admin' ? 'page' : undefined}
-              onClick={(event) => open(event, 'themes-admin')}
-            >
-              Moderar temas
-            </a>
-          )}
-          {auth && hasAdminClaim(auth.token) && (
-            <a
-              href="?view=categories-admin"
-              aria-current={view === 'categories-admin' ? 'page' : undefined}
-              onClick={(event) => open(event, 'categories-admin')}
-            >
-              Moderação
-            </a>
-          )}
-          {auth && hasAdminClaim(auth.token) && (
-            <a
-              href="?view=questions-admin"
-              aria-current={view === 'questions-admin' ? 'page' : undefined}
-              onClick={(event) => open(event, 'questions-admin')}
-            >
-              Moderar perguntas
-            </a>
-          )}
-          <a
-            href="?view=real-room"
-            aria-current={view === 'real-room' ? 'page' : undefined}
-            onClick={(event) => open(event, 'real-room')}
-          >
-            Sala real
-          </a>
-          {session && (
-            <a
-              href="?view=lobby"
-              aria-current={view === 'lobby' ? 'page' : undefined}
-              onClick={(event) => open(event, 'lobby')}
-            >
-              Minha sala
-            </a>
-          )}
-          <a
-            href="?view=design-system"
-            onClick={(event) => open(event, 'design-system')}
-          >
-            Design System
-          </a>
+        <nav aria-label="Navegação principal" className="gq-primary-nav">
+          {link('home', 'Início', view === 'home')}
+          {link('real-room', 'Jogar', view === 'real-room' || view === 'lobby')}
+          {link('categories', 'Comunidade', communityViews.includes(view))}
+          {link('quiz', 'Minha área', personalViews.includes(view))}
+          {admin &&
+            link(
+              'categories-admin',
+              'Administração',
+              adminViews.includes(view),
+            )}
+        </nav>
+        <div className="gq-account-actions">
           {auth ? (
-            <>
-              <a
-                href="?view=login"
-                aria-current={isAuthView ? 'page' : undefined}
-                onClick={(event) => open(event, 'login')}
-              >
-                Minha conta
-              </a>
-              <Button
-                className="auth-nav-button"
-                variant="outline"
-                busy={logoutPending}
-                loadingLabel="Saindo…"
-                onClick={() => void logout()}
-              >
-                Sair
-              </Button>
-            </>
+            <Button
+              className="auth-nav-button"
+              variant="outline"
+              busy={logoutPending}
+              loadingLabel="Saindo…"
+              onClick={() => void logout()}
+            >
+              Sair
+            </Button>
           ) : (
             <>
-              <a
-                href="?view=login"
-                aria-current={view === 'login' ? 'page' : undefined}
-                onClick={(event) => open(event, 'login')}
-              >
-                Entrar
-              </a>
-              <a
-                className="auth-nav-signup"
-                href="?view=register"
-                aria-current={view === 'register' ? 'page' : undefined}
-                onClick={(event) => open(event, 'register')}
-              >
-                Criar conta
-              </a>
+              {link('login', 'Entrar', view === 'login')}
+              {link('register', 'Criar conta', view === 'register')}
             </>
           )}
-        </nav>
+        </div>
       </header>
       {(view === 'home' || view === 'lobby') && (
         <div className="gq-demo-banner">
@@ -316,6 +240,33 @@ function Pages() {
         </div>
       )}
       <main id="conteudo" tabIndex={-1} className="gq-main">
+        {communityViews.includes(view) && (
+          <nav className="gq-section-nav" aria-label="Comunidade">
+            {link('categories', 'Categorias')}
+            {link('themes', 'Temas e votação')}
+            {link('history', 'Histórico de votação')}
+          </nav>
+        )}
+        {personalViews.includes(view) && (
+          <nav className="gq-section-nav" aria-label="Minha área">
+            {link('quiz', 'Minhas partidas')}
+            {link('match-results', 'Resultados')}
+            {auth && link('login', 'Minha conta')}
+          </nav>
+        )}
+        {admin && adminViews.includes(view) && (
+          <nav className="gq-section-nav" aria-label="Administração">
+            {link('categories-admin', 'Categorias')}
+            {link('themes-admin', 'Temas')}
+            {link('questions-admin', 'Perguntas')}
+          </nav>
+        )}
+        {(view === 'real-room' || view === 'lobby') && (
+          <nav className="gq-section-nav" aria-label="Jogar">
+            {link('real-room', 'Multiplayer')}
+            {session && link('lobby', 'Sala demonstrativa')}
+          </nav>
+        )}
         {logoutError && (
           <p className="auth-logout-error" role="alert">
             {logoutError}
@@ -332,7 +283,10 @@ function Pages() {
             </p>
             <div className="auth-notice-actions">
               {!isAuthView && notice !== 'signed-out' && (
-                <a href="?view=login" onClick={(event) => open(event, 'login')}>
+                <a
+                  href="/?view=login"
+                  onClick={(event) => open(event, 'login')}
+                >
                   Entrar novamente
                 </a>
               )}
@@ -476,7 +430,10 @@ function Pages() {
       </main>
       <footer className="gq-footer">
         <span>Genius Quest · A curiosidade aproxima.</span>
-        <ApiHealth />
+        <div className="gq-footer-links">
+          {link('design-system', 'Design System')}
+          <ApiHealth />
+        </div>
       </footer>
     </>
   );

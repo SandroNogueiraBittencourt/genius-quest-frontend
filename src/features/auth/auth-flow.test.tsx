@@ -86,6 +86,7 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
     screen.getByRole('button', { name: 'Entrar na minha conta' }),
   );
   await screen.findByRole('button', { name: 'Sair' });
+  fireEvent.click(screen.getByRole('link', { name: 'Minha área' }));
   fireEvent.click(screen.getByRole('link', { name: 'Minha conta' }));
   expect(
     screen.getByRole('heading', { name: 'Você está conectado.' }),

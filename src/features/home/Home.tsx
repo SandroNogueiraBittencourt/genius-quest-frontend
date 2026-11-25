@@ -78,9 +78,19 @@ export function Home({
             Reúna as pessoas que você gosta. Descubram coisas novas,
             compartilhem histórias e celebrem juntos.
           </p>
+          {onRealRoom && (
+            <div className="home-actions">
+              <Button variant="secondary" onClick={onRealRoom}>
+                Jogar online
+              </Button>
+            </div>
+          )}
+          <p className="gq-demo-caption">
+            Experimente sem conta (demonstração local)
+          </p>
           <div className="home-actions" ref={actionsRef}>
             <Button
-              variant="secondary"
+              variant="outline"
               disabled={!!session}
               aria-expanded={mode === 'create'}
               onClick={() => chooseMode('create')}
@@ -96,13 +106,6 @@ export function Home({
               Entrar em uma sala
             </Button>
           </div>
-          {onRealRoom && (
-            <div className="home-actions" style={{ marginTop: 16 }}>
-              <Button variant="outline" onClick={onRealRoom}>
-                Jogar multiplayer real (login necessário)
-              </Button>
-            </div>
-          )}
           <div className="home-people">
             <div aria-hidden="true">
               <Avatar name="Ana Lima" />
