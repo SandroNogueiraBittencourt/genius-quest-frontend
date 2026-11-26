@@ -278,9 +278,11 @@ function Pages() {
             <p role="status">
               {notice === 'signed-out'
                 ? 'Você saiu da sua conta.'
-                : notice === 'expired'
-                  ? 'Sua sessão expirou. Entre novamente.'
-                  : 'Sua sessão não está mais válida. Entre novamente.'}
+                : notice === 'password-changed'
+                  ? 'Senha alterada. Entre novamente com sua nova senha.'
+                  : notice === 'expired'
+                    ? 'Sua sessão expirou. Entre novamente.'
+                    : 'Sua sessão não está mais válida. Entre novamente.'}
             </p>
             <div className="auth-notice-actions">
               {!isAuthView && notice !== 'signed-out' && (
@@ -322,6 +324,12 @@ function Pages() {
               onHome={() => navigate('home')}
               onLogout={() => void logout()}
               logoutPending={logoutPending}
+              onPasswordChanged={(email) => {
+                setRegistrationEmail(email);
+                setEmailVerified(false);
+                navigate('login');
+              }}
+              onForgotPassword={(event) => open(event, 'forgot-password')}
             />
           ) : (
             <AuthPage
