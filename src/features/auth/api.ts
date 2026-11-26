@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from '../../services/http';
+import { authenticatedRequest } from './authenticatedRequest';
 import type {
   LoginRequest,
   LoginResponse,
@@ -122,4 +123,20 @@ export async function logout(
     token,
     signal,
   });
+}
+
+export async function changePassword(
+  userId: string,
+  senhaAtual: string,
+  novaSenha: string,
+  signal: AbortSignal,
+): Promise<void> {
+  await authenticatedRequest<void>(
+    `/usuarios/${encodeURIComponent(userId)}/senha`,
+    {
+      method: 'PATCH',
+      json: { senhaAtual, novaSenha },
+      signal,
+    },
+  );
 }
