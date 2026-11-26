@@ -8,6 +8,7 @@ import {
 import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { login, register } from './api';
+import { ChangePasswordForm } from './ChangePasswordForm';
 import { useAuthStore } from './store';
 import { passwordError, passwordHint } from './passwordPolicy';
 import './Auth.css';
@@ -333,10 +334,14 @@ export function ConnectedAccount({
   onHome,
   onLogout,
   logoutPending = false,
+  onPasswordChanged,
+  onForgotPassword,
 }: {
   onHome: () => void;
   onLogout: () => void;
   logoutPending?: boolean;
+  onPasswordChanged: (email: string) => void;
+  onForgotPassword: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   const session = useAuthStore((state) => state.session);
   return (
@@ -347,6 +352,15 @@ export function ConnectedAccount({
         Seu e-mail: <strong>{session?.email}</strong>
       </p>
       <p>A sessão está ativa nesta aba.</p>
+      {session && (
+        <ChangePasswordForm
+          key={session.token}
+          session={session}
+          disabled={logoutPending}
+          onPasswordChanged={onPasswordChanged}
+          onForgotPassword={onForgotPassword}
+        />
+      )}
       <div className="auth-connected-actions">
         <Button variant="secondary" onClick={onHome}>
           Voltar à abertura

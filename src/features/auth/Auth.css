@@ -104,7 +104,7 @@
   line-height: 1.3;
   margin: 16px 0 24px;
 }
-.auth-connected p {
+.auth-connected > p {
   color: var(--color-muted);
   overflow-wrap: anywhere;
 }
@@ -113,6 +113,9 @@
   flex-wrap: wrap;
   gap: 16px;
   margin-top: 28px;
+}
+.auth-change-password {
+  margin-top: 24px;
 }
 .auth-notice {
   display: flex;

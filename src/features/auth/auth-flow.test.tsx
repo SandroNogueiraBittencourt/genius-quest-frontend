@@ -103,3 +103,99 @@ it('percorre cadastro, login, conta conectada e saída pela navegação real', a
   expect(useAuthStore.getState().session).toBeNull();
   expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument();
 });
+
+function abrirMinhaConta() {
+  const id = '19beaa15-d762-4bb5-9db7-db69b76f7520';
+  const token =
+    'header.' + btoa(JSON.stringify({ usuarioId: id })) + '.assinatura';
+  useAuthStore
+    .getState()
+    .start({ token, tipo: 'Bearer', expiraEm: 3600 }, 'lia@example.test');
+  window.history.replaceState({}, '', '/?view=login');
+  render(<App />);
+  return { id, token };
+}
+
+function preencherTroca(novaSenha: string, confirmacao = novaSenha) {
+  fireEvent.change(screen.getByLabelText('Senha atual'), {
+    target: { value: 'senha-antiga' },
+  });
+  fireEvent.change(screen.getByLabelText('Nova senha', { exact: true }), {
+    target: { value: novaSenha },
+  });
+  fireEvent.change(screen.getByLabelText('Confirme a nova senha'), {
+    target: { value: confirmacao },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Alterar senha' }));
+}
+
+it('valida a troca de senha e encerra a sessão ao concluir', async () => {
+  const fetch = vi.fn(async (url: string) => {
+    if (!url.endsWith('/senha')) return new Response(null, { status: 404 });
+    const tentativas = fetch.mock.calls.filter(([path]) =>
+      path.endsWith('/senha'),
+    );
+    return tentativas.length === 1
+      ? new Response(
+          JSON.stringify({ mensagem: 'A senha atual está incorreta.' }),
+          {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      : new Response(null, { status: 204 });
+  });
+  vi.stubGlobal('fetch', fetch);
+  const { id, token } = abrirMinhaConta();
+
+  preencherTroca('senhafraca', 'diferente');
+  expect(screen.getByLabelText('Nova senha', { exact: true })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  expect(
+    screen.getByText('As novas senhas precisam ser iguais.'),
+  ).toBeInTheDocument();
+  expect(fetch.mock.calls.some(([url]) => url.endsWith('/senha'))).toBe(false);
+
+  preencherTroca('NovaSenha123!');
+  expect(
+    await screen.findByText('A senha atual está incorreta.'),
+  ).toBeInTheDocument();
+  expect(useAuthStore.getState().session?.token).toBe(token);
+
+  preencherTroca('NovaSenha123!');
+  expect(
+    await screen.findByText(
+      'Senha alterada. Entre novamente com sua nova senha.',
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Entrar na minha conta' }),
+  ).toBeInTheDocument();
+  expect(useAuthStore.getState().session).toBeNull();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/usuarios/' + id + '/senha',
+    expect.objectContaining({
+      method: 'PATCH',
+      headers: expect.objectContaining({ Authorization: 'Bearer ' + token }),
+      body: JSON.stringify({
+        senhaAtual: 'senha-antiga',
+        novaSenha: 'NovaSenha123!',
+      }),
+    }),
+  );
+});
+
+it('abre a recuperação por e-mail a partir de Minha conta', () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(new Response(null, { status: 404 })),
+  );
+  abrirMinhaConta();
+
+  fireEvent.click(screen.getByRole('link', { name: 'Esqueci minha senha' }));
+  expect(
+    screen.getByRole('button', { name: 'Enviar código de recuperação' }),
+  ).toBeInTheDocument();
+});
