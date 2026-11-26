@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { AuthSession, LoginResponse } from './types';
-export type SessionNotice = 'signed-out' | 'expired' | 'unauthorized' | null;
+export type SessionNotice =
+  'signed-out' | 'password-changed' | 'expired' | 'unauthorized' | null;
 type AuthState = {
   session: AuthSession | null;
   notice: SessionNotice;
