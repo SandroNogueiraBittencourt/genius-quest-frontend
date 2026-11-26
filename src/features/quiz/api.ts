@@ -72,3 +72,27 @@ export async function getMyMatches(
     throw new ApiError(502, 'A API retornou partidas inválidas.');
   return data;
 }
+
+export const MATCH_PAGE_SIZE = 10;
+
+export async function getMyMatchesPage(page: number, signal?: AbortSignal) {
+  const session = useAuthStore.getState().session;
+  const data = await authenticatedRequest<{
+    content?: unknown;
+    page?: { totalPages?: unknown };
+  }>(
+    `/partidas/minhas?incluirSalas=true&page=${page}&size=${MATCH_PAGE_SIZE}`,
+    { signal },
+  );
+  assertSessionUnchanged(session, signal);
+  const totalPages = data?.page?.totalPages;
+  if (
+    !Array.isArray(data?.content) ||
+    !data.content.every(validMatch) ||
+    typeof totalPages !== 'number' ||
+    !Number.isSafeInteger(totalPages) ||
+    totalPages < 0
+  )
+    throw new ApiError(502, 'A API retornou uma página de partidas inválida.');
+  return { items: data.content as PreparedMatch[], totalPages };
+}
