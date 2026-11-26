@@ -9,7 +9,9 @@ import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { login, register } from './api';
 import { ChangePasswordForm } from './ChangePasswordForm';
+import { EditNameForm } from './EditNameForm';
 import { useAuthStore } from './store';
+import { userIdFromJwt } from './userIdFromJwt';
 import { passwordError, passwordHint } from './passwordPolicy';
 import './Auth.css';
 export type AuthMode = 'login' | 'register';
@@ -344,6 +346,7 @@ export function ConnectedAccount({
   onForgotPassword: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   const session = useAuthStore((state) => state.session);
+  const userId = session ? userIdFromJwt(session.token) : null;
   return (
     <Card className="auth-connected">
       <span className="gq-kicker">Sua conta Genius Quest</span>
@@ -352,6 +355,14 @@ export function ConnectedAccount({
         Seu e-mail: <strong>{session?.email}</strong>
       </p>
       <p>A sessão está ativa nesta aba.</p>
+      {session && userId && (
+        <EditNameForm
+          key={session.token}
+          userId={userId}
+          expiresAt={session.expiresAt}
+          disabled={logoutPending}
+        />
+      )}
       {session && (
         <ChangePasswordForm
           key={session.token}
