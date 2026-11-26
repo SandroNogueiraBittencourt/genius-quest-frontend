@@ -145,21 +145,7 @@ async function request<T>(
   return response;
 }
 
-export function playerIdFromJwt(jwt: string): string | null {
-  // Dado para exibição somente: todas as permissões são aplicadas no backend.
-  try {
-    const segment = jwt.split('.')[1];
-    if (!segment) return null;
-    const value = segment.replace(/-/g, '+').replace(/_/g, '/');
-    const parsed: unknown = JSON.parse(atob(value));
-    if (!parsed || typeof parsed !== 'object' || !('usuarioId' in parsed))
-      return null;
-    const id = (parsed as { usuarioId: unknown }).usuarioId;
-    return typeof id === 'string' && UUID.test(id) ? id : null;
-  } catch {
-    return null;
-  }
-}
+export { userIdFromJwt as playerIdFromJwt } from '../auth/userIdFromJwt';
 
 export const realRoomApi = {
   async criar(): Promise<RealRoom> {
