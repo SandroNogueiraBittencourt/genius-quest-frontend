@@ -199,3 +199,44 @@ it('abre a recuperação por e-mail a partir de Minha conta', () => {
     screen.getByRole('button', { name: 'Enviar código de recuperação' }),
   ).toBeInTheDocument();
 });
+
+it('carrega e atualiza o nome na própria conta sem encerrar a sessão', async () => {
+  const fetch = vi.fn(async (url: string, options: RequestInit) => {
+    if (!url.includes('/usuarios/')) return new Response(null, { status: 404 });
+    return new Response(
+      JSON.stringify({
+        nome: options.method === 'PATCH' ? 'Lia Souza' : 'Lia Teste',
+      }),
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+  });
+  vi.stubGlobal('fetch', fetch);
+  const { id, token } = abrirMinhaConta();
+  const name = await screen.findByRole('textbox', { name: 'Nome' });
+  const save = screen.getByRole('button', { name: 'Salvar nome' });
+  expect(name).toHaveValue('Lia Teste');
+  expect(save).toBeDisabled();
+
+  fireEvent.change(name, { target: { value: 'Li' } });
+  fireEvent.click(save);
+  expect(
+    screen.getByText('Informe um nome entre 3 e 100 caracteres.'),
+  ).toBeInTheDocument();
+  expect(
+    fetch.mock.calls.some(([, options]) => options.method === 'PATCH'),
+  ).toBe(false);
+
+  fireEvent.change(name, { target: { value: ' Lia Souza ' } });
+  fireEvent.click(save);
+  expect(await screen.findByText('Nome atualizado.')).toBeInTheDocument();
+  expect(name).toHaveValue('Lia Souza');
+  expect(useAuthStore.getState().session?.token).toBe(token);
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/usuarios/' + id,
+    expect.objectContaining({
+      method: 'PATCH',
+      headers: expect.objectContaining({ Authorization: 'Bearer ' + token }),
+      body: JSON.stringify({ nome: 'Lia Souza' }),
+    }),
+  );
+});
