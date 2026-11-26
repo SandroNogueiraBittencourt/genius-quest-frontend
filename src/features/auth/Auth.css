@@ -114,6 +114,7 @@
   gap: 16px;
   margin-top: 28px;
 }
+.auth-edit-name,
 .auth-change-password {
   margin-top: 24px;
 }

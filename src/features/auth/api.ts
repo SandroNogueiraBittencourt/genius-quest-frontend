@@ -140,3 +140,31 @@ export async function changePassword(
     },
   );
 }
+
+async function requestProfileName(
+  userId: string,
+  signal: AbortSignal,
+  nome?: string,
+): Promise<string> {
+  const data = await authenticatedRequest<unknown>(
+    `/usuarios/${encodeURIComponent(userId)}`,
+    nome === undefined
+      ? { signal }
+      : { method: 'PATCH', json: { nome }, signal },
+  );
+  if (!isRecord(data) || typeof data.nome !== 'string')
+    throw new ApiError(502, 'Não foi possível confirmar o nome da conta.');
+  return data.nome;
+}
+
+export function getProfileName(userId: string, signal: AbortSignal) {
+  return requestProfileName(userId, signal);
+}
+
+export function updateProfileName(
+  userId: string,
+  nome: string,
+  signal: AbortSignal,
+) {
+  return requestProfileName(userId, signal, nome);
+}
