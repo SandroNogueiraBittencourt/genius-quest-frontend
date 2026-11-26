@@ -217,3 +217,27 @@ it('limpa histórico e placar na troca de conta', async () => {
     ),
   ).toBeInTheDocument();
 });
+
+it('filtra partidas concluídas antes de repartir os resultados em páginas', async () => {
+  signIn();
+  const resultados = Array.from({ length: 11 }, (_, index) => ({
+    ...completed,
+    id: '22222222-0000-4000-8000-' + String(index + 100).padStart(12, '0'),
+    temaTitulo: 'Resultado ' + (index + 1),
+  }));
+  const fetch = vi.fn(async () => json([ongoing, individual, ...resultados]));
+  vi.stubGlobal('fetch', fetch);
+  mount();
+
+  await screen.findByText('Página 1 de 2');
+  expect(screen.getAllByRole('button', { name: 'Ver placar' })).toHaveLength(
+    10,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  expect(screen.getByText('Página 2 de 2')).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Resultado 11' }),
+  ).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: 'Ver placar' })).toHaveLength(1);
+  expect(fetch).toHaveBeenCalledOnce();
+});

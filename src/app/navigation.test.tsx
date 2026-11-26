@@ -110,8 +110,10 @@ it('retorna à página de resultados depois de autenticar', async () => {
           JSON.stringify(
             url.endsWith('/auth/login')
               ? { token: 'sessao-de-teste', tipo: 'Bearer', expiraEm: 3600 }
-              : url.endsWith('/partidas/minhas?incluirSalas=true')
-                ? []
+              : url.includes('/partidas/minhas?incluirSalas=true')
+                ? url.includes('&page=')
+                  ? { content: [], page: { totalPages: 0 } }
+                  : []
                 : {
                     status: 'UP',
                     application: 'Genius Quest Backend',
