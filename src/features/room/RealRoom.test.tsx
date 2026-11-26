@@ -418,3 +418,50 @@ it('preenche o UUID do convite e usa a API de entrada após confirmação', asyn
     window.history.replaceState({}, '', '/');
   }
 });
+
+it('aguarda o segundo jogador para habilitar o início da partida', async () => {
+  const { server, fetch } = mockServer({
+    ...baseRoom,
+    status: 'PREPARACAO',
+    participantes: [baseRoom.participantes[0]],
+  });
+  mount();
+  const iniciar = await screen.findByRole('button', {
+    name: 'Iniciar partida',
+  });
+
+  expect(
+    screen.getByText(/1 de 14 jogadores.*Aguardando mais 1 jogador/),
+  ).toBeInTheDocument();
+  expect(iniciar).toBeDisabled();
+  fireEvent.click(iniciar);
+  expect(
+    fetch.mock.calls.some(([url]) => url.endsWith('/partida/iniciar')),
+  ).toBe(false);
+
+  server.room = { ...baseRoom, status: 'PREPARACAO' };
+  fireEvent.click(screen.getByRole('button', { name: 'Atualizar sala' }));
+
+  expect(await screen.findByText('2 de 14 jogadores')).toBeInTheDocument();
+  expect(iniciar).toBeEnabled();
+});
+
+it('exibe sala cheia e permite ao anfitrião iniciar com 14 jogadores', async () => {
+  mockServer({
+    ...baseRoom,
+    status: 'PREPARACAO',
+    participantes: [
+      ...baseRoom.participantes,
+      ...Array.from({ length: 12 }, (_, index) => ({
+        id: 'convidado-' + index,
+        nome: 'Convidado ' + (index + 2),
+      })),
+    ],
+  });
+  mount();
+
+  expect(
+    await screen.findByText('14 de 14 jogadores · Sala cheia'),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Iniciar partida' })).toBeEnabled();
+});

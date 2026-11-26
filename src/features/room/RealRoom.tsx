@@ -12,6 +12,9 @@ import { forgetRoomCode, readRoomCode, rememberRoomCode } from './savedRoom';
 import './RealRoom.css';
 
 /** Conexão real. A demonstração em memória continua em ?view=lobby. */
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 14;
+
 export function RealRoom({
   onSignIn,
   onViewResults,
@@ -148,6 +151,8 @@ export function RealRoom({
       : undefined;
   const estadoContinuacao = continuacao.isError ? undefined : continuacao.data;
   const anfitriao = Boolean(room && meuId && room.anfitriaoId === meuId);
+  const totalJogadores = room?.participantes.length ?? 0;
+  const faltamJogadores = totalJogadores < MIN_PLAYERS;
 
   async function executar(acao: () => Promise<unknown>, sair = false) {
     if (ocupado) return;
@@ -345,6 +350,14 @@ export function RealRoom({
                   Estado: <strong>{room.status}</strong>
                   {room.encerrada ? ' — Sala encerrada' : ''}
                 </p>
+                {!room.encerrada && room.status === 'PREPARACAO' && (
+                  <p role="status" id="real-room-occupancy">
+                    {totalJogadores} de {MAX_PLAYERS} jogadores
+                    {faltamJogadores &&
+                      ' · Aguardando mais 1 jogador para iniciar'}
+                    {totalJogadores >= MAX_PLAYERS && ' · Sala cheia'}
+                  </p>
+                )}
                 <ul className="real-room-players">
                   {room.participantes.map((p) => (
                     <li key={p.id}>
@@ -478,7 +491,10 @@ export function RealRoom({
                 <div className="real-room-actions">
                   <Button
                     variant="secondary"
-                    disabled={ocupado}
+                    disabled={ocupado || faltamJogadores}
+                    aria-describedby={
+                      faltamJogadores ? 'real-room-occupancy' : undefined
+                    }
                     onClick={() =>
                       void executar(() => realRoomApi.iniciar(codigo))
                     }
