@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetRoomCode, readRoomCode, rememberRoomCode } from './savedRoom';
 
 const anfitriao = '5af3c27d-6ed8-4850-8e4a-48642f38089c';
@@ -37,4 +37,33 @@ describe('retomada da sala real na mesma aba', () => {
     expect(readRoomCode(anfitriao)).toBeNull();
     expect(readRoomCode(convidado)).toBe(codigo);
   });
+});
+
+it('permite jogar quando o navegador bloqueia a sessão de armazenamento', () => {
+  const falha = () => {
+    throw new DOMException('Armazenamento indisponível', 'SecurityError');
+  };
+  const spies = [
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(falha),
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(falha),
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(falha),
+  ];
+  try {
+    expect(readRoomCode(anfitriao)).toBeNull();
+    expect(() => rememberRoomCode(anfitriao, codigo)).not.toThrow();
+    expect(() => forgetRoomCode(anfitriao)).not.toThrow();
+  } finally {
+    spies.forEach((spy) => spy.mockRestore());
+  }
+});
+
+it('esquecer a sala de um jogador preserva a de outro jogador', () => {
+  const outraSala = '6ad4a771-b68f-4cb1-a279-61fb61ab5705';
+  rememberRoomCode(anfitriao, codigo);
+  rememberRoomCode(convidado, outraSala);
+
+  forgetRoomCode(anfitriao.toUpperCase());
+
+  expect(readRoomCode(anfitriao)).toBeNull();
+  expect(readRoomCode(convidado)).toBe(outraSala);
 });

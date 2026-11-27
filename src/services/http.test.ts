@@ -126,3 +126,41 @@ it('distingue indisponibilidade de rede e cancelamento', async () => {
     apiRequest('/usuarios', { signal: controller.signal }),
   ).rejects.toBe(error);
 });
+
+it('aceita 202 sem corpo somente quando a chamada declara esse contrato', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(null, { status: 202 })),
+  );
+
+  await expect(
+    apiRequest('/auth/reenviar-verificacao', {
+      method: 'POST',
+      allowEmptyAccepted: true,
+    }),
+  ).resolves.toBeUndefined();
+  await expect(
+    apiRequest('/auth/reenviar-verificacao', { method: 'POST' }),
+  ).rejects.toMatchObject({ status: 502 });
+});
+
+it('enfileira apenas chaves de idempotência no formato UUID', async () => {
+  const fetch = vi.fn(async () => new Response(null, { status: 204 }));
+  vi.stubGlobal('fetch', fetch);
+
+  await expect(
+    apiRequest('/teste', { idempotencyKey: 'chave-invalida' }),
+  ).rejects.toThrow('Chave de idempotência inválida.');
+  expect(fetch).not.toHaveBeenCalled();
+
+  const idempotencyKey = '33333333-0000-4000-8000-000000000001';
+  await expect(
+    apiRequest('/teste', { method: 'POST', idempotencyKey }),
+  ).resolves.toBeUndefined();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/teste',
+    expect.objectContaining({
+      headers: expect.objectContaining({ 'Idempotency-Key': idempotencyKey }),
+    }),
+  );
+});
