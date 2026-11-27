@@ -107,7 +107,7 @@ it('volta às categorias após login e recarrega os dados ao trocar de conta', a
   fireEvent.change(screen.getByLabelText('Nome da categoria'), {
     target: { value: 'Oceanos' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Enviar para revisão' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar categoria' }));
   await screen.findByRole('heading', { name: 'Sugestão recebida!' });
   fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
   await screen.findByText('Você saiu da sua conta.');
@@ -193,7 +193,7 @@ it('sair da conta durante envio cancela a tela e impede confirmação na próxim
   fireEvent.change(screen.getByLabelText('Nome da categoria'), {
     target: { value: 'Oceanos' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Enviar para revisão' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar categoria' }));
   expect(
     screen.getByRole('button', { name: 'Enviando sugestão…' }),
   ).toBeDisabled();

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
 import { MatchList } from './MatchList';
-import { useMyMatches } from './queries';
+import { useMyMatchesPage } from './queries';
+import { MatchPagination } from './MatchPagination';
 import './QuizPreparation.css';
 
 export function QuizPreparation({
@@ -55,7 +57,8 @@ function SignedInMatches({
   onRealRoom: () => void;
   onViewResults: () => void;
 }) {
-  const matches = useMyMatches();
+  const [page, setPage] = useState(0);
+  const matches = useMyMatchesPage(page);
 
   return (
     <>
@@ -91,9 +94,13 @@ function SignedInMatches({
             Tentar novamente
           </Button>
         </Card>
-      ) : matches.data.length === 0 ? (
+      ) : matches.data.items.length === 0 ? (
         <Card>
-          <h3>Você ainda não tem partidas.</h3>
+          <h3>
+            {page === 0
+              ? 'Você ainda não tem partidas.'
+              : 'Nenhuma partida nesta página.'}
+          </h3>
           <p>
             Participe de uma sala real ou escolha um tema vencedor no Histórico
             de votação para preparar uma partida.
@@ -103,8 +110,14 @@ function SignedInMatches({
           </Button>
         </Card>
       ) : (
-        <MatchList matches={matches.data} />
+        <MatchList matches={matches.data.items} />
       )}
+      <MatchPagination
+        page={page}
+        totalPages={matches.data?.totalPages ?? 0}
+        onPageChange={setPage}
+        busy={matches.isFetching}
+      />
     </>
   );
 }

@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
 import { MatchList } from './MatchList';
+import { MatchPagination } from './MatchPagination';
+import { MATCH_PAGE_SIZE } from './api';
 import { useMyMatches } from './queries';
 import './QuizPreparation.css';
 
@@ -40,11 +43,15 @@ export function MatchResultsPage({
 }
 
 function MatchResultsHistory({ onViewMatches }: { onViewMatches: () => void }) {
+  const [requestedPage, setPage] = useState(0);
   const matches = useMyMatches();
   const completed =
     matches.data?.filter(
       (match) => match.status === 'CONCLUIDA' && !!match.codigoSala,
     ) ?? [];
+  const totalPages = Math.ceil(completed.length / MATCH_PAGE_SIZE);
+  const page = Math.min(requestedPage, Math.max(0, totalPages - 1));
+  const start = page * MATCH_PAGE_SIZE;
   return (
     <>
       <div className="quiz-preparation-toolbar">
@@ -78,8 +85,14 @@ function MatchResultsHistory({ onViewMatches }: { onViewMatches: () => void }) {
           <p>Você ainda não tem resultados de partidas multiplayer.</p>
         </Card>
       ) : (
-        <MatchList matches={completed} />
+        <MatchList matches={completed.slice(start, start + MATCH_PAGE_SIZE)} />
       )}
+      <MatchPagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        busy={matches.isFetching}
+      />
     </>
   );
 }

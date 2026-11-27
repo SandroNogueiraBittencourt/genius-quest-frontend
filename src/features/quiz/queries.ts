@@ -1,16 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../auth/store';
-import { getMyMatches } from './api';
+import { getMyMatches, getMyMatchesPage } from './api';
 
-export function useMyMatches() {
+function useMyMatchesOptions() {
   const session = useAuthStore((state) => state.session);
-  return useQuery({
+  return {
     queryKey: ['quiz', 'my-matches', session?.email, session?.expiresAt],
-    queryFn: ({ signal }) => getMyMatches(signal),
     enabled: !!session,
     retry: false,
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
+  } as const;
+}
+
+export function useMyMatches() {
+  return useQuery({
+    ...useMyMatchesOptions(),
+    queryFn: ({ signal }) => getMyMatches(signal),
+  });
+}
+
+export function useMyMatchesPage(page: number) {
+  const options = useMyMatchesOptions();
+  return useQuery({
+    ...options,
+    queryKey: [...options.queryKey, page],
+    queryFn: ({ signal }) => getMyMatchesPage(page, signal),
   });
 }

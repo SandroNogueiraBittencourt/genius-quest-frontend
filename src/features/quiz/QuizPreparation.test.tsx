@@ -51,10 +51,13 @@ it('mostra a partida preparada sem oferecer gameplay inexistente', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue(
-      new Response(JSON.stringify([partida]), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
+      new Response(
+        JSON.stringify({ content: [partida], page: { totalPages: 1 } }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
     ),
   );
   useAuthStore
@@ -111,7 +114,10 @@ it('mostra estados reais no histórico e oferece placar apenas para sala conclu�
           JSON.stringify(
             url.endsWith('/resultado')
               ? { partidaId: id, classificacao: [] }
-              : [partida, real, running, cancelled],
+              : {
+                  content: [partida, real, running, cancelled],
+                  page: { totalPages: 1 },
+                },
           ),
           {
             status: 200,
@@ -135,5 +141,45 @@ it('mostra estados reais no histórico e oferece placar apenas para sala conclu�
     await screen.findByText(
       'Esta partida terminou sem pontuações registradas.',
     ),
+  ).toBeInTheDocument();
+});
+
+it('consulta a próxima página de partidas e permite voltar à primeira', async () => {
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-partida', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@geniusquest.test',
+    );
+  const fetch = vi.fn(async (url: string) => {
+    const page = new URL(url, window.location.origin).searchParams.get('page');
+    const item =
+      page === '0'
+        ? partida
+        : { ...partida, temaTitulo: 'Partida de outra página' };
+    return new Response(
+      JSON.stringify({ content: [item], page: { totalPages: 2 } }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  });
+  vi.stubGlobal('fetch', fetch);
+  mount();
+
+  await screen.findByText('Página 1 de 2');
+  expect(screen.getByRole('button', { name: 'Anterior' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  expect(
+    await screen.findByRole('heading', { name: 'Partida de outra página' }),
+  ).toBeInTheDocument();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/partidas/minhas?incluirSalas=true&page=1&size=10',
+    expect.any(Object),
+  );
+  expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Anterior' }));
+  expect(
+    await screen.findByRole('heading', { name: partida.temaTitulo }),
   ).toBeInTheDocument();
 });
