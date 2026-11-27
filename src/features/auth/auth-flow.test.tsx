@@ -240,3 +240,66 @@ it('carrega e atualiza o nome na própria conta sem encerrar a sessão', async (
     }),
   );
 });
+
+it('permite recarregar o perfil após falha ao buscar o nome', async () => {
+  let consultas = 0;
+  const fetch = vi.fn(async (url: string) => {
+    if (!url.includes('/usuarios/')) return new Response(null, { status: 404 });
+    if (++consultas === 1) return new Response(null, { status: 503 });
+    return new Response(JSON.stringify({ nome: 'Lia Teste' }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+  vi.stubGlobal('fetch', fetch);
+  const { id, token } = abrirMinhaConta();
+
+  expect(
+    await screen.findByText('Não foi possível carregar seu nome.'),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Salvar nome' })).toBeNull();
+
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Tentar carregar novamente' }),
+  );
+  expect(await screen.findByRole('textbox', { name: 'Nome' })).toHaveValue(
+    'Lia Teste',
+  );
+  expect(fetch).toHaveBeenLastCalledWith(
+    '/api/usuarios/' + id,
+    expect.objectContaining({
+      method: 'GET',
+      headers: expect.objectContaining({ Authorization: 'Bearer ' + token }),
+    }),
+  );
+  expect(useAuthStore.getState().session?.token).toBe(token);
+});
+
+it('associa a rejeição do servidor ao nome e mantém o rascunho para correção', async () => {
+  const fetch = vi.fn(async (_url: string, options: RequestInit) => {
+    const response =
+      options.method === 'PATCH'
+        ? {
+            mensagem: 'Dados inválidos',
+            campos: { nome: 'Confira o nome informado.' },
+          }
+        : { nome: 'Lia Teste' };
+    return new Response(JSON.stringify(response), {
+      status: options.method === 'PATCH' ? 400 : 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+  vi.stubGlobal('fetch', fetch);
+  const { token } = abrirMinhaConta();
+  const name = await screen.findByRole('textbox', { name: 'Nome' });
+
+  fireEvent.change(name, { target: { value: 'Lia Souza' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar nome' }));
+
+  expect(
+    await screen.findByText('Confira o nome informado.'),
+  ).toBeInTheDocument();
+  expect(name).toHaveAttribute('aria-invalid', 'true');
+  expect(name).toHaveValue('Lia Souza');
+  expect(screen.queryByText('Nome atualizado.')).toBeNull();
+  expect(useAuthStore.getState().session?.token).toBe(token);
+});
