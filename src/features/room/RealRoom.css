@@ -1,5 +1,5 @@
 .real-room-shell {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 24px auto;
   display: grid;
   gap: 24px;
@@ -58,8 +58,50 @@
 }
 .real-room-players {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+  margin-block: 20px 24px;
+  padding: 0;
+  list-style: none;
+}
+.real-room-player {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  padding-left: 22px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+.real-room-player-avatar {
+  flex: 0 0 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.real-room-player-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.real-room-player-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+.real-room-player-labels span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 .real-room-answers {
   display: grid;
