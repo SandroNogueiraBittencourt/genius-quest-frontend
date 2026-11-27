@@ -52,6 +52,7 @@ function json(body: unknown, status = 200) {
 function mockServer(initial: RoomState = baseRoom) {
   const server = {
     room: initial,
+    numero: 1 as number | null,
     continuation: waiting,
     voteFailure: null as RealContinuation | null,
     themeVote: {
@@ -61,6 +62,20 @@ function mockServer(initial: RoomState = baseRoom) {
     },
     onContinue: undefined as (() => void) | undefined,
   };
+  function questao(numero: number) {
+    return {
+      partidaId: server.room.partidaId,
+      numero,
+      totalPerguntas: 10,
+      enunciado:
+        server.room.partidaId === nextMatch
+          ? 'Pergunta da segunda rodada'
+          : numero === 1
+            ? 'Pergunta da primeira rodada'
+            : 'Pergunta ' + numero,
+      alternativas: ['Opção 1', 'Opção 2', 'Opção 3', 'Opção 4'],
+    };
+  }
   const fetch = vi.fn(async (url: string, init: RequestInit) => {
     if (url.endsWith('/temas'))
       return json([
@@ -79,22 +94,19 @@ function mockServer(initial: RoomState = baseRoom) {
       return json(server.room);
     if (url.endsWith(roomPath + '/votacao')) return json(server.themeVote);
     if (url.endsWith(roomPath + '/partida/pergunta-atual'))
+      return server.numero === null
+        ? new Response(null, { status: 204 })
+        : json(questao(server.numero));
+    if (url.endsWith(roomPath + '/partida/respostas')) {
+      const { numero } = JSON.parse(String(init.body));
+      server.numero = numero < 10 ? numero + 1 : null;
       return json({
-        partidaId: server.room.partidaId,
-        numero: 1,
-        totalPerguntas: 10,
-        enunciado:
-          server.room.partidaId === nextMatch
-            ? 'Pergunta da segunda rodada'
-            : 'Pergunta da primeira rodada',
-        alternativas: ['Opção 1', 'Opção 2', 'Opção 3', 'Opção 4'],
-      });
-    if (url.endsWith(roomPath + '/partida/respostas'))
-      return json({
-        perguntaRespondida: 1,
+        perguntaRespondida: numero,
         status: 'EM_ANDAMENTO',
-        perguntaAtual: 1,
+        perguntaAtual: server.numero,
+        proximaPergunta: server.numero === null ? null : questao(server.numero),
       });
+    }
     if (url.endsWith('/partidas/' + firstMatch + '/resultado'))
       return json({
         partidaId: firstMatch,
@@ -273,11 +285,12 @@ it('não pede voto novamente enquanto espera os demais participantes', async () 
 
 it('não carrega a resposta da primeira rodada para a questão de mesmo número na segunda', async () => {
   const { server } = mockServer({ ...baseRoom, status: 'EM_ANDAMENTO' });
+  server.numero = 10;
   mount();
   fireEvent.click(await screen.findByRole('button', { name: 'A. Opção 1' }));
   expect(
     await screen.findByText(
-      'Resposta registrada. Aguardando os outros participantes…',
+      'Você terminou! Aguardando os outros jogadores para ver o resultado.',
     ),
   ).toBeInTheDocument();
 
@@ -298,6 +311,7 @@ it('não carrega a resposta da primeira rodada para a questão de mesmo número 
     await screen.findByRole('heading', { name: 'Escolha do tema' }),
   ).toBeInTheDocument();
 
+  server.numero = 1;
   server.room = { ...baseRoom, partidaId: nextMatch, status: 'EM_ANDAMENTO' };
   fireEvent.click(screen.getByRole('button', { name: 'Atualizar sala' }));
   expect(
@@ -308,7 +322,7 @@ it('não carrega a resposta da primeira rodada para a questão de mesmo número 
   );
   expect(
     screen.queryByText(
-      'Resposta registrada. Aguardando os outros participantes…',
+      'Você terminou! Aguardando os outros jogadores para ver o resultado.',
     ),
   ).toBeNull();
   expect(screen.queryByRole('table')).toBeNull();
@@ -464,4 +478,42 @@ it('exibe sala cheia e permite ao anfitrião iniciar com 14 jogadores', async ()
     await screen.findByText('14 de 14 jogadores · Sala cheia'),
   ).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Iniciar partida' })).toBeEnabled();
+});
+
+it('exibe a pergunta seguinte da resposta sem consultar a sala ou a pergunta novamente', async () => {
+  const { fetch } = mockServer({ ...baseRoom, status: 'EM_ANDAMENTO' });
+  mount();
+  const alternativa = await screen.findByRole('button', { name: 'A. Opção 1' });
+  const consultas = fetch.mock.calls.filter(
+    ([url, init]) =>
+      init.method === 'GET' &&
+      (url.endsWith(roomPath) || url.endsWith('/partida/pergunta-atual')),
+  ).length;
+
+  fireEvent.click(alternativa);
+
+  expect(
+    await screen.findByRole('heading', { name: 'Pergunta 2' }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'A. Opção 1' })).toBeEnabled();
+  expect(
+    fetch.mock.calls.filter(
+      ([url, init]) =>
+        init.method === 'GET' &&
+        (url.endsWith(roomPath) || url.endsWith('/partida/pergunta-atual')),
+    ),
+  ).toHaveLength(consultas);
+});
+
+it('ao retomar a sala após responder tudo aguarda o placar sem mostrar alternativas', async () => {
+  const { server } = mockServer({ ...baseRoom, status: 'EM_ANDAMENTO' });
+  server.numero = null;
+  mount();
+
+  expect(
+    await screen.findByText(
+      'Você terminou! Aguardando os outros jogadores para ver o resultado.',
+    ),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'A. Opção 1' })).toBeNull();
 });

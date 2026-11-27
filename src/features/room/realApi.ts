@@ -28,6 +28,7 @@ export type RealAnswer = {
   perguntaRespondida: number;
   status: RealRoom['status'];
   perguntaAtual: number | null;
+  proximaPergunta: RealQuestion | null;
 };
 export type RealContinuation = {
   status: 'AGUARDANDO' | 'APROVADA' | 'ENCERRADA';
@@ -196,10 +197,14 @@ export const realRoomApi = {
       method: 'POST',
     });
   },
-  perguntaAtual(code: string, signal?: AbortSignal) {
-    return request<RealQuestion>(roomPath(code) + '/partida/pergunta-atual', {
-      signal,
-    });
+  async perguntaAtual(code: string, signal?: AbortSignal) {
+    const pergunta = await request<RealQuestion | undefined>(
+      roomPath(code) + '/partida/pergunta-atual',
+      {
+        signal,
+      },
+    );
+    return pergunta ?? null;
   },
   responder(code: string, numero: number, alternativaIndice: number) {
     return request<RealAnswer>(roomPath(code) + '/partida/respostas', {

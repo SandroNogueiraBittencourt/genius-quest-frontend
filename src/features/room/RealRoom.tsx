@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
@@ -36,11 +36,8 @@ export function RealRoom({
     abertaEm: 0,
     temaId: '',
   });
-  const [respondida, setRespondida] = useState<{
-    partidaId: string;
-    numero: number;
-  } | null>(null);
   const [ocupado, setOcupado] = useState(false);
+  const acaoEmCurso = useRef(false);
   const [erro, setErro] = useState('');
   const client = useQueryClient();
   const meuId = auth ? playerIdFromJwt(auth.token) : null;
@@ -54,7 +51,6 @@ export function RealRoom({
     if (novo) rememberRoomCode(meuId, novo);
     else forgetRoomCode(meuId);
     setSelecionada(meuId && novo ? { jogadorId: meuId, codigo: novo } : null);
-    setRespondida(null);
   }
 
   const sala = useQuery({
@@ -105,8 +101,15 @@ export function RealRoom({
     staleTime: 0,
     retry: false,
   });
+  const perguntaKey = [
+    'real-room',
+    'question',
+    ...identity,
+    codigo,
+    room?.partidaId,
+  ];
   const pergunta = useQuery({
-    queryKey: ['real-room', 'question', ...identity, codigo, room?.partidaId],
+    queryKey: perguntaKey,
     queryFn: ({ signal }) => realRoomApi.perguntaAtual(codigo!, signal),
     enabled: Boolean(
       auth &&
@@ -115,7 +118,6 @@ export function RealRoom({
       !room.encerrada &&
       room.status === 'EM_ANDAMENTO',
     ),
-    refetchInterval: 5000,
     staleTime: 0,
     retry: false,
   });
@@ -154,8 +156,12 @@ export function RealRoom({
   const totalJogadores = room?.participantes.length ?? 0;
   const faltamJogadores = totalJogadores < MIN_PLAYERS;
 
-  async function executar(acao: () => Promise<unknown>, sair = false) {
-    if (ocupado) return;
+  async function executar(
+    acao: () => Promise<unknown>,
+    { sair = false, atualizar = true } = {},
+  ) {
+    if (acaoEmCurso.current) return;
+    acaoEmCurso.current = true;
     setOcupado(true);
     setErro('');
     try {
@@ -163,15 +169,42 @@ export function RealRoom({
       if (sair) {
         setCodigo(null);
       }
-      await client.invalidateQueries({ queryKey: ['real-room'] });
-      await client.invalidateQueries({ queryKey: ['quiz', 'my-matches'] });
+      if (atualizar) {
+        await client.invalidateQueries({ queryKey: ['real-room'] });
+        await client.invalidateQueries({ queryKey: ['quiz', 'my-matches'] });
+      }
     } catch (error) {
       setErro(
         error instanceof Error ? error.message : 'Falha ao acessar a sala.',
       );
     } finally {
+      acaoEmCurso.current = false;
       setOcupado(false);
     }
+  }
+
+  async function responder(indice: number) {
+    if (!codigo || !questao) return;
+    await executar(
+      async () => {
+        const query = { queryKey: perguntaKey, exact: true };
+        const resposta = await realRoomApi
+          .responder(codigo, questao.numero, indice)
+          .catch((error: unknown) => {
+            if (useAuthStore.getState().session === auth)
+              void pergunta.refetch();
+            throw error;
+          });
+        await client.cancelQueries(query);
+        if (useAuthStore.getState().session !== auth) return;
+        client.setQueryData(perguntaKey, resposta.proximaPergunta);
+        if (resposta.status === 'CONCLUIDA') {
+          void sala.refetch();
+          void client.invalidateQueries({ queryKey: ['quiz', 'my-matches'] });
+        }
+      },
+      { atualizar: false },
+    );
   }
 
   async function votarContinuacao(continuar: boolean) {
@@ -323,7 +356,7 @@ export function RealRoom({
                 variant="outline"
                 disabled={ocupado}
                 onClick={() =>
-                  void executar(() => realRoomApi.sair(codigo), true)
+                  void executar(() => realRoomApi.sair(codigo), { sair: true })
                 }
               >
                 Sair da sala
@@ -509,9 +542,24 @@ export function RealRoom({
             <Card>
               <h2>Pergunta da partida</h2>
               {pergunta.isPending && <p role="status">Carregando pergunta…</p>}
-              {pergunta.isError && <Notice message={pergunta.error.message} />}
+              {pergunta.isError && (
+                <>
+                  <Notice message={pergunta.error.message} />
+                  <Button
+                    variant="outline"
+                    busy={pergunta.isFetching}
+                    onClick={() => void pergunta.refetch()}
+                  >
+                    Tentar consultar pergunta novamente
+                  </Button>
+                </>
+              )}
               {!questao && !pergunta.isPending && !pergunta.isError && (
-                <p role="status">Atualizando partida…</p>
+                <p role="status">
+                  {pergunta.data === null
+                    ? 'Você terminou! Aguardando os outros jogadores para ver o resultado.'
+                    : 'Atualizando partida…'}
+                </p>
               )}
               {questao && (
                 <>
@@ -519,37 +567,18 @@ export function RealRoom({
                     Pergunta {questao.numero} de {questao.totalPerguntas}
                   </p>
                   <h3>{questao.enunciado}</h3>
-                  {respondida?.partidaId === questao.partidaId &&
-                  respondida.numero === questao.numero ? (
-                    <p role="status">
-                      Resposta registrada. Aguardando os outros participantes…
-                    </p>
-                  ) : (
-                    <div className="real-room-answers">
-                      {questao.alternativas.map((texto, indice) => (
-                        <Button
-                          key={indice}
-                          variant="outline"
-                          disabled={ocupado}
-                          onClick={() =>
-                            void executar(async () => {
-                              await realRoomApi.responder(
-                                codigo,
-                                questao.numero,
-                                indice,
-                              );
-                              setRespondida({
-                                partidaId: questao.partidaId,
-                                numero: questao.numero,
-                              });
-                            })
-                          }
-                        >
-                          {String.fromCharCode(65 + indice)}. {texto}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
+                  <div className="real-room-answers">
+                    {questao.alternativas.map((texto, indice) => (
+                      <Button
+                        key={indice}
+                        variant="outline"
+                        disabled={ocupado}
+                        onClick={() => void responder(indice)}
+                      >
+                        {String.fromCharCode(65 + indice)}. {texto}
+                      </Button>
+                    ))}
+                  </div>
                 </>
               )}
             </Card>
