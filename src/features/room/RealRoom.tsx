@@ -391,12 +391,35 @@ export function RealRoom({
                     {totalJogadores >= MAX_PLAYERS && ' · Sala cheia'}
                   </p>
                 )}
-                <ul className="real-room-players">
+                <ul
+                  className="real-room-players"
+                  aria-label="Jogadores da sala"
+                >
                   {room.participantes.map((p) => (
-                    <li key={p.id}>
-                      {p.nome}
-                      {p.id === room.anfitriaoId ? ' (anfitrião)' : ''}
-                      {p.id === meuId ? ' — você' : ''}
+                    <li className="real-room-player" key={p.id}>
+                      <span
+                        className="real-room-player-avatar"
+                        aria-hidden="true"
+                      >
+                        {p.nome
+                          .trim()
+                          .split(/\s+/u)
+                          .slice(0, 2)
+                          .map((parte) => Array.from(parte)[0])
+                          .join('')
+                          .toLocaleUpperCase('pt-BR')}
+                      </span>
+                      <div className="real-room-player-details">
+                        <strong>{p.nome}</strong>
+                        {(p.id === room.anfitriaoId || p.id === meuId) && (
+                          <div className="real-room-player-labels">
+                            {p.id === room.anfitriaoId && (
+                              <span>Anfitrião</span>
+                            )}
+                            {p.id === meuId && <span>Você</span>}
+                          </div>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
