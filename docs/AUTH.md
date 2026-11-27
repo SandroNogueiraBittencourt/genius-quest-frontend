@@ -32,7 +32,7 @@ Validações de cadastro: nome com 3–100 caracteres após trim, e-mail de até
 
 ## Sessão e limpeza
 
-- JWT, e-mail usado no login e expiração ficam somente na memória do Zustand. Não há persistência em localStorage, sessionStorage ou cookies. Recarregar a página exige entrar novamente; abas têm sessões independentes.
+- O JWT usado nas chamadas fica na memória do Zustand. O login inclui credenciais de navegador para receber o cookie de sessão HttpOnly. Somente o UUID da conta fica no sessionStorage, para que a aba confirme a identidade antes de restaurar a sessão. A API valida a expiração e revogação no POST /api/auth/sessao. Frontend e API precisam estar no mesmo site para o cookie SameSite=Lax ser enviado.
 - Senhas ficam no estado local do formulário e são limpas após sucesso ou desmontagem. As operações de autenticação não usam o cache de mutations do React Query.
 - Trocar de sessão, sair ou expirar cancela consultas, limpa o cache e encerra a sala demonstrativa, evitando compartilhar estado entre contas.
 - O prazo é reavaliado pelo timer e quando a aba recupera foco/visibilidade, inclusive após suspensão do dispositivo.
