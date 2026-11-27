@@ -54,15 +54,7 @@ export async function resendEmailVerification(
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
-export async function login(
-  request: LoginRequest,
-  signal?: AbortSignal,
-): Promise<LoginResponse> {
-  const data = await apiRequest<unknown>('/auth/login', {
-    method: 'POST',
-    json: { email: request.email.trim().toLowerCase(), senha: request.senha },
-    signal,
-  });
+function parseLoginResponse(data: unknown): LoginResponse {
   if (
     !isRecord(data) ||
     typeof data.token !== 'string' ||
@@ -79,6 +71,32 @@ export async function login(
     );
   return data as LoginResponse;
 }
+export async function login(
+  request: LoginRequest,
+  signal?: AbortSignal,
+): Promise<LoginResponse> {
+  const data = await apiRequest<unknown>('/auth/login', {
+    method: 'POST',
+    json: { email: request.email.trim().toLowerCase(), senha: request.senha },
+    includeCookies: true,
+    signal,
+  });
+  return parseLoginResponse(data);
+}
+
+export async function restoreSession(signal: AbortSignal) {
+  const data = await apiRequest<unknown>('/auth/sessao', {
+    method: 'POST',
+    json: {},
+    includeCookies: true,
+    signal,
+  });
+  const session = parseLoginResponse(data);
+  if (!isRecord(data) || typeof data.email !== 'string' || !data.email.trim())
+    throw new ApiError(502, 'A API retornou uma sessão inválida.');
+  return { session, email: data.email };
+}
+
 export async function register(
   request: RegisterRequest,
   signal?: AbortSignal,
@@ -121,6 +139,7 @@ export async function logout(
   await apiRequest<void>('/auth/logout', {
     method: 'POST',
     token,
+    includeCookies: true,
     signal,
   });
 }

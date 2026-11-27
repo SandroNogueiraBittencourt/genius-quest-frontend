@@ -25,6 +25,7 @@ export type ApiOptions = {
   idempotencyKey?: string;
   signal?: AbortSignal;
   allowEmptyAccepted?: boolean;
+  includeCookies?: boolean;
 };
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -55,7 +56,7 @@ export async function apiRequest<T>(
       body:
         options.json === undefined ? undefined : JSON.stringify(options.json),
       signal: options.signal,
-      credentials: 'omit',
+      credentials: options.includeCookies ? 'include' : 'omit',
       cache: 'no-store',
     });
   } catch (error) {
