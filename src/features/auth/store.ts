@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { forgetSessionUser } from './sessionResume';
 import type { AuthSession, LoginResponse } from './types';
 export type SessionNotice =
   'signed-out' | 'password-changed' | 'expired' | 'unauthorized' | null;
@@ -22,10 +23,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       notice: null,
     }),
   end: (reason, expectedToken) =>
-    set((state) =>
-      expectedToken && state.session?.token !== expectedToken
-        ? state
-        : { session: null, notice: reason },
-    ),
+    set((state) => {
+      if (expectedToken && state.session?.token !== expectedToken) return state;
+      forgetSessionUser();
+      return { session: null, notice: reason };
+    }),
   dismissNotice: () => set({ notice: null }),
 }));

@@ -20,6 +20,7 @@ import { readRoomInvite } from './features/room/roomInvite';
 import { useRoomStore } from './features/room/store';
 import { Button } from './components/ui';
 import { AuthPage, ConnectedAccount } from './features/auth/AuthPage';
+import { SessionBootstrap } from './features/auth/SessionBootstrap';
 import { PasswordRecovery } from './features/auth/PasswordRecovery';
 import { EmailVerification } from './features/auth/EmailVerification';
 import { AuthLifecycle } from './features/auth/AuthLifecycle';
@@ -452,7 +453,9 @@ export default function App() {
   return (
     <QueryClientProvider client={client}>
       <AuthLifecycle />
-      <Pages />
+      <SessionBootstrap>
+        <Pages />
+      </SessionBootstrap>
     </QueryClientProvider>
   );
 }

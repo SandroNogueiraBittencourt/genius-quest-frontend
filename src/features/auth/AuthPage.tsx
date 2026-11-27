@@ -11,6 +11,7 @@ import { login, register } from './api';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { EditNameForm } from './EditNameForm';
 import { useAuthStore } from './store';
+import { rememberSessionUser } from './sessionResume';
 import { userIdFromJwt } from './userIdFromJwt';
 import { passwordError, passwordHint } from './passwordPolicy';
 import './Auth.css';
@@ -105,6 +106,7 @@ export function AuthPage({
         const response = await login({ email, senha }, controller.signal);
         if (controller.signal.aborted) return;
         setSenha('');
+        rememberSessionUser(response.token);
         useAuthStore.getState().start(response, email);
         onSignedIn();
       }
