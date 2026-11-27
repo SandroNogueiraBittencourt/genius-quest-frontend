@@ -217,3 +217,36 @@ it('limpa histórico e placar na troca de conta', async () => {
     ),
   ).toBeInTheDocument();
 });
+
+it('recusa um placar com jogador duplicado e permite consultar novamente', async () => {
+  signIn();
+  let consultas = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (!url.endsWith(resultPath)) return json([completed]);
+      consultas++;
+      return json(
+        consultas === 1
+          ? {
+              ...result,
+              classificacao: [result.classificacao[0], result.classificacao[0]],
+            }
+          : result,
+      );
+    }),
+  );
+  mount();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Ver placar' }));
+  expect(await screen.findByRole('alert')).toBeInTheDocument();
+  expect(screen.queryByRole('table')).toBeNull();
+
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Tentar carregar placar novamente' }),
+  );
+  expect(
+    await screen.findByRole('table', { name: 'Classificação final' }),
+  ).toBeInTheDocument();
+  expect(consultas).toBe(2);
+});
