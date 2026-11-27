@@ -20,3 +20,23 @@ it('remove apenas o convite depois de entrar', () => {
   clearRoomInvite();
   expect(window.location.search).toBe('?view=real-room');
 });
+
+it('consome o convite sem apagar o estado ou outros parâmetros da navegação', () => {
+  const estado = { origem: 'resultados' };
+  window.history.replaceState(
+    estado,
+    '',
+    `/?view=real-room&room=${code}&origem=resultados#conteudo`,
+  );
+
+  clearRoomInvite();
+
+  expect(window.history.state).toEqual(estado);
+  expect(window.location.search).toBe('?view=real-room&origem=resultados');
+  expect(window.location.hash).toBe('#conteudo');
+  expect(readRoomInvite()).toBeNull();
+});
+
+it('rejeita convite ambíguo mesmo quando apenas um dos valores é UUID', () => {
+  expect(readRoomInvite(`?room=${code}&room=invalido`)).toBeNull();
+});
