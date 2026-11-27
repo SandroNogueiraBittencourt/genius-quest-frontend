@@ -181,3 +181,30 @@ it('higieniza URL antiga e retorna ao login', () => {
   expect(window.location.pathname).toBe('/');
   expect(window.location.search).toBe('?view=login');
 });
+
+it('mede o limite da nova senha em bytes UTF-8 durante a recuperação', async () => {
+  const fetch = vi.fn(async () => new Response(null, { status: 204 }));
+  vi.stubGlobal('fetch', fetch);
+  setup(true);
+  const limite = 'Á'.repeat(34) + 'aa1!';
+  const enviar = screen.getByRole('button', { name: 'Salvar nova senha' });
+
+  fill(limite + 'a');
+  fireEvent.click(enviar);
+  expect(screen.getByLabelText('Nova senha')).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  expect(fetch).not.toHaveBeenCalled();
+
+  fill(limite);
+  fireEvent.click(enviar);
+  expect(await screen.findByText(/Senha redefinida/)).toBeInTheDocument();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/auth/redefinir-senha',
+    expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ token: 'ABCD2345EFGH6789', novaSenha: limite }),
+    }),
+  );
+});
