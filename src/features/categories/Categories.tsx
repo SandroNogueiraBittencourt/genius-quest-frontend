@@ -200,19 +200,16 @@ function SignedInCategories() {
         )}
         <aside className="categories-care">
           <strong>Uma ideia pode abrir muitas conversas.</strong>
-          <p>
-            As sugestões passam por revisão antes de fazer parte das categorias
-            aprovadas.
-          </p>
+          <p>Categorias sugeridas por jogadores passam pela moderação.</p>
         </aside>
       </section>
       <section aria-labelledby="suggestion-title">
         <SuggestionForm
           onCreated={() => {
-            if (session)
-              void client.invalidateQueries({
-                queryKey: approvedCategoriesKey(session),
-              });
+            const filter = { queryKey: approvedCategoriesKey(session) };
+            void client
+              .cancelQueries(filter)
+              .then(() => client.invalidateQueries(filter));
           }}
         />
       </section>
@@ -337,14 +334,18 @@ function SuggestionForm({ onCreated }: { onCreated: () => void }) {
           <span className="category-status" data-status={sent.status}>
             {statusLabels[sent.status]}
           </span>
-          <h3>Sugestão recebida!</h3>
+          <h3>
+            {sent.status === 'APROVADA'
+              ? 'Categoria criada e aprovada!'
+              : 'Sugestão recebida!'}
+          </h3>
           <p>
             <strong>{sent.nome}</strong>
           </p>
           <p>
             {sent.status === 'PENDENTE'
               ? 'Sua ideia foi enviada para revisão. Ela aparecerá nas categorias aprovadas se for aprovada.'
-              : 'O status acima foi informado pelo backend. A lista mostra as categorias aprovadas.'}
+              : 'Você já pode usar essa categoria ao criar um tema.'}
           </p>
           <Button variant="outline" onClick={() => setSent(null)}>
             Sugerir outra categoria
@@ -352,10 +353,7 @@ function SuggestionForm({ onCreated }: { onCreated: () => void }) {
         </div>
       ) : (
         <>
-          <p>
-            Conte um assunto que você gostaria de explorar. Nossa curadoria
-            revisará a sugestão.
-          </p>
+          <p>Informe o nome e uma descrição opcional para a categoria.</p>
           <form ref={form} onSubmit={(event) => void submit(event)} noValidate>
             <fieldset disabled={pending} className="category-fields">
               <legend className="gq-sr-only">Sua sugestão de categoria</legend>
@@ -402,7 +400,7 @@ function SuggestionForm({ onCreated }: { onCreated: () => void }) {
                 busy={pending}
                 loadingLabel="Enviando sugestão…"
               >
-                Enviar para revisão
+                Enviar categoria
               </Button>
             </fieldset>
             {message && (
@@ -416,8 +414,7 @@ function SuggestionForm({ onCreated }: { onCreated: () => void }) {
             )}
           </form>
           <p className="categories-small">
-            A sugestão fica pendente até a revisão. Você não precisa enviar a
-            mesma ideia novamente.
+            Categorias criadas por administradores são aprovadas na hora.
           </p>
         </>
       )}

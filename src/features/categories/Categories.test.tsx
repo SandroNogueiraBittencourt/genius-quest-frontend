@@ -74,7 +74,7 @@ function fillForm() {
   });
 }
 function submit() {
-  fireEvent.click(screen.getByRole('button', { name: 'Enviar para revisão' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar categoria' }));
 }
 
 it('oferece entrada sem consultar endpoints protegidos para visitantes', () => {
@@ -134,7 +134,7 @@ it('explica lista vazia e mantém a possibilidade de sugerir', async () => {
     await screen.findByText('A primeira descoberta pode começar com você.'),
   ).toBeInTheDocument();
   expect(
-    screen.getByRole('button', { name: 'Enviar para revisão' }),
+    screen.getByRole('button', { name: 'Enviar categoria' }),
   ).toBeEnabled();
 });
 
@@ -364,7 +364,7 @@ it('não repete POST com falha de rede e preserva o formulário', async () => {
   ).toHaveLength(1);
   expect(screen.getByLabelText('Nome da categoria')).toHaveValue(' Oceanos ');
   expect(
-    screen.getByRole('button', { name: 'Enviar para revisão' }),
+    screen.getByRole('button', { name: 'Enviar categoria' }),
   ).toBeEnabled();
 });
 
@@ -383,7 +383,7 @@ it('bloqueia envio duplicado, cancela ao sair e descarta sucesso tardio', async 
   const page = setup();
   fillForm();
   const form = screen
-    .getByRole('button', { name: 'Enviar para revisão' })
+    .getByRole('button', { name: 'Enviar categoria' })
     .closest('form')!;
   fireEvent.submit(form);
   fireEvent.submit(form);
@@ -462,4 +462,32 @@ it('não confunde página vazia com catálogo sem categorias', async () => {
     screen.getByRole('button', { name: 'Voltar à primeira página' }),
   );
   await screen.findByRole('heading', { name: 'Astronomia' });
+});
+
+it('confirma aprovação automática e atualiza as categorias aprovadas', async () => {
+  const aprovada = { ...category, nome: 'Oceanos' };
+  let criada = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url: string, options: RequestInit) => {
+      if (options.method === 'POST') {
+        criada = true;
+        return json(aprovada, 201);
+      }
+      return json(criada ? [aprovada] : []);
+    }),
+  );
+
+  setup();
+  fillForm();
+  submit();
+
+  expect(
+    await screen.findByRole('heading', {
+      name: 'Categoria criada e aprovada!',
+    }),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByRole('heading', { name: 'Oceanos' }),
+  ).toBeInTheDocument();
 });

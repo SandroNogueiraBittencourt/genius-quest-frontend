@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { useAuthStore } from '../auth/store';
-import { getApprovedCategories } from '../categories/api';
+import { useApprovedCategories } from '../categories/queries';
 import {
   getCurrentCycle,
   getCycleRanking,
@@ -61,12 +61,7 @@ function SignedInThemes() {
     enabled: !!session,
     retry: false,
   });
-  const categories = useQuery({
-    queryKey: ['themes', 'categories', ...queryIdentity],
-    queryFn: ({ signal }) => getApprovedCategories(signal),
-    enabled: !!session,
-    retry: false,
-  });
+  const categories = useApprovedCategories();
   const cycle = useQuery({
     queryKey: ['themes', 'cycle', ...queryIdentity],
     queryFn: ({ signal }) => getCurrentCycle(signal),
@@ -97,7 +92,15 @@ function SignedInThemes() {
       setSubmitted(result);
       setTitulo('');
       setDescricao('');
-      setNotice('Sua sugestão foi enviada para revisão.');
+      void client.invalidateQueries({ queryKey: ['themes', 'moderation'] });
+      if (result.status === 'APROVADO') {
+        const aprovados = { queryKey: ['themes', 'approved'] };
+        void client
+          .cancelQueries(aprovados)
+          .then(() => client.invalidateQueries(aprovados));
+        void client.invalidateQueries({ queryKey: ['themes', 'ranking'] });
+        void client.invalidateQueries({ queryKey: ['real-room', 'themes'] });
+      }
     } catch (cause) {
       setError(
         cause instanceof ApiError && cause.status === 409
@@ -225,10 +228,16 @@ function SignedInThemes() {
           <Card className="themes-suggest">
             <span className="gq-kicker">Sua voz conta</span>
             <h2 id="themes-suggest-title">Sugira um tema</h2>
-            <p>Toda sugestão passa pela moderação antes de receber votos.</p>
+            <p>
+              Temas sugeridos por jogadores passam pela moderação.
+              Administradores podem publicá-los na hora.
+            </p>
             {submitted && (
               <p role="status" className="themes-success">
-                {submitted.titulo} — {submitted.status}
+                {submitted.status === 'APROVADO'
+                  ? 'Tema criado e aprovado!'
+                  : 'Sua sugestão foi enviada para revisão.'}{' '}
+                <strong>{submitted.titulo}</strong>
               </p>
             )}
             <form onSubmit={(event) => void submit(event)}>
