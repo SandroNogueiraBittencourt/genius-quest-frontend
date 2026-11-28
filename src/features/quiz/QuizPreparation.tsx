@@ -3,7 +3,7 @@ import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
 import { MatchList } from './MatchList';
 import { useMyMatchesPage } from './queries';
-import { MatchPagination } from './MatchPagination';
+import { Pagination } from '../../components/ui/Pagination';
 import './QuizPreparation.css';
 
 export function QuizPreparation({
@@ -112,7 +112,8 @@ function SignedInMatches({
       ) : (
         <MatchList matches={matches.data.items} />
       )}
-      <MatchPagination
+      <Pagination
+        label="Paginação de partidas"
         page={page}
         totalPages={matches.data?.totalPages ?? 0}
         onPageChange={setPage}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Card, Notice } from '../../components/ui';
 import { useAuthStore } from '../auth/store';
 import { MatchList } from './MatchList';
-import { MatchPagination } from './MatchPagination';
+import { Pagination } from '../../components/ui/Pagination';
 import { MATCH_PAGE_SIZE } from './api';
 import { useMyMatches } from './queries';
 import './QuizPreparation.css';
@@ -87,7 +87,8 @@ function MatchResultsHistory({ onViewMatches }: { onViewMatches: () => void }) {
       ) : (
         <MatchList matches={completed.slice(start, start + MATCH_PAGE_SIZE)} />
       )}
-      <MatchPagination
+      <Pagination
+        label="Paginação de partidas"
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
