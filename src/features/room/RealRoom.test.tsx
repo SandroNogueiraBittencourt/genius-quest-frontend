@@ -517,3 +517,44 @@ it('ao retomar a sala após responder tudo aguarda o placar sem mostrar alternat
   ).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'A. Opção 1' })).toBeNull();
 });
+
+it.each([
+  { jogador: playerId, proprioNome: 'Ana Clara Ribeiro' },
+  { jogador: guestId, proprioNome: 'Bruno Costa' },
+])(
+  'identifica anfitrião e jogador atual na lista para $proprioNome',
+  async ({ jogador, proprioNome }) => {
+    autenticar(jogador);
+    mockServer({
+      ...baseRoom,
+      status: 'PREPARACAO',
+      partidaId: null,
+      temaId: null,
+      participantes: [
+        { id: playerId, nome: 'Ana Clara Ribeiro' },
+        { id: guestId, nome: 'Bruno Costa' },
+      ],
+    });
+    mount(true, jogador);
+
+    const lista = await screen.findByRole('list', {
+      name: 'Jogadores da sala',
+    });
+    const [anfitriao, convidado] = within(lista).getAllByRole('listitem');
+    expect(
+      within(anfitriao).getByText('Ana Clara Ribeiro'),
+    ).toBeInTheDocument();
+    expect(within(anfitriao).getByText('AC')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+    expect(within(anfitriao).getByText('Anfitrião')).toBeInTheDocument();
+    expect(within(convidado).getByText('BC')).toBeInTheDocument();
+    expect(within(convidado).queryByText('Anfitrião')).toBeNull();
+    const proprio = jogador === playerId ? anfitriao : convidado;
+    const outro = jogador === playerId ? convidado : anfitriao;
+    expect(within(proprio).getByText(proprioNome)).toBeInTheDocument();
+    expect(within(proprio).getByText('Você')).toBeInTheDocument();
+    expect(within(outro).queryByText('Você')).toBeNull();
+  },
+);
