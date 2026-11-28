@@ -183,10 +183,7 @@
   .auth-connected-actions {
     flex-direction: column;
   }
-  .auth-change-email .ui-notice {
-  margin-top: 16px;
-}
-.auth-notice {
+  .auth-notice {
     flex-direction: column;
     align-items: flex-start;
     padding: 16px;
