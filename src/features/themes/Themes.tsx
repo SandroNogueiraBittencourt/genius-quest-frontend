@@ -12,7 +12,10 @@ import {
   voteTheme,
 } from './api';
 import type { Theme } from './types';
+import { Pagination } from '../../components/ui/Pagination';
 import './Themes.css';
+
+const PAGE_SIZE = 10;
 
 export function Themes({ onSignIn }: { onSignIn: () => void }) {
   const session = useAuthStore((state) => state.session);
@@ -44,6 +47,7 @@ export function Themes({ onSignIn }: { onSignIn: () => void }) {
 function SignedInThemes() {
   const session = useAuthStore((state) => state.session);
   const client = useQueryClient();
+  const [requestedPage, setPage] = useState(0);
   const [categoriaId, setCategoriaId] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -62,6 +66,9 @@ function SignedInThemes() {
     retry: false,
   });
   const categories = useApprovedCategories();
+  const totalPages = Math.ceil((themes.data?.length ?? 0) / PAGE_SIZE);
+  const page = Math.min(requestedPage, Math.max(0, totalPages - 1));
+  const start = page * PAGE_SIZE;
   const cycle = useQuery({
     queryKey: ['themes', 'cycle', ...queryIdentity],
     queryFn: ({ signal }) => getCurrentCycle(signal),
@@ -171,31 +178,40 @@ function SignedInThemes() {
               <p>Ainda não há temas aprovados. Envie a primeira sugestão.</p>
             </Card>
           ) : (
-            <ul className="themes-list">
-              {themes.data.map((theme) => (
-                <li key={theme.id}>
-                  <Card className="themes-card">
-                    <h3>{theme.titulo}</h3>
-                    <p>
-                      {theme.descricao || 'Um novo assunto para descobrir.'}
-                    </p>
-                    <Button
-                      variant="secondary"
-                      busy={votingId === theme.id}
-                      loadingLabel="Registrando voto…"
-                      disabled={
-                        !cycle.data || !!votingId || voted.includes(theme.id)
-                      }
-                      onClick={() => void vote(theme.id)}
-                    >
-                      {voted.includes(theme.id)
-                        ? 'Voto registrado'
-                        : 'Votar neste tema'}
-                    </Button>
-                  </Card>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="themes-list">
+                {themes.data.slice(start, start + PAGE_SIZE).map((theme) => (
+                  <li key={theme.id}>
+                    <Card className="themes-card">
+                      <h3>{theme.titulo}</h3>
+                      <p>
+                        {theme.descricao || 'Um novo assunto para descobrir.'}
+                      </p>
+                      <Button
+                        variant="secondary"
+                        busy={votingId === theme.id}
+                        loadingLabel="Registrando voto…"
+                        disabled={
+                          !cycle.data || !!votingId || voted.includes(theme.id)
+                        }
+                        onClick={() => void vote(theme.id)}
+                      >
+                        {voted.includes(theme.id)
+                          ? 'Voto registrado'
+                          : 'Votar neste tema'}
+                      </Button>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+              <Pagination
+                label="Paginação de temas aprovados"
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                busy={themes.isFetching}
+              />
+            </>
           )}
           {cycle.data && (
             <section
