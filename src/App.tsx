@@ -281,9 +281,11 @@ function Pages() {
                 ? 'Você saiu da sua conta.'
                 : notice === 'password-changed'
                   ? 'Senha alterada. Entre novamente com sua nova senha.'
-                  : notice === 'expired'
-                    ? 'Sua sessão expirou. Entre novamente.'
-                    : 'Sua sessão não está mais válida. Entre novamente.'}
+                  : notice === 'email-changed'
+                    ? 'E-mail alterado. Entre novamente com seu novo endereço.'
+                    : notice === 'expired'
+                      ? 'Sua sessão expirou. Entre novamente.'
+                      : 'Sua sessão não está mais válida. Entre novamente.'}
             </p>
             <div className="auth-notice-actions">
               {!isAuthView && notice !== 'signed-out' && (
@@ -326,6 +328,11 @@ function Pages() {
               onLogout={() => void logout()}
               logoutPending={logoutPending}
               onPasswordChanged={(email) => {
+                setRegistrationEmail(email);
+                setEmailVerified(false);
+                navigate('login');
+              }}
+              onEmailChanged={(email) => {
                 setRegistrationEmail(email);
                 setEmailVerified(false);
                 navigate('login');

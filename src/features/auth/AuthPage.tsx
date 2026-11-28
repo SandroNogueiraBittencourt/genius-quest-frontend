@@ -8,6 +8,7 @@ import {
 import { Button, Card, Input, Notice } from '../../components/ui';
 import { ApiError } from '../../services/http';
 import { login, register } from './api';
+import { ChangeEmailForm } from './ChangeEmailForm';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { EditNameForm } from './EditNameForm';
 import { useAuthStore } from './store';
@@ -339,12 +340,14 @@ export function ConnectedAccount({
   onLogout,
   logoutPending = false,
   onPasswordChanged,
+  onEmailChanged,
   onForgotPassword,
 }: {
   onHome: () => void;
   onLogout: () => void;
   logoutPending?: boolean;
   onPasswordChanged: (email: string) => void;
+  onEmailChanged: (email: string) => void;
   onForgotPassword: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   const session = useAuthStore((state) => state.session);
@@ -365,9 +368,18 @@ export function ConnectedAccount({
           disabled={logoutPending}
         />
       )}
+      {session && userId && (
+        <ChangeEmailForm
+          key={`email:${session.token}`}
+          session={session}
+          userId={userId}
+          disabled={logoutPending}
+          onEmailChanged={onEmailChanged}
+        />
+      )}
       {session && (
         <ChangePasswordForm
-          key={session.token}
+          key={`password:${session.token}`}
           session={session}
           disabled={logoutPending}
           onPasswordChanged={onPasswordChanged}
