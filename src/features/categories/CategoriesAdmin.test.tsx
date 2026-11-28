@@ -285,3 +285,37 @@ it('pagina categorias depois do filtro e volta à primeira página ao trocar o s
   expect(screen.queryByRole('heading', { name: 'Pendente 11' })).toBeNull();
   client.clear();
 });
+
+it('mantém a primeira página disponível ao aprovar a última categoria da segunda página', async () => {
+  const pendentes = Array.from({ length: 11 }, (_, index) => ({
+    ...category,
+    id: '550e8400-e29b-41d4-a716-' + String(index + 1).padStart(12, '0'),
+    nome: 'Categoria ' + (index + 1),
+  }));
+  const ultima = pendentes[10];
+  let lista = pendentes;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (url.endsWith('/aprovar')) {
+        const atualizada = { ...ultima, status: 'APROVADA' };
+        lista = [...pendentes.slice(0, 10), atualizada];
+        return json(atualizada);
+      }
+      return json(lista);
+    }),
+  );
+  const { client } = setup();
+  await screen.findByRole('heading', { name: 'Categoria 1' });
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Aprovar Categoria 11' }));
+  expect(
+    await screen.findByRole('heading', { name: 'Categoria 1' }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('navigation', {
+      name: 'Paginação de categorias em moderação',
+    }),
+  ).toBeNull();
+  client.clear();
+});

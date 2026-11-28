@@ -152,3 +152,39 @@ it('avança páginas sem misturar o resultado da página anterior', async () => 
     screen.queryByRole('heading', { name: 'Votação de Novembro' }),
   ).not.toBeInTheDocument();
 });
+
+it('permite tentar novamente após falha ao carregar o histórico', async () => {
+  useAuthStore
+    .getState()
+    .start(
+      { token: 'jwt-history', tipo: 'Bearer', expiraEm: 3600 },
+      'jogador@example.test',
+    );
+  const historico = vi
+    .fn()
+    .mockResolvedValueOnce(json({}, 503))
+    .mockResolvedValueOnce(
+      json({
+        ciclos: [cycle],
+        pagina: 0,
+        tamanho: 10,
+        total: 1,
+        temProxima: false,
+      }),
+    );
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) =>
+      url.includes('/historico?') ? historico() : json([]),
+    ),
+  );
+  mount();
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Tentar novamente' }),
+  );
+  expect(
+    await screen.findByRole('heading', { name: cycle.nome }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Tentar novamente' })).toBeNull();
+  expect(historico).toHaveBeenCalledTimes(2);
+});
