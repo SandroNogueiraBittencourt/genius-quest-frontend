@@ -249,3 +249,39 @@ it('restaura categoria removida com ação explícita e mesma API de aprovação
   );
   client.clear();
 });
+
+it('pagina categorias depois do filtro e volta à primeira página ao trocar o status', async () => {
+  const pendentes = Array.from({ length: 11 }, (_, index) => ({
+    ...category,
+    id: '550e8400-e29b-41d4-a716-' + String(index + 1).padStart(12, '0'),
+    nome: 'Pendente ' + (index + 1),
+  }));
+  const aprovadas = pendentes.map((item, index) => ({
+    ...item,
+    id: '550e8401-e29b-41d4-a716-' + String(index + 1).padStart(12, '0'),
+    nome: 'Aprovada ' + (index + 1),
+    status: 'APROVADA',
+  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => json([...aprovadas, ...pendentes])),
+  );
+  const { client } = setup();
+  expect(
+    await screen.findByRole('heading', { name: 'Pendente 1' }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Pendente 11' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  expect(screen.getByText('Página 2 de 2')).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Pendente 11' }),
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Aprovada' }));
+  expect(screen.getByText('Página 1 de 2')).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Aprovada 1' }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Pendente 11' })).toBeNull();
+  client.clear();
+});
