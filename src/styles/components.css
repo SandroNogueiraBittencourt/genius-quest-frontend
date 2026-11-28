@@ -179,3 +179,12 @@
     padding: var(--space-3);
   }
 }
+
+.ui-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}

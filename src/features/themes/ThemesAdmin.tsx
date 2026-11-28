@@ -11,7 +11,10 @@ import {
   moderateTheme,
 } from './api';
 import type { Theme, ThemeStatus } from './types';
+import { Pagination } from '../../components/ui/Pagination';
 import './Themes.css';
+
+const PAGE_SIZE = 10;
 
 const labels: Record<ThemeStatus, string> = {
   PENDENTE: 'Pendente',
@@ -46,6 +49,7 @@ export function ThemesAdmin({ onSignIn }: { onSignIn: () => void }) {
 function ManagedThemes() {
   const session = useAuthStore((state) => state.session);
   const client = useQueryClient();
+  const [requestedPage, setPage] = useState(0);
   const [filter, setFilter] = useState<ThemeStatus | 'TODOS'>('PENDENTE');
   const [cycleName, setCycleName] = useState('');
   const [duration, setDuration] = useState(60);
@@ -133,6 +137,9 @@ function ManagedThemes() {
     themes.data?.filter(
       (theme) => filter === 'TODOS' || theme.status === filter,
     ) ?? [];
+  const totalPages = Math.ceil(visible.length / PAGE_SIZE);
+  const page = Math.min(requestedPage, Math.max(0, totalPages - 1));
+  const start = page * PAGE_SIZE;
 
   return (
     <>
@@ -172,7 +179,10 @@ function ManagedThemes() {
                     key={status}
                     variant={status === filter ? 'secondary' : 'outline'}
                     aria-pressed={status === filter}
-                    onClick={() => setFilter(status)}
+                    onClick={() => {
+                      setFilter(status);
+                      setPage(0);
+                    }}
                   >
                     {status === 'TODOS' ? 'Todos' : labels[status]}
                   </Button>
@@ -183,52 +193,65 @@ function ManagedThemes() {
                   <p>Nenhum tema corresponde a este filtro.</p>
                 </Card>
               ) : (
-                <ul className="themes-list">
-                  {visible.map((theme) => (
-                    <li key={theme.id}>
-                      <Card className="themes-card">
-                        <span className="themes-state">
-                          {labels[theme.status]}
-                        </span>
-                        <h3>{theme.titulo}</h3>
-                        <p>{theme.descricao || 'Sem descrição.'}</p>
-                        <div className="themes-actions">
-                          {theme.status !== 'APROVADO' &&
-                            theme.status !== 'REMOVIDO' && (
+                <>
+                  <ul className="themes-list">
+                    {visible.slice(start, start + PAGE_SIZE).map((theme) => (
+                      <li key={theme.id}>
+                        <Card className="themes-card">
+                          <span className="themes-state">
+                            {labels[theme.status]}
+                          </span>
+                          <h3>{theme.titulo}</h3>
+                          <p>{theme.descricao || 'Sem descrição.'}</p>
+                          <div className="themes-actions">
+                            {theme.status !== 'APROVADO' &&
+                              theme.status !== 'REMOVIDO' && (
+                                <Button
+                                  variant="secondary"
+                                  busy={busyId === theme.id}
+                                  disabled={!!busyId}
+                                  onClick={() =>
+                                    void moderate(theme, 'aprovar')
+                                  }
+                                >
+                                  Aprovar
+                                </Button>
+                              )}
+                            {theme.status === 'APROVADO' && (
                               <Button
-                                variant="secondary"
+                                variant="outline"
                                 busy={busyId === theme.id}
                                 disabled={!!busyId}
-                                onClick={() => void moderate(theme, 'aprovar')}
+                                onClick={() =>
+                                  void moderate(theme, 'suspender')
+                                }
                               >
-                                Aprovar
+                                Suspender
                               </Button>
                             )}
-                          {theme.status === 'APROVADO' && (
-                            <Button
-                              variant="outline"
-                              busy={busyId === theme.id}
-                              disabled={!!busyId}
-                              onClick={() => void moderate(theme, 'suspender')}
-                            >
-                              Suspender
-                            </Button>
-                          )}
-                          {theme.status !== 'REMOVIDO' && (
-                            <Button
-                              variant="outline"
-                              busy={busyId === theme.id}
-                              disabled={!!busyId}
-                              onClick={() => void moderate(theme, 'remover')}
-                            >
-                              Remover
-                            </Button>
-                          )}
-                        </div>
-                      </Card>
-                    </li>
-                  ))}
-                </ul>
+                            {theme.status !== 'REMOVIDO' && (
+                              <Button
+                                variant="outline"
+                                busy={busyId === theme.id}
+                                disabled={!!busyId}
+                                onClick={() => void moderate(theme, 'remover')}
+                              >
+                                Remover
+                              </Button>
+                            )}
+                          </div>
+                        </Card>
+                      </li>
+                    ))}
+                  </ul>
+                  <Pagination
+                    label="Paginação de temas em moderação"
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    busy={!!busyId}
+                  />
+                </>
               )}
             </>
           )}

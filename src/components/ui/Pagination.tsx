@@ -1,11 +1,13 @@
-import { Button } from '../../components/ui';
+import { Button } from './Button';
 
-export function MatchPagination({
+export function Pagination({
+  label,
   page,
   totalPages,
   onPageChange,
   busy,
 }: {
+  label: string;
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -13,10 +15,7 @@ export function MatchPagination({
 }) {
   if (page === 0 && totalPages <= 1) return null;
   return (
-    <nav
-      aria-label="Paginação de partidas"
-      className="quiz-preparation-actions quiz-preparation-pagination"
-    >
+    <nav aria-label={label} className="ui-pagination">
       <Button
         variant="outline"
         disabled={busy || page === 0}
