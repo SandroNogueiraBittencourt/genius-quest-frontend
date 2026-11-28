@@ -187,3 +187,30 @@ export function updateProfileName(
 ) {
   return requestProfileName(userId, signal, nome);
 }
+
+export async function requestEmailChange(
+  userId: string,
+  email: string,
+  senhaAtual: string,
+  signal: AbortSignal,
+): Promise<void> {
+  await authenticatedRequest<unknown>(
+    `/usuarios/${encodeURIComponent(userId)}`,
+    {
+      method: 'PATCH',
+      json: { email, senhaAtual },
+      signal,
+    },
+  );
+}
+
+export async function confirmEmailChange(
+  codigo: string,
+  signal: AbortSignal,
+): Promise<void> {
+  await authenticatedRequest<void>('/auth/confirmar-troca-email', {
+    method: 'POST',
+    json: { codigo },
+    signal,
+  });
+}

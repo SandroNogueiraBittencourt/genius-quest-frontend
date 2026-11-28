@@ -2,7 +2,12 @@ import { create } from 'zustand';
 import { forgetSessionUser } from './sessionResume';
 import type { AuthSession, LoginResponse } from './types';
 export type SessionNotice =
-  'signed-out' | 'password-changed' | 'expired' | 'unauthorized' | null;
+  | 'signed-out'
+  | 'password-changed'
+  | 'email-changed'
+  | 'expired'
+  | 'unauthorized'
+  | null;
 type AuthState = {
   session: AuthSession | null;
   notice: SessionNotice;

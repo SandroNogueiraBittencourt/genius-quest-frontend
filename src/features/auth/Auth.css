@@ -115,8 +115,12 @@
   margin-top: 28px;
 }
 .auth-edit-name,
+.auth-change-email,
 .auth-change-password {
   margin-top: 24px;
+}
+.auth-change-email .ui-notice {
+  margin-top: 16px;
 }
 .auth-notice {
   display: flex;
