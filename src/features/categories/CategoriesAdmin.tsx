@@ -9,7 +9,10 @@ import {
   updateCategory,
 } from './api';
 import type { Category, CategoryStatus } from './types';
+import { Pagination } from '../../components/ui/Pagination';
 import './Categories.css';
+
+const PAGE_SIZE = 10;
 
 const statuses: Record<CategoryStatus, string> = {
   PENDENTE: 'Pendente',
@@ -45,6 +48,7 @@ export function CategoriesAdmin({ onSignIn }: { onSignIn: () => void }) {
 function ManagedCategories() {
   const session = useAuthStore((state) => state.session);
   const client = useQueryClient();
+  const [requestedPage, setPage] = useState(0);
   const [filter, setFilter] = useState<CategoryStatus | 'TODAS'>('PENDENTE');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -128,6 +132,9 @@ function ManagedCategories() {
     categories.data?.filter(
       (category) => filter === 'TODAS' || category.status === filter,
     ) ?? [];
+  const totalPages = Math.ceil(visible.length / PAGE_SIZE);
+  const page = Math.min(requestedPage, Math.max(0, totalPages - 1));
+  const start = page * PAGE_SIZE;
   const forbidden =
     categories.error instanceof ApiError && categories.error.status === 403;
 
@@ -167,7 +174,10 @@ function ManagedCategories() {
                   key={status}
                   variant={filter === status ? 'secondary' : 'outline'}
                   aria-pressed={filter === status}
-                  onClick={() => setFilter(status)}
+                  onClick={() => {
+                    setFilter(status);
+                    setPage(0);
+                  }}
                 >
                   {status === 'TODAS' ? 'Todas' : statuses[status]}
                 </Button>
@@ -183,7 +193,7 @@ function ManagedCategories() {
           <p role="status">{visible.length} categorias encontradas.</p>
           {visible.length === 0 && <p>Nenhuma categoria neste status.</p>}
           <ul className="categories-admin-list">
-            {visible.map((category) => (
+            {visible.slice(start, start + PAGE_SIZE).map((category) => (
               <li key={category.id}>
                 <Card>
                   <span
@@ -308,6 +318,13 @@ function ManagedCategories() {
               </li>
             ))}
           </ul>
+          <Pagination
+            label="Paginação de categorias em moderação"
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            busy={!!busyId}
+          />
         </>
       )}
     </div>
