@@ -303,3 +303,68 @@ it('associa a rejeição do servidor ao nome e mantém o rascunho para correçã
   expect(screen.queryByText('Nome atualizado.')).toBeNull();
   expect(useAuthStore.getState().session?.token).toBe(token);
 });
+
+it('rejeita e-mail em uso e pede novo login somente após confirmar a troca', async () => {
+  const novo = 'novo@example.com';
+  let pedidos = 0;
+  const fetch = vi.fn(async (url: string, options: RequestInit) => {
+    if (url.endsWith('/auth/confirmar-troca-email'))
+      return new Response(null, { status: 204 });
+    const ocupado = options.method === 'PATCH' && ++pedidos === 1;
+    return new Response(JSON.stringify({ nome: 'Lia Teste' }), {
+      status: ocupado ? 409 : 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+  vi.stubGlobal('fetch', fetch);
+  const { id, token } = abrirMinhaConta();
+  fireEvent.click(screen.getByRole('button', { name: 'Alterar e-mail' }));
+  const email = screen.getByRole('textbox', { name: 'Novo e-mail' });
+  const senha = screen.getByLabelText('Senha atual para trocar e-mail');
+  const enviar = screen.getByRole('button', { name: 'Enviar código' });
+
+  fireEvent.change(email, { target: { value: 'ocupado@example.com' } });
+  fireEvent.change(senha, { target: { value: 'SenhaAtual123!' } });
+  fireEvent.click(enviar);
+  expect(
+    await screen.findByText(
+      'Esse e-mail já está em uso. Escolha outro endereço.',
+    ),
+  ).toBeInTheDocument();
+  expect(useAuthStore.getState().session?.token).toBe(token);
+
+  fireEvent.change(email, { target: { value: 'Novo@example.com' } });
+  fireEvent.click(enviar);
+  const codigo = await screen.findByRole('textbox', {
+    name: 'Código de confirmação da troca',
+  });
+  expect(useAuthStore.getState().session?.token).toBe(token);
+  expect(screen.queryByLabelText('Senha atual para trocar e-mail')).toBeNull();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/usuarios/' + id,
+    expect.objectContaining({
+      method: 'PATCH',
+      headers: expect.objectContaining({ Authorization: 'Bearer ' + token }),
+      body: JSON.stringify({ email: novo, senhaAtual: 'SenhaAtual123!' }),
+    }),
+  );
+  fireEvent.change(codigo, { target: { value: '12345-67890' } });
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Confirmar troca de e-mail' }),
+  );
+  expect(
+    await screen.findByText(
+      'E-mail alterado. Entre novamente com seu novo endereço.',
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'E-mail' })).toHaveValue(novo);
+  expect(useAuthStore.getState().session).toBeNull();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/auth/confirmar-troca-email',
+    expect.objectContaining({
+      method: 'POST',
+      headers: expect.objectContaining({ Authorization: 'Bearer ' + token }),
+      body: JSON.stringify({ codigo: '1234567890' }),
+    }),
+  );
+});
