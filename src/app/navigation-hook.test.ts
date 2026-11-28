@@ -35,3 +35,45 @@ it('atualiza a tela ao restaurar uma URL pelo histórico do navegador', () => {
   });
   expect(result.current.view).toBe('home');
 });
+
+it.each([
+  'login',
+  'register',
+  'verify-email',
+  'forgot-password',
+  'real-room',
+] as const)(
+  'preserva o convite e remove o token de recuperação ao navegar para %s',
+  (destino) => {
+    window.history.replaceState(
+      null,
+      '',
+      `/redefinir-senha?token=teste&room=${room}#secao`,
+    );
+    const { result } = renderHook(useNavigation);
+    act(() => result.current.navigate(destino));
+    const parametros = new URLSearchParams(window.location.search);
+    expect(result.current.view).toBe(destino);
+    expect(window.location.pathname).toBe('/');
+    expect(window.location.hash).toBe('');
+    expect(parametros.get('room')).toBe(room);
+    expect(parametros.has('token')).toBe(false);
+  },
+);
+
+it('mantém o código na redefinição e volta à URL inicial ao sair', () => {
+  window.history.replaceState(
+    null,
+    '',
+    `/?view=login&token=teste&room=${room}`,
+  );
+  const { result } = renderHook(useNavigation);
+  act(() => result.current.navigate('reset-password'));
+  expect(window.location.pathname).toBe('/redefinir-senha');
+  expect(new URLSearchParams(window.location.search).get('token')).toBe(
+    'teste',
+  );
+  act(() => result.current.navigate('home'));
+  expect(window.location.pathname).toBe('/');
+  expect(window.location.search).toBe('');
+});
