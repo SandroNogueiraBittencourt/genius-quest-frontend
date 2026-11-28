@@ -33,3 +33,25 @@ it('oferece cópia manual se o navegador não disponibiliza clipboard', async ()
     else Reflect.deleteProperty(navigator, 'clipboard');
   }
 });
+
+it('confirma a cópia bem-sucedida do link da sala', async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText },
+  });
+  try {
+    render(<RoomInvite code={code} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar link' }));
+    expect(
+      await screen.findByText('Link de convite copiado.'),
+    ).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledExactlyOnceWith(
+      `${window.location.origin}/?view=real-room&room=${code}`,
+    );
+  } finally {
+    if (original) Object.defineProperty(navigator, 'clipboard', original);
+    else Reflect.deleteProperty(navigator, 'clipboard');
+  }
+});
